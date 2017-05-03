@@ -1,0 +1,15 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/cf-ci
+inputs:
+- name: src
+- name: ci
+- name: fissile-binary
+- name: stampy-binary
+outputs:
+- name: out
+run:
+  path: ci/cf-kube-config/tasks/kube-dist.sh

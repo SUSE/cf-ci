@@ -1,0 +1,71 @@
+groups: []
+
+resources:
+- name: src
+  type: git
+  source:
+    branch: develop
+    private_key: {{github-private-key}}
+    uri: git@github.com:hpcloud/hcf.git
+
+- name: ci
+  type: git
+  source:
+    uri: https://github.com/SUSE/cf-ci.git
+    branch: master
+    paths:
+    - cf-kube-config/*
+
+- name: fissile-binary
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    endpoint: {{s3-endpoint}}
+    secret_access_key: {{s3-secret-key}}
+    bucket: fissile
+    regexp: fissile-(.*)\.g.*linux.amd64\.tgz
+    private: true
+
+- name: stampy-binary
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    endpoint: {{s3-endpoint}}
+    secret_access_key: {{s3-secret-key}}
+    bucket: stampy
+    regexp: stampy-(.*)\.g.*linux.amd64\.tgz
+    private: true
+
+- name: artifact
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    bucket: kube-config
+    endpoint: {{s3-endpoint}}
+    regexp: hcf-kube-(.*).zip$
+    secret_access_key: {{s3-secret-key}}
+    private: true
+
+jobs:
+- name: kube-dist
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+
+    - get: ci
+      trigger: true
+
+    - get: fissile-binary
+      trigger: true
+
+    - get: stampy-binary
+
+  - task: kube-dist
+    file: ci/cf-kube-config/tasks/kube-dist.yml
+    privileged: true
+
+  - put: artifact
+    params:
+      file: out/hcf-kube-*.zip
+      acl: public-read
