@@ -1,0 +1,13 @@
+---
+src-repo: github.com:hpcloud/hcf.git
+src-branch: develop
+src-ci-repo: github.com:SUSE/cf-ci.git
+src-ci-branch: master
+s3-bucket: hcf
+s3-fissile-bucket: fissile
+dockerhub-registry: index.docker.io
+dockerhub-org: splatform
+s3-endpoint: https://minio.from-the.cloud:9000/
+#job-limit-repo:
+#job-limit-branch:
+#job-limit-pool:

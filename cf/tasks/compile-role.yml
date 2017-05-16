@@ -1,0 +1,14 @@
+# This will compile packages for a single role
+# Takes `ROLE_NAME` and `RELEASES` as parameters
+---
+platform: linux
+# image is set in the pipeline (built in the pipeline)
+inputs:
+- name: fissile-binary
+- name: src
+- name: ci
+- name: all-releases-tarball
+run:
+  path: ci/cf/tasks/compile-role.sh
+outputs:
+- name: fissile-work-dir

@@ -1,0 +1,333 @@
+---
+resources:
+  - name: src
+    type: git
+    source:
+      uri: {{src-repo}}
+      private_key: {{github-private-key}}
+      branch: {{src-branch}}
+      git_config:
+      - name: submodule.fetchJobs
+        value: 0 # Sane defaults, > 1
+
+  - name: ci
+    type: git
+    source:
+      uri: {{src-ci-repo}}
+      private_key: {{github-private-key}}
+      branch: {{src-ci-branch}}
+
+  - name: fissile-binary
+    type: s3
+    source:
+      endpoint: {{s3-endpoint}}
+      access_key_id: {{s3-access-key}}
+      secret_access_key: {{s3-secret-key}}
+      bucket: {{s3-fissile-bucket}}
+      regexp: fissile-(.*)\.tgz
+
+  - name: ubuntu-base
+    type: docker-image
+    source:
+      repository: ubuntu
+      tag: "14.04"
+
+  - name: docker-fissile-compile-base
+    type: docker-image
+    source:
+      insecure_registries: [0.0.0.0/0]
+      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-compile-base
+      username: {{dockerhub-username}}
+      password: {{dockerhub-password}}
+
+  - name: docker-fissile-role-base
+    type: docker-image
+    source:
+      insecure_registries: [0.0.0.0/0]
+      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-role-base
+      username: {{dockerhub-username}}
+      password: {{dockerhub-password}}
+
+  - name: docker-fissile-role-packages
+    type: docker-image
+    source:
+      insecure_registries: [0.0.0.0/0]
+      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-role-packages
+      username: {{dockerhub-username}}
+      password: {{dockerhub-password}}
+
+<% releases.keys.each do |release| %>
+  - name: <%= release %>-tarball
+    type: s3
+    source:
+      endpoint: {{s3-endpoint}}
+      access_key_id: {{s3-access-key}}
+      secret_access_key: {{s3-secret-key}}
+      bucket: {{s3-bucket}}
+      regexp: <%= release %>-tarball-(.*)\.tgz
+<% end %>
+
+  - name: all-releases-tarball
+    type: s3
+    source:
+      endpoint: {{s3-endpoint}}
+      access_key_id: {{s3-access-key}}
+      secret_access_key: {{s3-secret-key}}
+      bucket: {{s3-bucket}}
+      regexp: all-releases-tarball-(.*)\.tgz
+
+<% roles.each do |role| %>
+  - name: docker-role-<%= role['name'] %>
+    type: docker-image
+    source:
+      insecure_registries: [0.0.0.0/0]
+      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-<%= role['name'] %>
+      username: {{dockerhub-username}}
+      password: {{dockerhub-password}}
+<% end %>
+
+  - name: hcf-version
+    type: semver
+    source:
+      driver: s3
+      bucket: {{s3-bucket}}
+      key: hcf-version
+      access_key_id: {{s3-access-key}}
+      secret_access_key: {{s3-secret-key}}
+      endpoint: {{s3-endpoint}}
+
+<% if job_limit_pool %>
+  - name: job-limit
+    type: pool
+    source:
+      uri: <%= job_limit_repo %>
+      branch: <%= job_limit_branch %>
+      pool: <%= job_limit_pool %>
+<% end %>
+
+resource_types:
+  - name: status
+    type: docker-image
+    source:
+      repository: heliondevops/concourse-github-status
+
+  - name: rsync-resource
+    type: docker-image
+    source:
+        repository: mrsixw/concourse-rsync-resource
+
+jobs:
+  - name: pull-sources
+    # This job is only used to serialize pulling the sources so we don't try
+    # to pull the same thing twice simultaneously.  Doing this allows concourse
+    # to cache the pulled source code.
+    plan:
+      - aggregate:
+        - get: src
+        - get: ci
+
+<% releases.each do |release, path| %>
+  - name: create-<%= release %>
+    plan:
+      - aggregate:
+        - get: src
+          passed: [pull-sources]
+          trigger: true
+        - get: ci
+        <% if job_limit_pool %>
+        - put: job-limit
+          params: { acquire: true }
+        <% end %>
+      - do:
+        - task: package-release
+          file: ci/cf/tasks/create-release.yml
+          params:
+            RELEASE_NAME: <%= release.sub(/-release$/, '') %>
+            RELEASE_DIR: src/<%= path %> # src/ is the concourse input name
+        - put: <%= release %>-tarball
+          params:
+            file: out/<%= release %>-tarball-*.tgz
+        <% if job_limit_pool %>
+        ensure:
+          put: job-limit
+          params: { release: job-limit }
+        <% end %>
+<% end %>
+
+  - name: find-version
+    plan:
+      - aggregate:
+        - get: src
+          passed: [pull-sources]
+          trigger: true
+        - get: ci
+      - task: find-version
+        file: ci/cf/tasks/find-version.yml
+      - put: hcf-version
+        params:
+          file: out/version
+
+  # Combine all the release tarballs to a single one
+  # This is needed bacause fissile want all releases to be built being doing
+  # anything, even if we don't require it for the image
+  - name: combine-releases
+    plan:
+      - aggregate:
+        <% releases.keys.each do |release| %>
+        - get: <%= release %>-tarball
+          passed: [ create-<%= release %> ]
+        <% end %>
+        - get: ci
+        - get: src
+          passed:
+          - find-version
+          <% releases.keys.each do |release| %>
+          - create-<%= release %>
+          <% end %>
+          trigger: true
+        - get: hcf-version
+      - task: combine-releases
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: ubuntu
+              tag: "14.04"
+          inputs:
+          - name: src
+          - name: ci
+          - name: hcf-version
+          <% releases.keys.each do |release| %>
+          - name: <%= release %>-tarball
+          <% end %>
+          run:
+            path: ci/cf/tasks/combine-releases.sh
+          outputs:
+          - name: out
+      - put: all-releases-tarball
+        params:
+          file: out/all-releases-tarball-*.tgz
+
+  - name: compile-base
+    plan:
+      - aggregate:
+        - get: fissile-binary
+          trigger: true
+        - get: ci
+        - get: ubuntu-base
+          trigger: true
+          params:
+            save: true
+      - task: compile-base
+        file: ci/cf/tasks/compile-base.yml
+        privileged: true
+      - put: docker-fissile-compile-base
+        params:
+          load: out
+          tag: out/tag
+
+  - name: role-base
+    plan:
+      - aggregate:
+        - get: fissile-binary
+          trigger: true
+        - get: ci
+        - get: ubuntu-base
+          trigger: true
+          params:
+            save: true
+      - task: role-base
+        file: ci/cf/tasks/role-base.yml
+        privileged: true
+      - put: docker-fissile-role-base
+        params:
+          load: out
+          tag: out/tag
+
+<% roles.each do |role| %>
+  - name: <%= role['name'] %>-image
+    plan:
+      - aggregate:
+        - get: fissile-binary
+          passed: [ compile-base, role-base ]
+          trigger: true
+        - get: src
+          passed: [ combine-releases ]
+          trigger: true
+        - get: ci
+        - get: all-releases-tarball
+          passed: [ combine-releases ]
+        - get: docker-fissile-compile-base
+          passed: [ compile-base ]
+        - get: docker-fissile-role-base
+          passed: [ role-base ]
+          params:
+            save: true
+        <% if job_limit_pool %>
+        - put: job-limit
+          params: { acquire: true }
+        <% end %>
+      - do:
+        - task: compile-role
+          file: ci/cf/tasks/compile-role.yml
+          privileged: true # mount namespaces
+          image: docker-fissile-compile-base
+          params:
+            ROLE_NAME: <%= role['name'] %>
+            RELEASES: <%= releases.keys.join(' ') %>
+            <% releases.each_pair do |release, path| %>
+            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
+        - task: build-image
+          file: ci/cf/tasks/build-image.yml
+          image: docker-fissile-compile-base
+          params:
+            ROLE_NAME: <%= role['name'] %>
+            RELEASES: <%= releases.keys.join(' ') %>
+            <% releases.each_pair do |release, path| %>
+            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
+          output_mapping:
+            out: fissile-output
+        - put: docker-fissile-role-packages
+          params:
+            build: fissile-output/role-packages
+            load_base: docker-fissile-role-base
+            tag: fissile-output/role-packages.tag
+          get_params:
+            save: true
+        - task: adjust-role-image-from
+          file: ci/cf/tasks/adjust-role-image-from.yml
+          params:
+            ROLE_NAME: <%= role['name'] %>
+        - put: docker-role-<%= role['name'] %>
+          params:
+            build: adjusted-role-image
+            load_base: docker-fissile-role-packages
+            tag: adjusted-role-image/<%= role['name'] %>.tag
+        <% if job_limit_pool %>
+        ensure:
+          put: job-limit
+          params: { release: job-limit }
+        <% end %>
+<% end %>
+
+groups:
+- name: releases
+  jobs:
+  - pull-sources
+  <% releases.keys.each do |release| %>
+  - create-<%= release %>
+  <% end %>
+  - find-version
+  - combine-releases
+- name: base-images
+  jobs:
+  - compile-base
+  - role-base
+- name: images
+  jobs:
+  <% roles.each do |role| %>
+  - <%= role['name'] %>-image
+  <% end %>
