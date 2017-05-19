@@ -7,8 +7,8 @@ image_resource:
 inputs:
 - name: src
 - name: ci
-- name: fissile-binary
-- name: stampy-binary
+- name: s3.fissile-binary
+- name: s3.stampy-binary
 outputs:
 - name: out
 run:

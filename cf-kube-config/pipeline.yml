@@ -16,7 +16,7 @@ resources:
     paths:
     - cf-kube-config/*
 
-- name: fissile-binary
+- name: s3.fissile-binary
   type: s3
   source:
     access_key_id: {{s3-access-key}}
@@ -26,7 +26,7 @@ resources:
     regexp: fissile-(.*)\.g.*linux.amd64\.tgz
     private: true
 
-- name: stampy-binary
+- name: s3.stampy-binary
   type: s3
   source:
     access_key_id: {{s3-access-key}}
@@ -36,7 +36,7 @@ resources:
     regexp: stampy-(.*)\.g.*linux.amd64\.tgz
     private: true
 
-- name: artifact
+- name: s3.artifact
   type: s3
   source:
     access_key_id: {{s3-access-key}}
@@ -56,16 +56,16 @@ jobs:
     - get: ci
       trigger: true
 
-    - get: fissile-binary
+    - get: s3.fissile-binary
       trigger: true
 
-    - get: stampy-binary
+    - get: s3.stampy-binary
 
   - task: kube-dist
     file: ci/cf-kube-config/tasks/kube-dist.yml
     privileged: true
 
-  - put: artifact
+  - put: s3.artifact
     params:
       file: out/hcf-kube-*.zip
       acl: public-read

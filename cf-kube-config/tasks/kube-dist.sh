@@ -2,8 +2,8 @@
 
 set -ex
 
-tar xf fissile-binary/fissile-* -C /usr/local/bin fissile
-tar xf stampy-binary/stampy-* -C /usr/local/bin stampy
+tar xf s3.fissile-binary/fissile-* -C /usr/local/bin fissile
+tar xf s3.stampy-binary/stampy-* -C /usr/local/bin stampy
 
 ci/cf-kube-config/tasks/common/start-docker.sh
 
