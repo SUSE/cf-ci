@@ -1,7 +1,7 @@
 ---
-src-repo: github.com:hpcloud/hcf.git
+src-repo: git@github.com:hpcloud/hcf.git
 src-branch: develop
-src-ci-repo: github.com:SUSE/cf-ci.git
+src-ci-repo: git@github.com:SUSE/cf-ci.git
 src-ci-branch: master
 s3-bucket: hcf
 s3-fissile-bucket: fissile

@@ -9,7 +9,10 @@ require 'yaml'
 ROLE_MANIFEST_RELPATH = 'src/hcf-release/src/hcf-config/role-manifest.yml'
 SECRETS_RELPATH = 'secure/concourse-secrets.yml.gpg'
 
-opts = OpenStruct.new(hcf_dir: '../../../hpcloud/hcf', secrets_dir: '../../cloudfoundry')
+opts = OpenStruct.new(
+    hcf_dir: '../../../hpcloud/hcf',
+    secrets_dir: '../../cloudfoundry',
+    print: false)
 parser = OptionParser.new do |parser|
     parser.banner = (<<-EOF).gsub(/^ +/, '')
         This script will deploy the pipeline to build HCF directly into concourse.
@@ -36,6 +39,9 @@ parser = OptionParser.new do |parser|
     end
     parser.on('--target=concourse') do |fly_target|
         opts.target = fly_target
+    end
+    parser.on('--print') do
+        opts.print = true
     end
 end
 parser.parse!
@@ -99,6 +105,11 @@ YAML.load_file(config_file_name).each_pair do |name, value|
 end
 b.local_variable_set('roles',
     role_manifest['roles'].reject { |r| r['type'] == 'docker' } )
+
+if opts.print
+    template.run(b)
+    exit
+end
 
 begin
     pipeline_file = Tempfile.new("hcf-#{pipeline}.yaml")

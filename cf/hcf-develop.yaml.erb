@@ -37,24 +37,24 @@ resources:
     source:
       insecure_registries: [0.0.0.0/0]
       repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-compile-base
-      username: {{dockerhub-username}}
-      password: {{dockerhub-password}}
+      username: {{docker-username}}
+      password: {{docker-password}}
 
   - name: docker-fissile-role-base
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
       repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-role-base
-      username: {{dockerhub-username}}
-      password: {{dockerhub-password}}
+      username: {{docker-username}}
+      password: {{docker-password}}
 
   - name: docker-fissile-role-packages
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
       repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-role-packages
-      username: {{dockerhub-username}}
-      password: {{dockerhub-password}}
+      username: {{docker-username}}
+      password: {{docker-password}}
 
 <% releases.keys.each do |release| %>
   - name: <%= release %>-tarball
@@ -82,8 +82,8 @@ resources:
     source:
       insecure_registries: [0.0.0.0/0]
       repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-<%= role['name'] %>
-      username: {{dockerhub-username}}
-      password: {{dockerhub-password}}
+      username: {{docker-username}}
+      password: {{docker-password}}
 <% end %>
 
   - name: hcf-version
@@ -226,6 +226,8 @@ jobs:
         params:
           load: out
           tag: out/tag
+        get_params:
+          skip_download: true
 
   - name: role-base
     plan:
@@ -244,6 +246,8 @@ jobs:
         params:
           load: out
           tag: out/tag
+        get_params:
+          skip_download: true
 
 <% roles.each do |role| %>
   - name: <%= role['name'] %>-image
