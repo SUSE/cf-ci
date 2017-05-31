@@ -1,0 +1,59 @@
+groups: []
+
+resources:
+- name: src
+  type: git
+  source:
+    branch: master
+    private_key: {{github-private-key}}
+    uri: git@github.com:hpcloud/uaa-fissile-release.git
+
+- name: ci
+  type: git
+  source:
+    uri: https://github.com/SUSE/cf-ci.git
+    branch: master
+    paths:
+    - uaa-kube-config/*
+
+- name: s3.fissile-binary
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    endpoint: {{s3-endpoint}}
+    secret_access_key: {{s3-secret-key}}
+    bucket: fissile
+    regexp: fissile-(.*)\.g.*linux.amd64\.tgz
+    private: true
+
+- name: s3.artifact
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    bucket: kube-config
+    endpoint: {{s3-endpoint}}
+    regexp: uaa-kube-(.*).zip$
+    secret_access_key: {{s3-secret-key}}
+    private: true
+
+jobs:
+- name: kube-dist
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+
+    - get: ci
+      trigger: true
+
+    - get: s3.fissile-binary
+      trigger: true
+
+  - task: kube-dist
+    file: ci/uaa-kube-config/tasks/kube-dist.yml
+    privileged: true
+
+  - put: s3.artifact
+    params:
+      file: out/uaa-kube-*.zip
+      acl: public-read
