@@ -2,14 +2,14 @@
 
 set -ex
 
-tar xf s3.kube-config-yml/hcf-kube-*
+unzip s3.uaa-kube-yml/uaa-kube-* -d uaa-kube-yml
+unzip s3.hcf-kube-yml/hcf-kube-* -d hcf-kube-yml
 
 #Deploy UAA
-#kubectl create namespace uaa
-#kubectl create -n uaa -f s3.uaa-config-yml/bosh/
-#kubectl create -n uaa -f s3.uaa-config-yml/kube-test/exposed-ports.yml
+kubectl create namespace uaa
+kubectl create -n uaa -f s3.uaa-kube-yml/bosh/
 
 #Deploy CF
 kubectl create namespace cf
-kubectl create -n cf -f s3.kube-config-yml/bosh
-kubectl create -n cf -f s3.kube-config-yml/bosh-task/post-deployment-setup.yml
+kubectl create -n cf -f s3.hcf-kube-yml/bosh
+kubectl create -n cf -f s3.hcf-kube-yml/bosh-task/post-deployment-setup.yml

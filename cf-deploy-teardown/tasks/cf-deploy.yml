@@ -6,6 +6,7 @@ image_resource:
     repository: splatform/opensuse-kubectl
 inputs:
 - name: ci
-- name: s3.kube-config-yml
+- name: s3.uaa-kube-yml
+- name: s3.hcf-kube--yml
 run:
   path: ci/cf-deploy-teardown/tasks/cf-deploy.sh

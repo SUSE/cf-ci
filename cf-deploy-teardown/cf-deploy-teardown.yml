@@ -10,7 +10,17 @@ resources:
     paths:
     - cf-deploy-teardown/*
 
-- name: s3.kube-config-yml
+- name: s3.uaa-kube-yml
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    bucket: kube-config
+    endpoint: {{s3-endpoint}}
+    regexp: uaa-kube-(.*).zip$
+    secret_access_key: {{s3-secret-key}}
+    private: true
+
+- name: s3.hcf-kube-yml
   type: s3
   source:
     access_key_id: {{s3-access-key}}
@@ -28,9 +38,13 @@ jobs:
     - get: ci
       trigger: true
 
-    - get: s3.kube-config-yml
+    - get: s3.uaa-kube-yml
+      trigger: true
+
+    - get: s3.hcf-kube-yml
       trigger: true
 
   - task: cf-deploy
     file: ci/cf-deploy-teardown/tasks/cf-deploy.yml
+
     
