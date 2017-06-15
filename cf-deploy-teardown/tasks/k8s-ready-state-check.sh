@@ -39,8 +39,8 @@ if [[ $kube_apiserver == *"--allow-privileged"* ]]; then
   echo "Verified: privileged enabled in 'kube-apiserver'"
 fi
 
-kube_apiserver=$(systemctl status kubelet -l | grep "/usr/bin/hyperkube kubelet" )
-if [[ $kube_apiserver == *"--allow-privileged"* ]]; then
+kubelet=$(systemctl status kubelet -l | grep "/usr/bin/hyperkube kubelet" )
+if [[ $kubelet == *"--allow-privileged"* ]]; then
   echo "Verified: privileged enabled in 'kubelet'"
 fi
 
@@ -55,4 +55,4 @@ echo "Verified: dns check"
 
 systemctl cat containerd | grep -w "TasksMax=infinity"
 echo "Verified: TasksMax set to infinity"
-
+echo "Verification Ended: Deply CF"
