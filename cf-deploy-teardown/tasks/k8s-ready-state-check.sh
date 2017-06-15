@@ -47,7 +47,7 @@ fi
 # dns check for the current hostname resolution
 
 IP=$(nslookup cf-dev.io | grep answer: -A 2 | grep Address: | sed 's/Address: *//g')
-#TODO: replace cf-dev.io with $hostaname.ci.van when this script is implimented in CI
+#TODO: replace cf-dev.io with $hostname.ci.van when this script is implemented in CI
 sudo ifconfig | grep -w "inet addr:$IP"
 echo "Verified: dns check"
 
@@ -55,4 +55,5 @@ echo "Verified: dns check"
 
 systemctl cat containerd | grep -w "TasksMax=infinity"
 echo "Verified: TasksMax set to infinity"
-echo "Verification Ended: Deply CF"
+echo "Verification Ended: Deploy CF"
+
