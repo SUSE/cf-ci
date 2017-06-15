@@ -1,4 +1,4 @@
-# Script to determine is the K8s host is "ready" for cf deployment
+#Script to determine is the K8s host is "ready" for cf deployment
 
 set -ex
 
@@ -18,16 +18,13 @@ echo "Verified: 'docker info should show overlay2'"
 # kube-dns shows 4/4 ready
 
 kube_dns=$(k get pods : | grep "kube-dns-")
-if [[ $kube_dns= == *"4/4 Running"* ]]; then
+if [[ $kube_dns == *"4/4 Running"* ]]; then
   echo "Verified: 'kube-dns shows 4/4 ready'"
 fi
 
 # ntp is installed and running
 
-systemctl list-unit-files | grep -w "ntpd.service"
-echo "Verified: ntp is installed"
-
-systemctl list-unit-files | grep -w "ntpd.service                            enabled"
+systemctl status ntpd| grep -w "Active: active (running)"
 echo "Verified: ntp is running"
 
 # "persistent" storage class exists in K8s
@@ -49,9 +46,7 @@ fi
 
 # dns check for the current hostname resolution
 
-domain_address=$(nslookup cf-dev.io | grep answer: -A 2 | grep Address:)
-domain_address_array=( $domain_address )
-IP=${domain_address_array[1]}
+IP=$(nslookup cf-dev.io | grep answer: -A 2 | grep Address: | sed 's/Address: *//g')
 sudo ifconfig | grep -w "inet addr:$IP"
 echo "Verified: dns check"
 
