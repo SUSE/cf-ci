@@ -1,13 +1,13 @@
-#Script to determine is the K8s host is "ready" for cf deployment
-
 #!/bin/bash
+
+#Script to determine is the K8s host is "ready" for cf deployment
 
 set -ex
 
 # cgroup memory & swap accounting in /proc/cmdline
 
 grep -w "cgroup_enable=memory" proc/cmdline
-echo "Verified: cgroug_enable memory"
+echo "Verified: cgroup_enable memory"
 
 grep -w "swapaccount=1" proc/cmdline
 echo "Verified: swapaccount enabled"
