@@ -6,10 +6,10 @@ set -ex
 
 # cgroup memory & swap accounting in /proc/cmdline
 
-grep -w "cgroup_enable=memory" proc/cmdline
+grep -w "cgroup_enable=memory" /proc/cmdline
 echo "Verified: cgroup_enable memory"
 
-grep -w "swapaccount=1" proc/cmdline
+grep -w "swapaccount=1" /proc/cmdline
 echo "Verified: swapaccount enabled"
 
 # docker info should show overlay2
