@@ -26,7 +26,7 @@ fi
 
 # ntp is installed and running
 
-systemctl status ntpd| grep -w "Active: active (running)"
+systemctl is-active ntpd
 echo "Verified: ntp is running"
 
 # "persistent" storage class exists in K8s
