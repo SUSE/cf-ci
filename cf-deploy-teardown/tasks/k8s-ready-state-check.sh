@@ -1,13 +1,15 @@
 #Script to determine is the K8s host is "ready" for cf deployment
 
+#!/bin/bash
+
 set -ex
 
 # cgroup memory & swap accounting in /proc/cmdline
 
-cat /proc/cmdline | grep -w "cgroup_enable=memory"
+grep -w "cgroup_enable=memory" proc/cmdline
 echo "Verified: cgroug_enable memory"
 
-cat /proc/cmdline | grep -w "swapaccount=1"
+grep -w "swapaccount=1" proc/cmdline
 echo "Verified: swapaccount enabled"
 
 # docker info should show overlay2
