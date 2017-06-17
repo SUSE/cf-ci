@@ -1,10 +1,10 @@
 #!/bin/bash
 mkdir work
 
-version="$(tr -d '[:space:]' < hcf-version/version)"
+version="$(tr -d '[:space:]' < semver.hcf-version/version)"
 
-for i in "${PWD}/"*-release-tarball ; do
-    release_name="${i##*/}"
+for i in "${PWD}/s3."*-release-tarball ; do
+    release_name="${i##*/s3.}"
     release_name="${release_name%-tarball}"
     mkdir "work/${release_name}"
     tar x -C "work/${release_name}" -zf "${i}"/*-release-tarball-*.tgz

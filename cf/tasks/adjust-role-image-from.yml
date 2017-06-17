@@ -8,7 +8,7 @@ image_resource:
     repository: ubuntu
     tag: "14.04"
 inputs:
-- name: docker-fissile-role-packages
+- name: docker.fissile-role-packages
 - name: fissile-output
 - name: ci
 run:

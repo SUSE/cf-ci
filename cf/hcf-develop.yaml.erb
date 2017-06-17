@@ -17,7 +17,7 @@ resources:
       private_key: {{github-private-key}}
       branch: {{src-ci-branch}}
 
-  - name: fissile-binary
+  - name: s3.fissile-binary
     type: s3
     source:
       endpoint: {{s3-endpoint}}
@@ -26,29 +26,15 @@ resources:
       bucket: {{s3-fissile-bucket}}
       regexp: fissile-(.*)\.tgz
 
-  - name: ubuntu-base
+  - name: docker.fissile-stemcell
     type: docker-image
     source:
-      repository: ubuntu
-      tag: "14.04"
-
-  - name: docker-fissile-compile-base
-    type: docker-image
-    source:
-      insecure_registries: [0.0.0.0/0]
-      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-compile-base
+      repository: splatform/fissile-stemcell-ubuntu
+      tag: trusty-0.g7dad5cc-1.4
       username: {{docker-username}}
       password: {{docker-password}}
 
-  - name: docker-fissile-role-base
-    type: docker-image
-    source:
-      insecure_registries: [0.0.0.0/0]
-      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-role-base
-      username: {{docker-username}}
-      password: {{docker-password}}
-
-  - name: docker-fissile-role-packages
+  - name: docker.fissile-role-packages
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
@@ -57,7 +43,7 @@ resources:
       password: {{docker-password}}
 
 <% releases.keys.each do |release| %>
-  - name: <%= release %>-tarball
+  - name: s3.<%= release %>-tarball
     type: s3
     source:
       endpoint: {{s3-endpoint}}
@@ -67,7 +53,7 @@ resources:
       regexp: <%= release %>-tarball-(.*)\.tgz
 <% end %>
 
-  - name: all-releases-tarball
+  - name: s3.all-releases-tarball
     type: s3
     source:
       endpoint: {{s3-endpoint}}
@@ -77,7 +63,7 @@ resources:
       regexp: all-releases-tarball-(.*)\.tgz
 
 <% roles.each do |role| %>
-  - name: docker-role-<%= role['name'] %>
+  - name: docker.role-<%= role['name'] %>
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
@@ -86,7 +72,7 @@ resources:
       password: {{docker-password}}
 <% end %>
 
-  - name: hcf-version
+  - name: semver.hcf-version
     type: semver
     source:
       driver: s3
@@ -97,7 +83,7 @@ resources:
       endpoint: {{s3-endpoint}}
 
 <% if job_limit_pool %>
-  - name: job-limit
+  - name: pool.job-limit
     type: pool
     source:
       uri: <%= job_limit_repo %>
@@ -135,7 +121,7 @@ jobs:
           trigger: true
         - get: ci
         <% if job_limit_pool %>
-        - put: job-limit
+        - put: pool.job-limit
           params: { acquire: true }
         <% end %>
       - do:
@@ -144,13 +130,13 @@ jobs:
           params:
             RELEASE_NAME: <%= release.sub(/-release$/, '') %>
             RELEASE_DIR: src/<%= path %> # src/ is the concourse input name
-        - put: <%= release %>-tarball
+        - put: s3.<%= release %>-tarball
           params:
             file: out/<%= release %>-tarball-*.tgz
         <% if job_limit_pool %>
         ensure:
-          put: job-limit
-          params: { release: job-limit }
+          put: pool.job-limit
+          params: { release: pool.job-limit }
         <% end %>
 <% end %>
 
@@ -163,7 +149,7 @@ jobs:
         - get: ci
       - task: find-version
         file: ci/cf/tasks/find-version.yml
-      - put: hcf-version
+      - put: semver.hcf-version
         params:
           file: out/version
 
@@ -174,7 +160,7 @@ jobs:
     plan:
       - aggregate:
         <% releases.keys.each do |release| %>
-        - get: <%= release %>-tarball
+        - get: s3.<%= release %>-tarball
           passed: [ create-<%= release %> ]
         <% end %>
         - get: ci
@@ -185,7 +171,7 @@ jobs:
           - create-<%= release %>
           <% end %>
           trigger: true
-        - get: hcf-version
+        - get: semver.hcf-version
       - task: combine-releases
         config:
           platform: linux
@@ -197,86 +183,42 @@ jobs:
           inputs:
           - name: src
           - name: ci
-          - name: hcf-version
+          - name: semver.hcf-version
           <% releases.keys.each do |release| %>
-          - name: <%= release %>-tarball
+          - name: s3.<%= release %>-tarball
           <% end %>
           run:
             path: ci/cf/tasks/combine-releases.sh
           outputs:
           - name: out
-      - put: all-releases-tarball
+      - put: s3.all-releases-tarball
         params:
           file: out/all-releases-tarball-*.tgz
-
-  - name: compile-base
-    plan:
-      - aggregate:
-        - get: fissile-binary
-          trigger: true
-        - get: ci
-        - get: ubuntu-base
-          trigger: true
-          params:
-            save: true
-      - task: compile-base
-        file: ci/cf/tasks/compile-base.yml
-        privileged: true
-      - put: docker-fissile-compile-base
-        params:
-          load: out
-          tag: out/tag
-        get_params:
-          skip_download: true
-
-  - name: role-base
-    plan:
-      - aggregate:
-        - get: fissile-binary
-          trigger: true
-        - get: ci
-        - get: ubuntu-base
-          trigger: true
-          params:
-            save: true
-      - task: role-base
-        file: ci/cf/tasks/role-base.yml
-        privileged: true
-      - put: docker-fissile-role-base
-        params:
-          load: out
-          tag: out/tag
-        get_params:
-          skip_download: true
 
 <% roles.each do |role| %>
   - name: <%= role['name'] %>-image
     plan:
       - aggregate:
-        - get: fissile-binary
-          passed: [ compile-base, role-base ]
+        - get: s3.fissile-binary
           trigger: true
         - get: src
           passed: [ combine-releases ]
           trigger: true
         - get: ci
-        - get: all-releases-tarball
+        - get: s3.all-releases-tarball
           passed: [ combine-releases ]
-        - get: docker-fissile-compile-base
-          passed: [ compile-base ]
-        - get: docker-fissile-role-base
-          passed: [ role-base ]
+        - get: docker.fissile-stemcell
           params:
             save: true
         <% if job_limit_pool %>
-        - put: job-limit
+        - put: pool.job-limit
           params: { acquire: true }
         <% end %>
       - do:
         - task: compile-role
           file: ci/cf/tasks/compile-role.yml
           privileged: true # mount namespaces
-          image: docker-fissile-compile-base
+          image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
             RELEASES: <%= releases.keys.join(' ') %>
@@ -284,8 +226,9 @@ jobs:
             <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
             <% end %>
         - task: build-image
+          privileged: true
           file: ci/cf/tasks/build-image.yml
-          image: docker-fissile-compile-base
+          image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
             RELEASES: <%= releases.keys.join(' ') %>
@@ -294,10 +237,10 @@ jobs:
             <% end %>
           output_mapping:
             out: fissile-output
-        - put: docker-fissile-role-packages
+        - put: docker.fissile-role-packages
           params:
             build: fissile-output/role-packages
-            load_base: docker-fissile-role-base
+            load_base: docker.fissile-stemcell
             tag: fissile-output/role-packages.tag
           get_params:
             save: true
@@ -305,15 +248,15 @@ jobs:
           file: ci/cf/tasks/adjust-role-image-from.yml
           params:
             ROLE_NAME: <%= role['name'] %>
-        - put: docker-role-<%= role['name'] %>
+        - put: docker.role-<%= role['name'] %>
           params:
             build: adjusted-role-image
-            load_base: docker-fissile-role-packages
+            load_base: docker.fissile-role-packages
             tag: adjusted-role-image/<%= role['name'] %>.tag
         <% if job_limit_pool %>
         ensure:
-          put: job-limit
-          params: { release: job-limit }
+          put: pool.job-limit
+          params: { release: pool.job-limit }
         <% end %>
 <% end %>
 
@@ -326,10 +269,6 @@ groups:
   <% end %>
   - find-version
   - combine-releases
-- name: base-images
-  jobs:
-  - compile-base
-  - role-base
 - name: images
   jobs:
   <% roles.each do |role| %>

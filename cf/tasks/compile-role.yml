@@ -4,10 +4,10 @@
 platform: linux
 # image is set in the pipeline (built in the pipeline)
 inputs:
-- name: fissile-binary
+- name: s3.fissile-binary
 - name: src
 - name: ci
-- name: all-releases-tarball
+- name: s3.all-releases-tarball
 run:
   path: ci/cf/tasks/compile-role.sh
 outputs:

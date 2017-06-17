@@ -4,12 +4,12 @@
 platform: linux
 # image is set in the pipeline (built in the pipeline)
 inputs:
-- name: fissile-binary
+- name: s3.fissile-binary
 - name: src
 - name: ci
-- name: all-releases-tarball
+- name: s3.all-releases-tarball
 - name: fissile-work-dir
-- name: docker-fissile-role-base
+- name: docker.fissile-stemcell
 run:
   path: ci/cf/tasks/build-image.sh
 outputs:

@@ -8,8 +8,8 @@ if test -z "${ROLE_NAME:-}" ; then
     exit 1
 fi
 
-tar -xf fissile-binary/fissile-*.linux-amd64.tgz -C fissile-binary fissile
-export PATH=$PATH:$PWD/fissile-binary
+tar -xf s3.fissile-binary/fissile-*.linux-amd64.tgz -C s3.fissile-binary fissile
+export PATH=$PATH:$PWD/s3.fissile-binary
 
 source src/.envrc
 export FISSILE_WORK_DIR="${PWD}/fissile-work-dir"
@@ -20,7 +20,7 @@ mkdir -p "${FISSILE_CACHE_DIR}"
 # sed(1)-style transform required to make tar(1) do it for us.  While this
 # results in a few unreadable expressions here, it reduces disk usage somewhat
 # (which is especially an issue on concourse vagrant boxes).
-tar_filename="$(echo "${PWD}"/all-releases-tarball/all-releases-*.tgz)"
+tar_filename="$(echo "${PWD}"/s3.all-releases-tarball/all-releases-*.tgz)"
 tar_command=( tar xvf "${tar_filename}" --show-transformed-names )
 
 for release in ${RELEASES} ; do
