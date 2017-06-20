@@ -5,8 +5,7 @@ resources:
   type: git
   source:
     branch: master
-    private_key: {{github-private-key}}
-    uri: git@github.com:hpcloud/uaa-fissile-release.git
+    uri: https://github.com/SUSE/uaa-fissile-release.git
 
 - name: ci
   type: git
@@ -14,7 +13,7 @@ resources:
     uri: https://github.com/SUSE/cf-ci.git
     branch: master
     paths:
-    - uaa-kube-config/*
+    - uaa-kube-dist/*
 
 - name: s3.fissile-binary
   type: s3
@@ -26,11 +25,21 @@ resources:
     regexp: fissile-(.*)\.g.*linux.amd64\.tgz
     private: true
 
+- name: s3.stampy-binary
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    endpoint: {{s3-endpoint}}
+    secret_access_key: {{s3-secret-key}}
+    bucket: stampy
+    regexp: stampy-(.*)\.g.*linux.amd64\.tgz
+    private: true
+
 - name: s3.artifact
   type: s3
   source:
     access_key_id: {{s3-access-key}}
-    bucket: kube-config
+    bucket: kube-dist
     endpoint: {{s3-endpoint}}
     regexp: uaa-kube-(.*).zip$
     secret_access_key: {{s3-secret-key}}
@@ -49,8 +58,10 @@ jobs:
     - get: s3.fissile-binary
       trigger: true
 
+    - get: s3.stampy-binary
+
   - task: kube-dist
-    file: ci/uaa-kube-config/tasks/kube-dist.yml
+    file: ci/uaa-kube-dist/tasks/kube-dist.yml
     privileged: true
 
   - put: s3.artifact
