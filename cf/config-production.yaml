@@ -1,9 +1,9 @@
 ---
-src-repo: git@github.com:hpcloud/hcf.git
+src-repo: git@github.com:SUSE/scf.git
 src-branch: develop
 src-ci-repo: git@github.com:SUSE/cf-ci.git
 src-ci-branch: master
-s3-bucket: hcf
+s3-bucket: scf
 s3-fissile-bucket: fissile
 dockerhub-registry: index.docker.io
 dockerhub-org: splatform

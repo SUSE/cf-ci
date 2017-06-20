@@ -8,7 +8,7 @@ require 'pathname'
 require 'tempfile'
 require 'yaml'
 
-ROLE_MANIFEST_RELPATH = 'src/hcf-release/src/hcf-config/role-manifest.yml'
+ROLE_MANIFEST_RELPATH = 'container-host-files/etc/hcf/config/role-manifest.yml'
 ENVRC_RELPATH = '.envrc'
 SECRETS_RELPATH = 'secure/concourse-secrets.yml.gpg'
 
@@ -23,7 +23,7 @@ parser = OptionParser.new do |parser|
 
         Usage: #{$0} <master|check> [config variant]
 
-        Pipeline variant may be any word, as long as hcf-<variant>.yaml.erb exists
+        Pipeline variant may be any word, as long as scf-<variant>.yaml.erb exists
         Config variant may be any word, as long as config-<variant>.yaml exists.  Defaults to 'production'.
 
     EOF
@@ -75,8 +75,8 @@ releases = Hash[release_paths.map do |path|
     [name, Pathname.new(path).relative_path_from(Pathname.new(opts.scf_dir))]
 end]
 
-pipeline_name = "#{opts.prefix}hcf-#{pipeline}"
-template = open("hcf-#{pipeline}.yaml.erb", 'r') do |f|
+pipeline_name = "#{opts.prefix}scf-#{pipeline}"
+template = open("scf-#{pipeline}.yaml.erb", 'r') do |f|
     ERB.new(f.read, nil, '<>')
 end
 
@@ -95,7 +95,7 @@ if opts.print
 end
 
 begin
-    pipeline_file = Tempfile.new("hcf-#{pipeline}.yaml")
+    pipeline_file = Tempfile.new("scf-#{pipeline}.yaml")
     pipeline_file.write template.result(b)
     pipeline_file.close
 

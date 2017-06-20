@@ -1,7 +1,7 @@
 #!/bin/bash
 mkdir work
 
-version="$(tr -d '[:space:]' < semver.hcf-version/version)"
+version="$(tr -d '[:space:]' < semver.scf-version/version)"
 
 for i in "${PWD}/s3."*-release-tarball ; do
     release_name="${i##*/s3.}"

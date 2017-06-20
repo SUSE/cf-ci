@@ -72,12 +72,12 @@ resources:
       password: {{docker-password}}
 <% end %>
 
-  - name: semver.hcf-version
+  - name: semver.scf-version
     type: semver
     source:
       driver: s3
       bucket: {{s3-bucket}}
-      key: hcf-version
+      key: scf-version
       access_key_id: {{s3-access-key}}
       secret_access_key: {{s3-secret-key}}
       endpoint: {{s3-endpoint}}
@@ -149,7 +149,7 @@ jobs:
         - get: ci
       - task: find-version
         file: ci/cf/tasks/find-version.yml
-      - put: semver.hcf-version
+      - put: semver.scf-version
         params:
           file: out/version
 
@@ -171,7 +171,7 @@ jobs:
           - create-<%= release %>
           <% end %>
           trigger: true
-        - get: semver.hcf-version
+        - get: semver.scf-version
       - task: combine-releases
         config:
           platform: linux
@@ -183,7 +183,7 @@ jobs:
           inputs:
           - name: src
           - name: ci
-          - name: semver.hcf-version
+          - name: semver.scf-version
           <% releases.keys.each do |release| %>
           - name: s3.<%= release %>-tarball
           <% end %>
