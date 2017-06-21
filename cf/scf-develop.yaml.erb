@@ -253,6 +253,8 @@ jobs:
             build: adjusted-role-image
             load_base: docker.fissile-role-packages
             tag: adjusted-role-image/<%= role['name'] %>.tag
+          get_params:
+            skip_download: true
         <% if job_limit_pool %>
         ensure:
           put: pool.job-limit
