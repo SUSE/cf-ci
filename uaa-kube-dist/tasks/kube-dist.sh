@@ -2,7 +2,7 @@
 
 set -ex
 
-export PATH=$PATH:/opt/rubies/ruby-2.3.1/bin
+export PATH=$PATH:/opt/rubies/ruby-2.3.1/bin:$HOME/bin
 
 gem install bosh_cli --no-ri --no-rdoc
 
