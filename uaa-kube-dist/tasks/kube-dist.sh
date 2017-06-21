@@ -14,6 +14,6 @@ ci/uaa-kube-dist/tasks/common/start-docker.sh
 cd src
 source .envrc
 
-make releases kube kube-dist
+make certs releases kube kube-dist
 
 mv uaa-kube-*.zip ../out/
