@@ -2,6 +2,9 @@
 
 set -ex
 
+# Need xxd for the UAA cert code
+apt-get update && apt-get install -qy vim-common
+
 tar xf s3.fissile-binary/fissile-* -C /usr/local/bin fissile
 tar xf s3.stampy-binary/stampy-* -C /usr/local/bin stampy
 

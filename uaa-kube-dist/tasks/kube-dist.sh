@@ -6,7 +6,7 @@ export PATH=$PATH:/opt/rubies/ruby-2.3.1/bin:$HOME/bin
 
 gem install bosh_cli --no-ri --no-rdoc
 
-# Need xxd for the cert stuff
+# Need xxd for the cert generation
 apt-get update && apt-get install -qy vim-common
 
 tar xf s3.fissile-binary/fissile-* -C /usr/local/bin fissile
