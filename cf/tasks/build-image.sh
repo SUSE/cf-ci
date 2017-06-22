@@ -41,7 +41,7 @@ set -o xtrace
 
 # The toplevel release directory themselves are empty; we transformed all of
 # their contents to the correct places already.  Clean them up so when we
-# hijack the containers they aren't there to disctract us.
+# hijack the containers they aren't there to distract us.
 rmdir ./*-release || true
 
 base_id="$(cat docker.fissile-stemcell/image-id)"
