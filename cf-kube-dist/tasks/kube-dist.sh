@@ -10,7 +10,6 @@ ci/cf-kube-dist/tasks/common/start-docker.sh
 cd src
 source .envrc
 
-make releases
-make kube-dist
+make releases uaa-certs uaa-releases kube-dist
 
 mv hcf-kube-*.zip ../out/
