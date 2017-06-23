@@ -2,6 +2,8 @@
 
 set -ex
 
+export PATH=$PATH:$HOME/bin
+
 # Need xxd for the UAA cert code
 apt-get update && apt-get install -qy vim-common
 
