@@ -17,4 +17,4 @@ source .envrc
 
 make releases uaa-certs uaa-releases kube-dist
 
-mv hcf-kube-*.zip ../out/
+mv scf-kube-*.zip ../out/
