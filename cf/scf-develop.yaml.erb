@@ -20,11 +20,12 @@ resources:
   - name: s3.fissile-binary
     type: s3
     source:
-      endpoint: {{s3-endpoint}}
-      access_key_id: {{s3-access-key}}
-      secret_access_key: {{s3-secret-key}}
+      # Fissile is being pushed to Amazon S3 for world visibility
+      # endpoint: {{s3-endpoint}}
+      access_key_id: {{aws-access-key}}
+      secret_access_key: {{aws-secret-key}}
       bucket: {{s3-fissile-bucket}}
-      regexp: fissile-(.*)\.tgz
+      regexp: fissile/fissile-(.*)\.tgz
 
   - name: docker.fissile-stemcell
     type: docker-image

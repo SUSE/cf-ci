@@ -4,7 +4,7 @@ src-branch: develop
 src-ci-repo: git@github.com:SUSE/cf-ci.git
 src-ci-branch: master
 s3-bucket: scf
-s3-fissile-bucket: fissile
+s3-fissile-bucket: cf-opensusefs2
 dockerhub-registry: index.docker.io
 dockerhub-org: splatform
 s3-endpoint: https://minio.from-the.cloud:9000/
