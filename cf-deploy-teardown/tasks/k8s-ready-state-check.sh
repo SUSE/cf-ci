@@ -2,60 +2,68 @@
 
 #Script to determine is the K8s host is "ready" for cf deployment
 
-set -ex
+function green() {
+  awk '{ print "\033[32mVerified: " $0 "\033[0m" }';
+}
+
+function red() {
+  awk '{ print "\033[31mConfiguration problem detected: " $0 "\033[0m" }';
+}
 
 # cgroup memory & swap accounting in /proc/cmdline
 
-grep -w "cgroup_enable=memory" /proc/cmdline
-echo "Verified: cgroup_enable memory"
+echo "cgroup_enable memory" | ( grep -wq "cgroup_enable=memory" /proc/cmdline && green || red )
 
-grep -w "swapaccount=1" /proc/cmdline
-echo "Verified: swapaccount enabled"
+
+
+echo "swapaccount enable" | ( grep -wq "swapaccount=1" /proc/cmdline && green || red )
 
 # docker info should show overlay2
 
-docker info | grep -w "Storage Driver: overlay2"
-echo "Verified: 'docker info should show overlay2'"
+echo "docker info should show overlay2" | ( docker info | grep -wq "Storage Driver: overlay2" && green || red )
 
 # kube-dns shows 4/4 ready
 
-kube_dns=$(k get pods : | grep "kube-dns-")
-if [[ $kube_dns == *"4/4 Running"* ]]; then
-  echo "Verified: 'kube-dns shows 4/4 ready'"
-fi
+echo "kube-dns should shows 4/4 ready" | (
+    kube_dns=$(kubectl get pods --all-namespaces | grep -q "kube-dns-")
+    [[ $kube_dns == *"4/4 Running"* ]] && green || red
+)
 
 # ntp is installed and running
 
-systemctl is-active ntpd
-echo "Verified: ntp is running"
+
+echo "ntp must be installed and active" | ( systemctl is-active ntpd >& /dev/null && green || red )
 
 # "persistent" storage class exists in K8s
 
-k get storageclasses | grep -w "persistent   StorageClass.v1.storage.k8s.io"
-echo "Verified: 'persistent' storage class exists in K8s"
+echo "'persistent' storage class should exist in K8s" | (
+    kubectl get storageclasses |& grep -wq "persistent   StorageClass.v1.storage.k8s.io" && green || red
+)
+
 
 # privileged pods are enabled in K8s
 
-kube_apiserver=$(systemctl status kube-apiserver -l | grep "/usr/bin/hyperkube apiserver" )
-if [[ $kube_apiserver == *"--allow-privileged"* ]]; then
-  echo "Verified: privileged enabled in 'kube-apiserver'"
-fi
+echo "Privileged must be enabled in 'kube-apiserver'" | (
+    kube_apiserver=$(systemctl status kube-apiserver -l | grep "/usr/bin/hyperkube apiserver" )
+    [[ $kube_apiserver == *"--allow-privileged"* ]] && green || red
+)
 
-kubelet=$(systemctl status kubelet -l | grep "/usr/bin/hyperkube kubelet" )
-if [[ $kubelet == *"--allow-privileged"* ]]; then
-  echo "Verified: privileged enabled in 'kubelet'"
-fi
+echo "Privileged must be enabled in 'kubelet'" | (
+    kubelet=$(systemctl status kubelet -l | grep "/usr/bin/hyperkube kubelet" )
+    [[ $kubelet == *"--allow-privileged"* ]] && green || red
+)
 
 # dns check for the current hostname resolution
 
-IP=$(nslookup cf-dev.io | grep answer: -A 2 | grep Address: | sed 's/Address: *//g')
-#TODO: replace cf-dev.io with $hostname.ci.van when this script is implemented in CI
-sudo ifconfig | grep -w "inet addr:$IP"
-echo "Verified: dns check"
+echo "dns check" | (
+    IP=$(nslookup cf-dev.io | grep answer: -A 2 | grep Address: | sed 's/Address: *//g')
+    #TODO: replace cf-dev.io with $hostname.ci.van when this script is implemented in CI
+    /sbin/ifconfig | grep -wq "inet addr:$IP" && green || red
+)
+
 
 # override tasks infinity in systemd configuration
 
-systemctl cat containerd | grep -w "TasksMax=infinity"
-echo "Verified: TasksMax set to infinity"
-echo "Verification Ended: Deploy CF"
-
+echo "TasksMax must be set to infinity" | (
+    systemctl cat containerd | grep -wq "TasksMax=infinity" && green || red
+)
