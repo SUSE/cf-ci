@@ -5,8 +5,7 @@ resources:
   type: git
   source:
     branch: develop
-    private_key: {{github-private-key}}
-    uri: git@github.com:hpcloud/hcf.git
+    uri: https://github.com/SUSE/scf.git
 
 - name: ci
   type: git
@@ -14,7 +13,7 @@ resources:
     uri: https://github.com/SUSE/cf-ci.git
     branch: master
     paths:
-    - cf-kube-config/*
+    - cf-kube-dist/*
 
 - name: s3.fissile-binary
   type: s3
@@ -40,9 +39,9 @@ resources:
   type: s3
   source:
     access_key_id: {{s3-access-key}}
-    bucket: kube-config
+    bucket: kube-dist
     endpoint: {{s3-endpoint}}
-    regexp: hcf-kube-(.*).zip$
+    regexp: scf-kube-(.*).zip$
     secret_access_key: {{s3-secret-key}}
     private: true
 
@@ -62,10 +61,10 @@ jobs:
     - get: s3.stampy-binary
 
   - task: kube-dist
-    file: ci/cf-kube-config/tasks/kube-dist.yml
+    file: ci/cf-kube-dist/tasks/kube-dist.yml
     privileged: true
 
   - put: s3.artifact
     params:
-      file: out/hcf-kube-*.zip
+      file: out/scf-kube-*.zip
       acl: public-read

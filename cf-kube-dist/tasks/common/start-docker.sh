@@ -23,7 +23,8 @@ done
 # configuration, that's btrfs and the subvolumes will get cleaned up correctly
 # the concourse removes the volume.
 mkdir -p /tmp/build/graph
-dockerd -g /tmp/build/graph --mtu 1432 &
+# We need to pipe stdout + stderr to cat so that dockerd exits correctly when we're done
+( dockerd --data-root /tmp/build/graph --mtu 1432 &> >(cat) ) &
 
 until docker info >/dev/null 2>&1; do
   echo waiting for docker to come up...

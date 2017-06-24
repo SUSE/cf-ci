@@ -8,7 +8,8 @@ inputs:
 - name: src
 - name: ci
 - name: s3.fissile-binary
+- name: s3.stampy-binary
 outputs:
 - name: out
 run:
-  path: ci/uaa-kube-config/tasks/kube-dist.sh
+  path: ci/uaa-kube-dist/tasks/kube-dist.sh

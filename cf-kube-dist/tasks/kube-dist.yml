@@ -12,4 +12,4 @@ inputs:
 outputs:
 - name: out
 run:
-  path: ci/cf-kube-config/tasks/kube-dist.sh
+  path: ci/cf-kube-dist/tasks/kube-dist.sh
