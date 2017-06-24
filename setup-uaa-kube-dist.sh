@@ -15,6 +15,7 @@ then
 fi
 
 fly -t "$target" set-pipeline -p ${PP}uaa-kube-dist -c uaa-kube-dist/uaa-kube-dist.yml \
+    -v s3-bucket=cf-opensusefs2 \
     -l <(gpg -d --no-tty "${secrets}" 2> /dev/null)
 
 fly -t "$target" expose-pipeline -p ${PP}uaa-kube-dist

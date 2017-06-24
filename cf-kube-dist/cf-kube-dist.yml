@@ -18,11 +18,11 @@ resources:
 - name: s3.fissile-binary
   type: s3
   source:
-    access_key_id: {{s3-access-key}}
-    endpoint: {{s3-endpoint}}
-    secret_access_key: {{s3-secret-key}}
-    bucket: fissile
-    regexp: fissile-(.*)\.g.*linux.amd64\.tgz
+    # endpoint: {{s3-endpoint}}
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+    bucket: {{s3-bucket}}
+    regexp: fissile/fissile-(.*)\.g.*linux.amd64\.tgz
     private: true
 
 - name: s3.stampy-binary
