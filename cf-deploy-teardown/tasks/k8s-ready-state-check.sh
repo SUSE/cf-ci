@@ -3,6 +3,7 @@
 #Script to determine is the K8s host is "ready" for cf deployment
 FAILED=0
 
+SCF_DOMAIN=${SCF_DOMAIN:-cf-dev.io}
 function green() {
   awk '{ print "\033[32mVerified: " $0 "\033[0m" }';
 }
@@ -33,8 +34,8 @@ status "docker info should show overlay2"
 
 # kube-dns shows 4/4 ready
 
-kube_dns=$(kubectl get pods --all-namespaces | grep -q "kube-dns-")
-[[ $kube_dns == *"4/4 Running"* ]]
+kube_dns=$(kubectl get pods --all-namespaces | grep "kube-dns-")
+[[ $kube_dns =~ 4/4\ *Running ]]
 status "kube-dns should shows 4/4 ready"
 
 # ntp is installed and running
@@ -44,7 +45,7 @@ status "ntp must be installed and active"
 
 # "persistent" storage class exists in K8s
 
-kubectl get storageclasses |& grep -wq "persistent   StorageClass.v1.storage.k8s.io"
+kubectl get storageclasses |& grep -wq "persistent"
 status "'persistent' storage class should exist in K8s"
 
 # privileged pods are enabled in K8s
@@ -59,8 +60,7 @@ status "Privileged must be enabled in 'kubelet'"
 
 # dns check for the current hostname resolution
 
-IP=$(nslookup cf-dev.io | grep answer: -A 2 | grep Address: | sed 's/Address: *//g')
-#TODO: replace cf-dev.io with $hostname.ci.van when this script is implemented in CI
+IP=$(nslookup $SCF_DOMAIN | grep answer: -A 2 | grep Address: | sed 's/Address: *//g')
 /sbin/ifconfig | grep -wq "inet addr:$IP"
 status "dns check"
 
@@ -71,3 +71,4 @@ systemctl cat containerd | grep -wq "TasksMax=infinity"
 status "TasksMax must be set to infinity"
 
 exit $FAILED
+
