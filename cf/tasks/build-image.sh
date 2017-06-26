@@ -46,10 +46,11 @@ rmdir ./*-release || true
 
 base_id="$(cat docker.fissile-stemcell/image-id)"
 
+mkdir -p "out/${FISSILE_DOCKER_ORGANIZATION}"
 fissile build images --roles="${ROLE_NAME}" --force --output-directory "${PWD}/out" --stemcell-id "${base_id}"
 
 mkdir "out/role-packages"
-archive="$(echo out/fissile-role-packages*.tar)"
+archive="$(echo out/${FISSILE_REPOSITORY:-fissile}-role-packages*.tar)"
 tar xf "${archive}" -C "out/role-packages"
 image_tag="${archive#*:}"
 image_tag="${image_tag%.*}"
