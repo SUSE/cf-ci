@@ -40,8 +40,8 @@ status "kube-dns should shows 4/4 ready"
 
 # ntp is installed and running
 
-systemctl is-active ntpd >& /dev/null
-status "ntp must be installed and active"
+systemctl is-active ntpd >& /dev/null || systemctl is-active systemd-timesyncd >& /dev/null
+status "ntp or systemd-timesyncd must be installed and active"
 
 # "persistent" storage class exists in K8s
 
