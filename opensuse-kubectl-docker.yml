@@ -12,7 +12,8 @@ resources:
 - name: docker.cf-ci
   type: docker-image
   source:
-    repository: splatform/opensuse-kubectl
+    #repository: splatform/opensuse-kubectl
+    repository: prabalsuse/opensuse-kubectl
     username: {{docker-username}}
     password: {{docker-password}}
 
