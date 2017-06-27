@@ -1,6 +1,7 @@
 #!/bin/bash
 
-archive="$(echo "fissile-output/fissile-${ROLE_NAME}:"*.tar)"
+shopt -s globstar
+archive="$(echo fissile-output/**/*-"${ROLE_NAME}:"*.tar)"
 tar xf "${archive}" -C adjusted-role-image
 
 image_tag="${archive#*:}"
