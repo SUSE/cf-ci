@@ -5,11 +5,7 @@ image_resource:
   source:
     #repository: splatform/opensuse-kubectl\
     repository: prabalsuse/opensuse-kubectl
-params:
-  K8S_HOST_IP: {{k8s-host-ip}}
-  K8S_HOSTNAME: {{k8s-hostname}}
-  K8S_USER: {{k8s-host-user}}
-  K8S_PASSWORD: {{k8s-host-password}}
+
 inputs:
 - name: ci
 - name: s3.scf-kube-yml
