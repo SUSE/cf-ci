@@ -14,4 +14,7 @@ RUN zypper --non-interactive in vim
 #install nano
 
 RUN zypper --non-interactive in nano
- 
+
+#install unzip
+
+RUN zypper --non-interactive in unzip
