@@ -34,8 +34,7 @@ status "docker info should show overlay2"
 
 # kube-dns shows 4/4 ready
 
-kube_dns=$(kubectl get pods --all-namespaces | grep "kube-dns-")
-[[ $kube_dns =~ 4/4\ *Running ]]
+kubectl get pods --namespace=kube-system --selector k8s-app=kube-dns | grep -Eq '([0-9])/\1 *Running'
 status "kube-dns should shows 4/4 ready"
 
 # ntp is installed and running
@@ -60,7 +59,7 @@ status "Privileged must be enabled in 'kubelet'"
 
 # dns check for the current hostname resolution
 
-IP=$(nslookup $SCF_DOMAIN | grep answer: -A 2 | grep Address: | sed 's/Address: *//g')
+IP=$(host -tA "${SCF_DOMAIN}" | awk '{ print $NF }')
 /sbin/ifconfig | grep -wq "inet addr:$IP"
 status "dns check"
 
