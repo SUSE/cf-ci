@@ -1,0 +1,279 @@
+---
+resources:
+  - name: src
+    type: git
+    source:
+      uri: {{src-repo}}
+      private_key: {{github-private-key}}
+      branch: {{src-branch}}
+      git_config:
+      - name: submodule.fetchJobs
+        value: 0 # Sane defaults, > 1
+
+  - name: ci
+    type: git
+    source:
+      uri: {{src-ci-repo}}
+      private_key: {{github-private-key}}
+      branch: {{src-ci-branch}}
+
+  - name: s3.fissile-binary
+    type: s3
+    source:
+      # Fissile is being pushed to Amazon S3 for world visibility
+      # endpoint: {{s3-endpoint}}
+      access_key_id: {{aws-access-key}}
+      secret_access_key: {{aws-secret-key}}
+      bucket: {{s3-fissile-bucket}}
+      regexp: fissile/fissile-(.*)\.tgz
+
+  - name: docker.fissile-stemcell
+    type: docker-image
+    source:
+      repository: splatform/fissile-stemcell-ubuntu
+      tag: trusty-0.g7dad5cc-1.4
+      username: {{docker-username}}
+      password: {{docker-password}}
+
+  - name: docker.fissile-role-packages
+    type: docker-image
+    source:
+      insecure_registries: [0.0.0.0/0]
+      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-role-packages
+      username: {{docker-username}}
+      password: {{docker-password}}
+
+<% releases.keys.each do |release| %>
+  - name: s3.<%= release %>-tarball
+    type: s3
+    source:
+      endpoint: {{s3-endpoint}}
+      access_key_id: {{s3-access-key}}
+      secret_access_key: {{s3-secret-key}}
+      bucket: {{s3-bucket}}
+      regexp: <%= release %>-tarball-(.*)\.tgz
+<% end %>
+
+  - name: s3.all-releases-tarball
+    type: s3
+    source:
+      endpoint: {{s3-endpoint}}
+      access_key_id: {{s3-access-key}}
+      secret_access_key: {{s3-secret-key}}
+      bucket: {{s3-bucket}}
+      regexp: all-releases-tarball-(.*)\.tgz
+
+<% roles.each do |role| %>
+  - name: docker.role-<%= role['name'] %>
+    type: docker-image
+    source:
+      insecure_registries: [0.0.0.0/0]
+      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-<%= role['name'] %>
+      username: {{docker-username}}
+      password: {{docker-password}}
+<% end %>
+
+  - name: semver.scf-version
+    type: semver
+    source:
+      driver: s3
+      bucket: {{s3-bucket}}
+      key: scf-version
+      access_key_id: {{s3-access-key}}
+      secret_access_key: {{s3-secret-key}}
+      endpoint: {{s3-endpoint}}
+
+<% if job_limit_pool %>
+  - name: pool.job-limit
+    type: pool
+    source:
+      uri: <%= job_limit_repo %>
+      branch: <%= job_limit_branch %>
+      pool: <%= job_limit_pool %>
+<% end %>
+
+resource_types:
+  - name: status
+    type: docker-image
+    source:
+      repository: heliondevops/concourse-github-status
+
+  - name: rsync-resource
+    type: docker-image
+    source:
+        repository: mrsixw/concourse-rsync-resource
+
+jobs:
+  - name: pull-sources
+    # This job is only used to serialize pulling the sources so we don't try
+    # to pull the same thing twice simultaneously.  Doing this allows concourse
+    # to cache the pulled source code.
+    plan:
+      - aggregate:
+        - get: src
+        - get: ci
+
+<% releases.each do |release, path| %>
+  - name: create-<%= release %>
+    plan:
+      - aggregate:
+        - get: src
+          passed: [pull-sources]
+          trigger: true
+        - get: ci
+        <% if job_limit_pool %>
+        - put: pool.job-limit
+          params: { acquire: true }
+        <% end %>
+      - do:
+        - task: package-release
+          file: ci/cf/tasks/create-release.yml
+          params:
+            RELEASE_NAME: <%= release.sub(/-release$/, '') %>
+            RELEASE_DIR: src/<%= path %> # src/ is the concourse input name
+        - put: s3.<%= release %>-tarball
+          params:
+            file: out/<%= release %>-tarball-*.tgz
+        <% if job_limit_pool %>
+        ensure:
+          put: pool.job-limit
+          params: { release: pool.job-limit }
+        <% end %>
+<% end %>
+
+  - name: find-version
+    plan:
+      - aggregate:
+        - get: src
+          passed: [pull-sources]
+          trigger: true
+        - get: ci
+      - task: find-version
+        file: ci/cf/tasks/find-version.yml
+      - put: semver.scf-version
+        params:
+          file: out/version
+
+  # Combine all the release tarballs to a single one
+  # This is needed bacause fissile want all releases to be built being doing
+  # anything, even if we don't require it for the image
+  - name: combine-releases
+    plan:
+      - aggregate:
+        <% releases.keys.each do |release| %>
+        - get: s3.<%= release %>-tarball
+          passed: [ create-<%= release %> ]
+        <% end %>
+        - get: ci
+        - get: src
+          passed:
+          - find-version
+          <% releases.keys.each do |release| %>
+          - create-<%= release %>
+          <% end %>
+          trigger: true
+        - get: semver.scf-version
+      - task: combine-releases
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: ubuntu
+              tag: "14.04"
+          inputs:
+          - name: src
+          - name: ci
+          - name: semver.scf-version
+          <% releases.keys.each do |release| %>
+          - name: s3.<%= release %>-tarball
+          <% end %>
+          run:
+            path: ci/cf/tasks/combine-releases.sh
+          outputs:
+          - name: out
+      - put: s3.all-releases-tarball
+        params:
+          file: out/all-releases-tarball-*.tgz
+
+<% roles.each do |role| %>
+  - name: <%= role['name'] %>-image
+    plan:
+      - aggregate:
+        - get: s3.fissile-binary
+          trigger: true
+        - get: src
+          passed: [ combine-releases ]
+          trigger: true
+        - get: ci
+        - get: s3.all-releases-tarball
+          passed: [ combine-releases ]
+        - get: docker.fissile-stemcell
+          params:
+            save: true
+        <% if job_limit_pool %>
+        - put: pool.job-limit
+          params: { acquire: true }
+        <% end %>
+      - do:
+        - task: compile-role
+          file: ci/cf/tasks/compile-role.yml
+          privileged: true # mount namespaces
+          image: docker.fissile-stemcell
+          params:
+            ROLE_NAME: <%= role['name'] %>
+            RELEASES: <%= releases.keys.join(' ') %>
+            <% releases.each_pair do |release, path| %>
+            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
+        - task: build-image
+          privileged: true
+          file: ci/cf/tasks/build-image.yml
+          image: docker.fissile-stemcell
+          params:
+            ROLE_NAME: <%= role['name'] %>
+            RELEASES: <%= releases.keys.join(' ') %>
+            <% releases.each_pair do |release, path| %>
+            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
+          output_mapping:
+            out: fissile-output
+        - put: docker.fissile-role-packages
+          params:
+            build: fissile-output/role-packages
+            load_base: docker.fissile-stemcell
+            tag: fissile-output/role-packages.tag
+          get_params:
+            save: true
+        - task: adjust-role-image-from
+          file: ci/cf/tasks/adjust-role-image-from.yml
+          params:
+            ROLE_NAME: <%= role['name'] %>
+        - put: docker.role-<%= role['name'] %>
+          params:
+            build: adjusted-role-image
+            load_base: docker.fissile-role-packages
+            tag: adjusted-role-image/<%= role['name'] %>.tag
+          get_params:
+            skip_download: true
+        <% if job_limit_pool %>
+        ensure:
+          put: pool.job-limit
+          params: { release: pool.job-limit }
+        <% end %>
+<% end %>
+
+groups:
+- name: releases
+  jobs:
+  - pull-sources
+  <% releases.keys.each do |release| %>
+  - create-<%= release %>
+  <% end %>
+  - find-version
+  - combine-releases
+- name: images
+  jobs:
+  <% roles.each do |role| %>
+  - <%= role['name'] %>-image
+  <% end %>

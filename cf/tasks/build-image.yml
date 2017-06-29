@@ -1,0 +1,16 @@
+# This will build the docker image for a single role
+# Takes `ROLE_NAME` and `RELEASES` as parameters
+---
+platform: linux
+# image is set in the pipeline (built in the pipeline)
+inputs:
+- name: s3.fissile-binary
+- name: src
+- name: ci
+- name: s3.all-releases-tarball
+- name: fissile-work-dir
+- name: docker.fissile-stemcell
+run:
+  path: ci/cf/tasks/build-image.sh
+outputs:
+- name: out
