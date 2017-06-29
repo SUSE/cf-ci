@@ -2,9 +2,11 @@
 
 set -ex
 
-env
-# Run the following commands in an environment with kubectl to target this kube cluster:
-kubectl config set-cluster --server=$K8S_HOST_IP $K8S_HOSTNAME
+#check k8s host readiness to deploy CF
+sshpass -p $K8S_PASSWORD  ssh $K8S_USER@$K8S_HOST_IP 'bash -s' < ci/cf-deploy-teardown/tasks/k8s-ready-state-check.sh
+
+# target the kube cluster:
+kubectl config set-cluster --server=$K8S_HOST_IP:$K8S_HOST_PORT $K8S_HOSTNAME
 kubectl config set-context $K8S_HOSTNAME --cluster=$K8S_HOSTNAME
 kubectl config use-context $K8S_HOSTNAME
 
