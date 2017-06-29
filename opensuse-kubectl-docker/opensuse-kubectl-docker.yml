@@ -26,4 +26,4 @@ jobs:
   - put: docker.opensuse-kubectl-docker
     params:
       build: ci/opensuse-kubectl-docker/dockerfiles
-      dockerfile: ci/dockerfiles/opensuse-kubectl.dockerfile
+      dockerfile: ci/opensuse-kubectl-docker/dockerfiles/opensuse-kubectl.dockerfile
