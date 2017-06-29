@@ -17,5 +17,5 @@ kubectl create -n uaa -f scf-kube-yml/uaa/kube-test/exposed-ports.yml
 
 #Deploy CF
 kubectl create namespace cf
-kubectl create -n cf -f scf-kube-yml/bosh
-kubectl create -n cf -f scf-kube-yml/bosh-task/post-deployment-setup.yml
+kubectl create -n cf -f scf-kube-yml/cf/bosh
+kubectl create -n cf -f scf-kube-yml/cf/bosh-task/post-deployment-setup.yml
