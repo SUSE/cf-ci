@@ -5,11 +5,12 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
+    #branch: master
     branch: cf-deploy-teardown
     paths:
-    - dockerfiles/*
+    - opensuse-kubectl-docker/*
 
-- name: docker.cf-ci
+- name: docker.opensuse-kubectl-docker
   type: docker-image
   source:
     #repository: splatform/opensuse-kubectl
@@ -22,7 +23,7 @@ jobs:
   plan:
   - get: ci
     trigger: true
-  - put: docker.cf-ci
+  - put: docker.opensuse-kubectl-docker
     params:
-      build: ci/dockerfiles
+      build: ci/opensuse-kubectl-docker/dockerfiles
       dockerfile: ci/dockerfiles/opensuse-kubectl.dockerfile
