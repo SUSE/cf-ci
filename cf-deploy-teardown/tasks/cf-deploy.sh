@@ -12,10 +12,10 @@ unzip s3.scf-kube-yml/scf-kube-* -d scf-kube-yml
 
 #Deploy UAA
 kubectl create namespace uaa
-kubectl create -n uaa -f s3.scf-kube-yml/uaa/bosh/
-kubectl create -n uaa -f s3.scf-kube-yml/uaa/kube-test/exposed-ports.yml
+kubectl create -n uaa -f scf-kube-yml/uaa/bosh/
+kubectl create -n uaa -f scf-kube-yml/uaa/kube-test/exposed-ports.yml
 
 #Deploy CF
 kubectl create namespace cf
-kubectl create -n cf -f s3.scf-kube-yml/bosh
-kubectl create -n cf -f s3.scf-kube-yml/bosh-task/post-deployment-setup.yml
+kubectl create -n cf -f scf-kube-yml/bosh
+kubectl create -n cf -f scf-kube-yml/bosh-task/post-deployment-setup.yml
