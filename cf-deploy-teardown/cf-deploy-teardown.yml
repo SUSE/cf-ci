@@ -2,7 +2,7 @@
 groups: []
 
 resources:
-- name: ci
+- name: cf-ci
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
@@ -26,14 +26,14 @@ jobs:
   plan:
   - aggregate:
 
-    - get: ci
+    - get: cf-ci
       trigger: true
 
     - get: s3.scf-kube-yml
       trigger: true
 
   - task: cf-deploy
-    file: ci/cf-deploy-teardown/tasks/cf-deploy.yml
+    file: cf-ci/cf-deploy-teardown/tasks/cf-deploy.yml
     params:
       K8S_HOST_IP: {{k8s-host-ip}}
       K8S_HOSTNAME: {{k8s-hostname}}

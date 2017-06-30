@@ -7,7 +7,7 @@ image_resource:
     repository: prabalsuse/opensuse-kubectl
 
 inputs:
-- name: ci
+- name: cf-ci
 - name: s3.scf-kube-yml
 run:
-  path: ci/cf-deploy-teardown/tasks/cf-deploy.sh
+  path: cf-ci/cf-deploy-teardown/tasks/cf-deploy.sh

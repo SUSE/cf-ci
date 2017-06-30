@@ -1,7 +1,7 @@
 # Concourse pipeline to build opensuse-kubectl docker image
 ---
 resources:
-- name: ci
+- name: cf-ci
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
@@ -21,8 +21,8 @@ resources:
 jobs:
 - name: build-image
   plan:
-  - get: ci
+  - get: cf-ci
     trigger: true
   - put: docker.opensuse-kubectl
     params:
-      build: ci/opensuse-kubectl-docker/
+      build: cf-ci/opensuse-kubectl-docker/
