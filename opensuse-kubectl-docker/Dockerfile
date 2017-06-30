@@ -1,7 +1,7 @@
 #Base image for kube yaml installer
 FROM opensuse:42.2
 
-#install: surl, kubectl, unzip, openssh, sshpass,vim, nano
+#install: surl, kubectl, unzip, openssh, sshpass, vim, nano
 RUN true \
     && zypper ref \
     && zypper --non-interactive in curl \

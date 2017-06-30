@@ -6,8 +6,7 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    #branch: master
-    branch: cf-deploy-teardown
+    branch: master
     paths:
     - cf-deploy-teardown/*
 
