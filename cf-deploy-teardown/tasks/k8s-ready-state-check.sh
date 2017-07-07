@@ -70,4 +70,3 @@ systemctl cat containerd | grep -wq "TasksMax=infinity"
 status "TasksMax must be set to infinity"
 
 exit $FAILED
-

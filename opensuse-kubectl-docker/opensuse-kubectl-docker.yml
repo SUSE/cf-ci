@@ -5,14 +5,16 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    branch: master
+    #branch: master
+    branch: cf-deploy-teardown
     paths:
     - opensuse-kubectl-docker/*
 
 - name: docker.opensuse-kubectl
   type: docker-image
   source:
-    repository: splatform/opensuse-kubectl
+    #repository: splatform/opensuse-kubectl
+    repository: prabalsuse/opensuse-kubectl
     username: {{docker-username}}
     password: {{docker-password}}
 
