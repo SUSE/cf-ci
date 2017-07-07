@@ -23,7 +23,8 @@ resources:
 - name: pool.k8s-hosts
   type: pool
   source:
-    uri: https://github.com/SUSE/cf-ci-pools
+    uri: git@github.com:SUSE/cf-ci-pools.git
+    private_key: {{github-private-key}}
     branch: master
     pool: k8s-hosts
 
@@ -35,16 +36,9 @@ jobs:
       trigger: true
     - get: s3.scf-kube-yml
       trigger: true
-    - get: pool.k8s-hosts
+    - put: pool.k8s-hosts
       params: {acquire: true}
-
   - task: cf-deploy
     file: cf-ci/cf-deploy-teardown/tasks/cf-deploy.yml
-    params:
-      #K8S_HOST_IP: {{k8s-host-ip}}
-      #K8S_HOSTNAME: {{k8s-hostname}}
-      K8S_USER: {{k8s-host-user}}
-      K8S_PASSWORD: {{k8s-host-password}}
-      #K8S_HOST_PORT: {{k8s-host-port}}
-  -put: pool.k8s-hosts
-   params: {release: pool.k8s-hosts
+  - put: pool.k8s-hosts
+    params: {release: pool.k8s-hosts}

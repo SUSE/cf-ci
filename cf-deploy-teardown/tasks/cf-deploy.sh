@@ -2,6 +2,9 @@
 
 set -ex
 
+#export k8s-host details from pool
+set -a; source pool.k8s-hosts/metadata; set +a
+
 #check k8s host readiness to deploy CF
 ssh-keygen -N "" -f /root/.ssh/id_rsa
 sshpass -p "$K8S_PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP}
