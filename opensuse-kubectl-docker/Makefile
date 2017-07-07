@@ -1,5 +1,4 @@
-#IMAGE ?= splatform/opensuse-kubectl
-IMAGE ?= prabalsuse/opensuse-kubectl
+IMAGE ?= splatform/opensuse-kubectl
 TAG ?= latest
 
 build:
