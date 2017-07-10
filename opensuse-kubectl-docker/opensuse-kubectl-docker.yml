@@ -24,3 +24,5 @@ jobs:
   - put: docker.opensuse-kubectl
     params:
       build: cf-ci/opensuse-kubectl-docker/
+    get_params:
+      skip_download: true

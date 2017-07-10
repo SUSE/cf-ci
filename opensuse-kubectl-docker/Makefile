@@ -6,3 +6,5 @@ build:
 
 push: build
 	docker push ${IMAGE}:${TAG}
+
+.PHONY: build push
