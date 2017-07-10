@@ -7,7 +7,7 @@ set -a; source pool.k8s-hosts/metadata; set +a
 
 #check k8s host readiness to deploy CF
 ssh-keygen -N "" -f /root/.ssh/id_rsa
-sshpass -p "$K8S_PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP}
+sshpass -e ssh-copy-id -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP}
 ssh -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP} 'bash -s' < cf-ci/cf-deploy-teardown/tasks/k8s-ready-state-check.sh
 
 # target the kube cluster
