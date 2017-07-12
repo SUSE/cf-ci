@@ -68,7 +68,7 @@ resources:
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
-      repository: <%= dockerhub_registry %><%= dockerhub_org %>/fissile-<%= role['name'] %>
+      repository: <%= dockerhub_registry %><%= dockerhub_org %>/scf-<%= role['name'] %>
       username: {{docker-username}}
       password: {{docker-password}}
 <% end %>
