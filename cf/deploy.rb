@@ -84,6 +84,14 @@ b = binding
 variant ||= 'production'
 config_file_name = "config-#{variant}.yaml"
 YAML.load_file(config_file_name).each_pair do |name, value|
+    # docker-hub-registry needs special handling for index.docker.io :(
+    if name == 'docker-hub-registry'
+        if value.nil? || value.empty? || value == 'index.docker.io'
+            value = ''
+        else
+            value = "#{value}/"
+        end
+    end
     b.local_variable_set(name.gsub('-', '_'), value)
 end
 b.local_variable_set('roles',

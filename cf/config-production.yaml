@@ -5,7 +5,7 @@ src-ci-repo: git@github.com:SUSE/cf-ci.git
 src-ci-branch: master
 s3-bucket: scf
 s3-fissile-bucket: cf-opensusefs2
-dockerhub-registry: index.docker.io
+dockerhub-registry: ~
 dockerhub-org: splatform
 s3-endpoint: https://minio.from-the.cloud:9000/
 job-limit-repo: git@github.com:SUSE/cf-ci-pools.git
