@@ -1,10 +1,11 @@
 #Base image for kube yaml installer
 FROM opensuse:42.2
 
-#install: curl, kubectl, unzip, openssh, sshpass, vim, nano
+#install: ruby, unzip, openssh, sshpass, vim, nano, curl, kubectl
 RUN true \
     && zypper ref \
-    && zypper --non-interactive in unzip \
+    && zypper --non-interactive in ruby \
+    unzip \
     openssh \
     sshpass \
     vim \

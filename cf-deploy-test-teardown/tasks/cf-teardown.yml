@@ -1,0 +1,8 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/opensuse-kubectl
+run:
+  path: cf-ci/cf-deploy-test-teardown/tasks/cf-teardown.sh

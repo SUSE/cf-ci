@@ -1,0 +1,10 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/opensuse-kubectl
+inputs:
+- name: s3.scf-kube-yml
+run:
+  path: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests-brain.sh
