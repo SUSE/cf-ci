@@ -169,7 +169,7 @@ jobs:
   - name: combine-releases
     plan:
       - aggregate:
-        <% releases.keys.each do |release| %>
+        <% releases.keys.sort.each do |release| %>
         - get: s3.<%= release %>-tarball
           passed: [ create-<%= release %> ]
         <% end %>
@@ -177,11 +177,13 @@ jobs:
         - get: src
           passed:
           - find-version
-          <% releases.keys.each do |release| %>
+          <% releases.keys.sort.each do |release| %>
           - create-<%= release %>
           <% end %>
           trigger: true
         - get: semver.scf-version
+          passed:
+          - find-version
       - task: combine-releases
         config:
           platform: linux
