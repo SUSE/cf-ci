@@ -93,8 +93,8 @@ fi
 
 # "persistent" storage class exists in K8s
 if having_category all kube ; then
-    kubectl get storageclasses |& grep -wq "persistent"
-    status "'persistent' storage class should exist in K8s"
+    test $(kubectl get storageclasses |& wc -l) -gt 1
+    status "A storage class should exist in K8s"
 fi
 
 # privileged pods are enabled in K8s
