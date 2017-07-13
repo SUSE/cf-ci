@@ -81,10 +81,8 @@ if having_category node ; then
 
     grep -wq "swapaccount=1" /proc/cmdline
     status "swapaccount enable"
-fi
 
-# docker info should show overlay2
-if having_category api kube node ; then
+    # docker info should show overlay2
     docker info 2> /dev/null | grep -wq "Storage Driver: overlay2"
     status "docker info should show overlay2"
 fi
