@@ -48,20 +48,20 @@ resources:
     type: s3
     source:
       endpoint: {{s3-endpoint}}
-      access_key_id: {{s3-access-key}}
-      secret_access_key: {{s3-secret-key}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
       bucket: {{s3-bucket}}
-      regexp: <%= release %>-tarball-(.*)\.tgz
+      regexp: <%= s3_release_prefix || "" %><%= release %>-tarball-(.*)\.tgz
 <% end %>
 
   - name: s3.all-releases-tarball
     type: s3
     source:
       endpoint: {{s3-endpoint}}
-      access_key_id: {{s3-access-key}}
-      secret_access_key: {{s3-secret-key}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
       bucket: {{s3-bucket}}
-      regexp: all-releases-tarball-(.*)\.tgz
+      regexp: <%= s3_release_prefix || "" %>all-releases-tarball-(.*)\.tgz
 
 <% roles.each do |role| %>
   - name: docker.role-<%= role['name'] %>
@@ -79,8 +79,8 @@ resources:
       driver: s3
       bucket: {{s3-bucket}}
       key: scf-version
-      access_key_id: {{s3-access-key}}
-      secret_access_key: {{s3-secret-key}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
       endpoint: {{s3-endpoint}}
 
 <% if job_limit_pool %>

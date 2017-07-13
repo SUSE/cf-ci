@@ -80,56 +80,64 @@ template = open("scf-#{pipeline}.yaml.erb", 'r') do |f|
     ERB.new(f.read, nil, '<>')
 end
 
-b = binding
+# Load the secrets file, followed by the local config overrides
 variant ||= 'production'
 config_file_name = "config-#{variant}.yaml"
-YAML.load_file(config_file_name).each_pair do |name, value|
-    # docker-hub-registry needs special handling for index.docker.io :(
-    if name == 'docker-hub-registry'
-        if value.nil? || value.empty? || value == 'index.docker.io'
-            value = ''
-        else
-            value = "#{value}/"
-        end
-    end
+gpg_r, gpg_w = IO.pipe
+gpg_process = Process.spawn(
+    'gpg', '--decrypt', '--batch',
+    File.join(opts.secrets_dir, SECRETS_RELPATH),
+    out: gpg_w)
+gpg_w.close
+# Note that we jam the two YAML files together so the local configs can refer
+# to anchors in the secrets file
+vars = YAML.load(gpg_r.read + open(config_file_name, 'r').read.sub(/^---\n/m, ''))
+
+# docker hub registry needs special handling
+vars.select {|name| name == 'dockerhub-registry'}.map do |name, value|
+    vars[name] = [nil, '', 'index.docker.io'].include?(value) ? '' : "#{value.sub(/\/+$/, '')}/"
+end
+
+# Expose variables to the ERB template
+b = binding
+vars.each_pair do |name, value|
     b.local_variable_set(name.gsub('-', '_'), value)
 end
 b.local_variable_set('roles',
     role_manifest['roles'].reject { |r| r['type'] == 'docker' } )
 
 if opts.print
+    # Dry run mode
     template.run(b)
     exit
 end
 
-begin
-    pipeline_file = Tempfile.new("scf-#{pipeline}.yaml")
-    pipeline_file.write template.result(b)
-    pipeline_file.close
-
-    gpg_r, gpg_w = IO.pipe
-    gpg_process = Process.spawn(
-        'gpg', '--decrypt', '--batch',
-        File.join(opts.secrets_dir, SECRETS_RELPATH),
-        out: gpg_w)
-
-    fly_cmd = ['fly']
-    if opts.target
-        fly_cmd << '--target' << opts.target
-    end
-    fly_cmd += [
-        "set-pipeline",
-        "--pipeline=#{pipeline_name}",
-        "--config=#{pipeline_file.path}",
-        "--load-vars-from=/dev/fd/#{gpg_r.fileno}",
-        "--load-vars-from=#{config_file_name}",
-    ]
-    fly_process = Process.spawn(*fly_cmd, gpg_r.fileno => gpg_r.fileno)
-
-    gpg_w.close
-
-    exit 1 unless Process.wait2(gpg_process).last.success?
-    exit 1 unless Process.wait2(fly_process).last.success?
-ensure
-    pipeline_file.close!
+pipeline_r, pipeline_w = IO.pipe
+pipeline_thread = Thread.new do
+    pipeline_w.write template.result(b)
+    pipeline_w.close
 end
+
+vars_r, vars_w = IO.pipe
+vars_thread = Thread.new do
+    vars_w.write vars.to_yaml
+    vars_w.close
+end
+
+fly_cmd = ['fly']
+if opts.target
+    fly_cmd << '--target' << opts.target
+end
+fly_cmd += [
+    "set-pipeline",
+    "--pipeline=#{pipeline_name}",
+    "--config=/dev/fd/#{pipeline_r.fileno}",
+    "--load-vars-from=/dev/fd/#{vars_r.fileno}",
+]
+fly_process = Process.spawn(*fly_cmd,
+    pipeline_r.fileno => pipeline_r.fileno,
+    vars_r.fileno => vars_r.fileno)
+
+pipeline_thread.join
+vars_thread.join
+exit 1 unless Process.wait2(fly_process).last.success?
