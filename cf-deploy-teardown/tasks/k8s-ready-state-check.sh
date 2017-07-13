@@ -4,7 +4,7 @@ function usage() {
     cat <<EOF
 Usage: $(basename "${0}") [options] [category]
 
-  -h: Displays this help message
+  -h, --help: Displays this help message
 
   Supported categories: all, api, kube, node
   Defaults to: all
@@ -23,6 +23,14 @@ done
 shift $((OPTIND-1))
 
 category="${1:-all}"
+case ${category} in
+    all|api|kube|node)
+	: # ok, nothing to do
+	;;
+    *) usage
+	exit 1
+	;;
+esac
 
 #Script to determine is the K8s host is "ready" for cf deployment
 FAILED=0
