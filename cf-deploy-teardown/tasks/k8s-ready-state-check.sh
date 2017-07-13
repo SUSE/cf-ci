@@ -1,5 +1,29 @@
 #!/bin/bash
 
+function usage() {
+    cat <<EOF
+Usage: $(basename "${0}") ?options? ?category?
+
+  -h: Displays this help message
+
+  Supported categories: all, api, kube, node
+  Defaults to: all
+EOF
+}
+
+while getopts "h" opt; do
+    case $opt in
+	h)
+	    usage
+	    exit
+	    ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+category="${1:-all}"
+
 #Script to determine is the K8s host is "ready" for cf deployment
 FAILED=0
 SCF_DOMAIN=${SCF_DOMAIN:-cf-dev.io}
@@ -28,6 +52,9 @@ function status() {
 	FAILED=1
     fi
 }
+
+
+echo "Testing $(green $category)"
 
 # cgroup memory & swap accounting in /proc/cmdline
 grep -wq "cgroup_enable=memory" /proc/cmdline
