@@ -2,24 +2,33 @@
 
 #Script to determine is the K8s host is "ready" for cf deployment
 FAILED=0
-
 SCF_DOMAIN=${SCF_DOMAIN:-cf-dev.io}
+
 function green() {
-  awk '{ print "\033[32mVerified: " $0 "\033[0m" }';
+    printf "\033[32m%b\033[0m\n" "$1"
 }
 
 function red() {
-  awk '{ print "\033[31mConfiguration problem detected: " $0 "\033[0m" }';
+    printf "\033[31m%b\033[0m\n" "$1"
+}
+
+function verified() {
+    green "Verified: $1"
+}
+
+function trouble() {
+    red "Configuration problem detected: $1"
 }
 
 function status() {
-  if [ $? -eq 0 ]; then
-    echo "$1" | green
-  else
-    echo "$1" | red
-    FAILED=1
-  fi
+    if [ $? -eq 0 ]; then
+	verified "$1"
+    else
+	trouble "$1"
+	FAILED=1
+    fi
 }
+
 # cgroup memory & swap accounting in /proc/cmdline
 grep -wq "cgroup_enable=memory" /proc/cmdline
 status "cgroup_enable memory"
