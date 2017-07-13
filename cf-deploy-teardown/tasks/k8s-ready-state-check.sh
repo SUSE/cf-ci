@@ -2,7 +2,7 @@
 
 function usage() {
     cat <<EOF
-Usage: $(basename "${0}") ?options? ?category?
+Usage: $(basename "${0}") [options] [category]
 
   -h: Displays this help message
 
@@ -54,6 +54,8 @@ function status() {
 }
 
 function having_category() {
+    # `all` matches always
+    set -- all "$@"
     case "$@" in
 	*${category}*)
 	    return 0
@@ -65,7 +67,7 @@ function having_category() {
 echo "Testing $(green $category)"
 
 # cgroup memory & swap accounting in /proc/cmdline
-if having_category all node ; then
+if having_category node ; then
     grep -wq "cgroup_enable=memory" /proc/cmdline
     status "cgroup_enable memory"
 
@@ -74,51 +76,51 @@ if having_category all node ; then
 fi
 
 # docker info should show overlay2
-if having_category all api kube node ; then
+if having_category api kube node ; then
     docker info 2> /dev/null | grep -wq "Storage Driver: overlay2"
     status "docker info should show overlay2"
 fi
 
 # kube-dns shows 4/4 ready
-if having_category all kube ; then
+if having_category kube ; then
     kubectl get pods --namespace=kube-system --selector k8s-app=kube-dns | grep -Eq '([0-9])/\1 *Running'
     status "kube-dns should shows 4/4 ready"
 fi
 
 # ntp is installed and running
-if having_category all api kube node ; then
+if having_category api kube node ; then
     systemctl is-active ntpd >& /dev/null || systemctl is-active systemd-timesyncd >& /dev/null
     status "ntp or systemd-timesyncd must be installed and active"
 fi
 
-# "persistent" storage class exists in K8s
-if having_category all kube ; then
+# At least one storage class exists in K8s
+if having_category kube ; then
     test $(kubectl get storageclasses |& wc -l) -gt 1
     status "A storage class should exist in K8s"
 fi
 
 # privileged pods are enabled in K8s
-if having_category all api ; then
+if having_category api ; then
     kube_apiserver=$(systemctl status kube-apiserver -l | grep "/usr/bin/hyperkube apiserver" )
     [[ $kube_apiserver == *"--allow-privileged"* ]]
     status "Privileged must be enabled in 'kube-apiserver'"
 fi
 
-if having_category all node ; then
+if having_category node ; then
     kubelet=$(systemctl status kubelet -l | grep "/usr/bin/hyperkube kubelet" )
     [[ $kubelet == *"--allow-privileged"* ]]
     status "Privileged must be enabled in 'kubelet'"
 fi
 
 # dns check for the current hostname resolution
-if having_category all api ; then
+if having_category api ; then
     IP=$(host -tA "${SCF_DOMAIN}" | awk '{ print $NF }')
     /sbin/ifconfig | grep -wq "inet addr:$IP"
     status "dns check"
 fi
 
 # override tasks infinity in systemd configuration
-if having_category all node ; then
+if having_category node ; then
     systemctl cat containerd | grep -wq "TasksMax=infinity"
     status "TasksMax must be set to infinity"
 fi
