@@ -7,6 +7,8 @@ src-ci-branch: master
 dockerhub-registry: ~
 dockerhub-org: splatform
 
+manual-pull-sources: false
+
 job-limit-repo: git@github.com:SUSE/cf-ci-pools.git
 job-limit-branch: scf-deploy
 job-limit-pool: scf-deploy

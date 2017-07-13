@@ -105,6 +105,7 @@ resource_types:
         repository: mrsixw/concourse-rsync-resource
 
 jobs:
+  <% if manual_pull_sources %>
   - name: pull-sources
     # This job is only used to serialize pulling the sources so we don't try
     # to pull the same thing twice simultaneously.  Doing this allows concourse
@@ -113,13 +114,17 @@ jobs:
       - aggregate:
         - get: src
         - get: ci
+  <% end %>
 
 <% releases.each do |release, path| %>
   - name: create-<%= release %>
     plan:
       - aggregate:
         - get: src
-          passed: [pull-sources]
+          passed:
+          <% if manual_pull_sources %>
+          - pull-sources
+          <% end %>
           trigger: true
         - get: ci
         <% if job_limit_pool %>
@@ -146,7 +151,10 @@ jobs:
     plan:
       - aggregate:
         - get: src
-          passed: [pull-sources]
+          passed:
+          <% if manual_pull_sources %>
+          - pull-sources
+          <% end %>
           trigger: true
         - get: ci
       - task: find-version
@@ -267,7 +275,9 @@ jobs:
 groups:
 - name: releases
   jobs:
+  <% if manual_pull_sources %>
   - pull-sources
+  <% end %>
   <% releases.keys.each do |release| %>
   - create-<%= release %>
   <% end %>
