@@ -4,7 +4,7 @@ function usage() {
     cat <<EOF
 Usage: $(basename "${0}") [options] [category]
 
-  -h, --help: Displays this help message
+  -h: Displays this help message
 
   Supported categories: all, api, kube, node
   Defaults to: all
