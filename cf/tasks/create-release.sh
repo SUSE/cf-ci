@@ -25,7 +25,9 @@ fi
 # It's not used for anything else and should not be exposed outside CI.
 release_info=$(awk '/latest_release_filename:/ { print $2 }' < "${RELEASE_DIR}/config/dev.yml" | tr -d '"')
 function field() {
-    awk "/^${1}:/ { print \$2 }" < "${release_info}"
+    # If a string consists of only digits, we get extra quoting around it for YAML
+    # We need to delete that quoting
+    awk "/^${1}:/ { print \$2 }" < "${release_info}" | tr -d \"\'
 }
 tar_name="${RELEASE_NAME}-release-tarball-$(field version)-$(field commit_hash).tgz"
 
