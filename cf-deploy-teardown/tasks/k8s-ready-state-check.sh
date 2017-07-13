@@ -53,56 +53,74 @@ function status() {
     fi
 }
 
+function having_category() {
+    case "$@" in
+	*${category}*)
+	    return 0
+	    ;;
+    esac
+    return 1
+}
 
 echo "Testing $(green $category)"
 
 # cgroup memory & swap accounting in /proc/cmdline
-grep -wq "cgroup_enable=memory" /proc/cmdline
-status "cgroup_enable memory"
+if having_category all node ; then
+    grep -wq "cgroup_enable=memory" /proc/cmdline
+    status "cgroup_enable memory"
 
-grep -wq "swapaccount=1" /proc/cmdline
-status "swapaccount enable"
+    grep -wq "swapaccount=1" /proc/cmdline
+    status "swapaccount enable"
+fi
 
 # docker info should show overlay2
-
-docker info 2> /dev/null | grep -wq "Storage Driver: overlay2"
-status "docker info should show overlay2"
+if having_category all api kube node ; then
+    docker info 2> /dev/null | grep -wq "Storage Driver: overlay2"
+    status "docker info should show overlay2"
+fi
 
 # kube-dns shows 4/4 ready
-
-kubectl get pods --namespace=kube-system --selector k8s-app=kube-dns | grep -Eq '([0-9])/\1 *Running'
-status "kube-dns should shows 4/4 ready"
+if having_category all kube ; then
+    kubectl get pods --namespace=kube-system --selector k8s-app=kube-dns | grep -Eq '([0-9])/\1 *Running'
+    status "kube-dns should shows 4/4 ready"
+fi
 
 # ntp is installed and running
-
-systemctl is-active ntpd >& /dev/null || systemctl is-active systemd-timesyncd >& /dev/null
-status "ntp or systemd-timesyncd must be installed and active"
+if having_category all api kube node ; then
+    systemctl is-active ntpd >& /dev/null || systemctl is-active systemd-timesyncd >& /dev/null
+    status "ntp or systemd-timesyncd must be installed and active"
+fi
 
 # "persistent" storage class exists in K8s
-
-kubectl get storageclasses |& grep -wq "persistent"
-status "'persistent' storage class should exist in K8s"
+if having_category all kube ; then
+    kubectl get storageclasses |& grep -wq "persistent"
+    status "'persistent' storage class should exist in K8s"
+fi
 
 # privileged pods are enabled in K8s
+if having_category all api ; then
+    kube_apiserver=$(systemctl status kube-apiserver -l | grep "/usr/bin/hyperkube apiserver" )
+    [[ $kube_apiserver == *"--allow-privileged"* ]]
+    status "Privileged must be enabled in 'kube-apiserver'"
+fi
 
-kube_apiserver=$(systemctl status kube-apiserver -l | grep "/usr/bin/hyperkube apiserver" )
-[[ $kube_apiserver == *"--allow-privileged"* ]]
-status "Privileged must be enabled in 'kube-apiserver'"
-
-kubelet=$(systemctl status kubelet -l | grep "/usr/bin/hyperkube kubelet" )
-[[ $kubelet == *"--allow-privileged"* ]]
-status "Privileged must be enabled in 'kubelet'"
+if having_category all node ; then
+    kubelet=$(systemctl status kubelet -l | grep "/usr/bin/hyperkube kubelet" )
+    [[ $kubelet == *"--allow-privileged"* ]]
+    status "Privileged must be enabled in 'kubelet'"
+fi
 
 # dns check for the current hostname resolution
-
-IP=$(host -tA "${SCF_DOMAIN}" | awk '{ print $NF }')
-/sbin/ifconfig | grep -wq "inet addr:$IP"
-status "dns check"
-
+if having_category all api ; then
+    IP=$(host -tA "${SCF_DOMAIN}" | awk '{ print $NF }')
+    /sbin/ifconfig | grep -wq "inet addr:$IP"
+    status "dns check"
+fi
 
 # override tasks infinity in systemd configuration
-
-systemctl cat containerd | grep -wq "TasksMax=infinity"
-status "TasksMax must be set to infinity"
+if having_category all node ; then
+    systemctl cat containerd | grep -wq "TasksMax=infinity"
+    status "TasksMax must be set to infinity"
+fi
 
 exit $FAILED
