@@ -5,8 +5,7 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    #branch: master
-    branch: prabal-cf-test
+    branch: master
     paths:
     - opensuse-kubectl-docker/*
 
