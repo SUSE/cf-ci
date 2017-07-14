@@ -5,7 +5,7 @@ set -o errexit -o nounset -o xtrace
 export GOPATH=$PWD/go
 
 package="github.com/square/certstrap"
-go build -ldflags='-s -w' "${package}"
+go build -ldflags=-s "${package}"
 version="$(git -C "${GOPATH}/src/${package}" describe --always)"
 tar czf "out/certstrap-${version}.tgz" \
     --numeric-owner \

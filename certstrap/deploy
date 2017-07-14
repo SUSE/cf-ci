@@ -17,8 +17,8 @@ prefix=""
 secrets_file=""
 while getopts '?t:p:' arg ; do
     case $arg in
-        t) target="${OPTARG}";;
-        p) prefix="${OPTARG}";;
+        t) target="${OPTARG}" ; shift 2;;
+        p) prefix="${OPTARG}" ; shift 2;;
         ?) usage ; exit ;;
     esac
 done
@@ -43,10 +43,13 @@ if ! test -r "${vars_file}" ; then
     exit 1
 fi
 
-secrets_file="${PWD}/../../cloudfoundry/secure/concourse-secrets.yml.gpg"
-if ! test -r "${secrets_file}" ; then
-    printf "Warning: secrets file %s missing, ignored\n" "${secrets_file}" >&2
-    secrets_file=""
+if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
+    if test -r "${CONCOURSE_SECRETS_FILE:-}" ; then
+        secrets_file="${CONCOURSE_SECRETS_FILE}"
+    else
+        printf "ERROR: Secrets file %s is not readable\n" "${CONCOURSE_SECRETS_FILE}" >&2
+        exit 2
+    fi
 fi
 
 fly \
