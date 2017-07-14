@@ -13,6 +13,6 @@ kubectl config use-context ${K8S_HOSTNAME}
 
 unzip s3.scf-kube-yml/scf-kube-* -d scf-kube-yml
 
-image=$(cat scf-kube-yml/cf/bosh-task/acceptance-tests-brain.yml | grep "image" | awk -F' ' '{print $2}')
+image=$(awk '/image/ { print $2 }' < scf-kube-yml/cf/bosh-task/acceptance-tests-brain.yml)
 jsonify() { ruby -r yaml -r json -e 'YAML.load_stream(File.read "'"$1"'").each { |yaml| puts yaml.to_json}'; }
 kubectl run -n cf --attach --restart=Never --image ${image} --overrides="$(jsonify scf-kube-yml/cf/bosh-task/acceptance-tests-brain.yml)" acceptance-tests-brain
