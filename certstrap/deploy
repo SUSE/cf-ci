@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -o errexit -o nounset
+
+usage() {
+    cat <<-EOF
+	Usage: $0 [-t target] [-p prefix] <variant> <config>
+	
+	    <variant> is the pipeline variant (e.g. "master", "tags"); certstrap-<variant>.yaml should exist
+	    <config> is the configuration (e.g. "production", "vagrant"); config-<config>.yaml should exist
+	
+	EOF
+}
+
+target=""
+prefix=""
+secrets_file=""
+while getopts '?t:p:' arg ; do
+    case $arg in
+        t) target="${OPTARG}" ; shift 2;;
+        p) prefix="${OPTARG}" ; shift 2;;
+        ?) usage ; exit ;;
+    esac
+done
+
+variant="${1:-}"
+config_file="certstrap-${variant}.yaml"
+vars_file="config-${2:-}.yaml"
+
+if ! test -r "${config_file}" ; then
+    usage >&2
+    if test -n "${variant}" ; then
+        printf "Config file %s is not readable\n" "${config_file}" >&2
+    fi
+    exit 1
+fi
+
+if ! test -r "${vars_file}" ; then
+    usage >&2
+    if test -n "${2:-}" ; then
+        printf "Variables file %s is not readable\n" "${vars_file}" >&2
+    fi
+    exit 1
+fi
+
+if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
+    if test -r "${CONCOURSE_SECRETS_FILE:-}" ; then
+        secrets_file="${CONCOURSE_SECRETS_FILE}"
+    else
+        printf "ERROR: Secrets file %s is not readable\n" "${CONCOURSE_SECRETS_FILE}" >&2
+        exit 2
+    fi
+fi
+
+fly \
+    ${target:+"--target=${target}"} \
+    set-pipeline \
+    --pipeline="${prefix:+${prefix%-}-}certstrap-${variant}" \
+    --config="${config_file}" \
+    --load-vars-from=<(
+        # We concatenate the two vars files together so that the config vars can
+        # refer to secret vars correctly
+        ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
+        sed '/^---$/d' < "${vars_file}"                        # Config vars
+    )
