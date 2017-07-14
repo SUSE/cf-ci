@@ -1,0 +1,14 @@
+---
+src-repo: https://github.com/square/certstrap
+src-branch: master
+src-private-key: ~
+
+src-ci-repo: https://github.com/SUSE/cf-ci.git
+src-ci-branch: master
+src-ci-private-key: *github-private-key
+
+s3-certstrap-binary-endpoint: ~
+s3-certstrap-binary-access-key: *aws-access-key
+s3-certstrap-binary-secret-key: *aws-secret-key
+s3-certstrap-bucket: cf-opensusefs2
+s3-certstrap-prefix: certstrap/
