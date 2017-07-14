@@ -9,9 +9,9 @@ dockerhub-org: splatform
 
 manual-pull-sources: false
 
-job-limit-repo: ~
-job-limit-branch: ~
-job-limit-pool: ~
+job-limit-repo: git@github.com:SUSE/cf-ci-pools.git
+job-limit-branch: scf-deploy
+job-limit-pool: scf-deploy
 
 s3-fissile-bucket: cf-opensusefs2
 s3-bucket: cf-opensusefs2
