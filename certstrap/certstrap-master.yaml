@@ -14,14 +14,23 @@ resources:
     private_key: ((src-ci-private-key))
     branch: ((src-ci-branch))
 
-- name: s3.certstrap-binary
+- name: s3.certstrap-binary.linux
   type: s3
   source:
     endpoint: ((s3-certstrap-binary-endpoint))
     access_key_id: ((s3-certstrap-binary-access-key))
     secret_access_key: ((s3-certstrap-binary-secret-key))
     bucket: ((s3-certstrap-bucket))
-    regexp: ((s3-certstrap-prefix))certstrap-(.*)\.tgz
+    regexp: ((s3-certstrap-prefix))certstrap-(.*)\.linux-amd64\.tgz
+
+- name: s3.certstrap-binary.darwin
+  type: s3
+  source:
+    endpoint: ((s3-certstrap-binary-endpoint))
+    access_key_id: ((s3-certstrap-binary-access-key))
+    secret_access_key: ((s3-certstrap-binary-secret-key))
+    bucket: ((s3-certstrap-bucket))
+    regexp: ((s3-certstrap-prefix))certstrap-(.*)\.darwin-amd64\.tgz
 
 jobs:
 - name: build
@@ -30,8 +39,20 @@ jobs:
     - get: src
       trigger: true
     - get: ci
-  - task: build
-    file: ci/certstrap/tasks/build.yml
-  - put: s3.certstrap-binary
-    params:
-      file: out/certstrap-*.tgz
+  - aggregate:
+    - do:
+      - task: build
+        file: ci/certstrap/tasks/build.yml
+        params:
+          GOOS: linux
+      - put: s3.certstrap-binary.linux
+        params:
+          file: out/certstrap-*.linux-amd64.tgz
+    - do:
+      - task: build
+        file: ci/certstrap/tasks/build.yml
+        params:
+          GOOS: darwin
+      - put: s3.certstrap-binary.darwin
+        params:
+          file: out/certstrap-*.darwin-amd64.tgz
