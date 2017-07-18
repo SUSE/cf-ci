@@ -25,7 +25,25 @@ resources:
       access_key_id: {{aws-access-key}}
       secret_access_key: {{aws-secret-key}}
       bucket: {{s3-fissile-bucket}}
-      regexp: fissile/fissile-(.*)\.tgz
+      regexp: fissile/fissile-(.*)\.linux-amd64\.tgz
+
+  - name: s3.stampy-binary
+    type: s3
+    source:
+      access_key_id: {{s3-access-key}}
+      endpoint: {{s3-endpoint}}
+      secret_access_key: {{s3-secret-key}}
+      bucket: stampy
+      regexp: stampy-(.*)\.g.*linux-amd64\.tgz
+      private: true
+
+  - name: s3.certstrap-binary
+    type: s3
+    source:
+      access_key_id: {{aws-access-key}}
+      secret_access_key: {{aws-secret-key}}
+      bucket: {{s3-fissile-bucket}}
+      regexp: certstrap/certstrap-(.*)\.linux-amd64\.tgz
 
   - name: docker.fissile-stemcell
     type: docker-image
@@ -116,6 +134,16 @@ resources:
       access_key_id: <%= s3_access_key %>
       secret_access_key: <%= s3_secret_key %>
       endpoint: {{s3-endpoint}}
+
+  - name: s3.kube-dist
+    type: s3
+    source:
+      access_key_id: {{s3-access-key}}
+      bucket: kube-dist
+      endpoint: {{s3-endpoint}}
+      regexp: scf-kube-(.*).zip$
+      secret_access_key: {{s3-secret-key}}
+      private: true
 
 <% if job_limit_pool %>
   - name: pool.job-limit
@@ -350,11 +378,11 @@ jobs:
           image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
-            RELEASES: <%= scf_releases.keys.join(' ') %>
-            <% scf_releases.each_pair do |release, path| %>
-            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
-            <% end %>
             FISSILE_REPOSITORY: scf
+            SCF_RELEASES: <%= scf_releases.keys.join(' ') %>
+            <% scf_releases.each_pair do |release, path| %>
+            SCF_<%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
             PROJECT_DIR: <%= scf_dir %>
           input_mapping:
             s3.all-releases-tarball: s3.scf-all-releases-tarball
@@ -364,11 +392,11 @@ jobs:
           image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
-            RELEASES: <%= scf_releases.keys.join(' ') %>
-            <% scf_releases.each_pair do |release, path| %>
-            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
-            <% end %>
             FISSILE_REPOSITORY: scf
+            SCF_RELEASES: <%= scf_releases.keys.join(' ') %>
+            <% scf_releases.each_pair do |release, path| %>
+            SCF_<%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
             PROJECT_DIR: <%= scf_dir %>
           input_mapping:
             s3.all-releases-tarball: s3.scf-all-releases-tarball
@@ -426,11 +454,11 @@ jobs:
           image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
-            RELEASES: <%= uaa_releases.keys.join(' ') %>
-            <% uaa_releases.each_pair do |release, path| %>
-            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
-            <% end %>
             FISSILE_REPOSITORY: uaa
+            UAA_RELEASES: <%= uaa_releases.keys.join(' ') %>
+            <% uaa_releases.each_pair do |release, path| %>
+            UAA_<%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
             PROJECT_DIR: <%= uaa_dir %>
           input_mapping:
             s3.all-releases-tarball: s3.uaa-all-releases-tarball
@@ -440,11 +468,11 @@ jobs:
           image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
-            RELEASES: <%= uaa_releases.keys.join(' ') %>
-            <% uaa_releases.each_pair do |release, path| %>
-            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
-            <% end %>
             FISSILE_REPOSITORY: uaa
+            UAA_RELEASES: <%= uaa_releases.keys.join(' ') %>
+            <% uaa_releases.each_pair do |release, path| %>
+            UAA_<%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
             PROJECT_DIR: <%= uaa_dir %>
           input_mapping:
             s3.all-releases-tarball: s3.uaa-all-releases-tarball
@@ -475,6 +503,41 @@ jobs:
           params: { release: pool.job-limit }
         <% end %>
 <% end %>
+
+  - name: kube-dist
+    plan:
+    - aggregate:
+      - get: src
+        passed:
+        - combine-scf-releases
+        - combine-uaa-releases
+        trigger: true
+      - get: ci
+        trigger: true
+      - get: s3.fissile-binary
+        trigger: true
+      - get: s3.stampy-binary
+      - get: s3.certstrap-binary
+      - get: s3.scf-all-releases-tarball
+        passed: [ combine-scf-releases ]
+      - get: s3.uaa-all-releases-tarball
+        passed: [ combine-uaa-releases ]
+    - task: kube-dist
+      file: ci/cf/tasks/kube-dist.yml
+      privileged: true
+      params:
+        SCF_RELEASES: <%= scf_releases.keys.join(' ') %>
+        UAA_RELEASES: <%= uaa_releases.keys.join(' ') %>
+        <% scf_releases.each_pair do |release, path| %>
+        SCF_<%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+        <% end %>
+        <% uaa_releases.each_pair do |release, path| %>
+        UAA_<%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+        <% end %>
+    - put: s3.kube-dist
+      params:
+        file: out/scf-kube-*.zip
+        acl: public-read
 
 groups:
 - name: releases
@@ -507,3 +570,6 @@ groups:
   - uaa-<%= role['name'] %>-image
   <% end %>
 <% end %>
+- name: extras
+  jobs:
+  - kube-dist

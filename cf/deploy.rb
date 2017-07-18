@@ -44,7 +44,7 @@ parser = OptionParser.new do |parser|
         opts.scf.dir = scf_dir
         if opts.uaa.dir.nil?
             uaa_dir = File.join(scf_dir, UAA_RELPATH)
-            uaa_role_manifest = File.jam(uaa_dir, UAA_ROLE_MANIFEST_RELPATH)
+            uaa_role_manifest = File.join(uaa_dir, UAA_ROLE_MANIFEST_RELPATH)
             if File.exist? uaa_role_manifest
                 opts.uaa.dir = uaa_dir
             else

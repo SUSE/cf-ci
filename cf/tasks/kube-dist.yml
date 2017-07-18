@@ -9,7 +9,10 @@ inputs:
 - name: ci
 - name: s3.fissile-binary
 - name: s3.stampy-binary
+- name: s3.certstrap-binary
+- name: s3.scf-all-releases-tarball
+- name: s3.uaa-all-releases-tarball
 outputs:
 - name: out
 run:
-  path: ci/cf-kube-dist/tasks/kube-dist.sh
+  path: ci/cf/tasks/kube-dist.sh
