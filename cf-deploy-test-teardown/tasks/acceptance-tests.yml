@@ -1,0 +1,12 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/opensuse-kubectl
+inputs:
+- name: cf-ci
+- name: s3.scf-kube-yml
+- name: pool.k8s-hosts
+run:
+  path: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests.sh

@@ -7,7 +7,7 @@ resources:
     uri: https://github.com/SUSE/cf-ci.git
     branch: master
     paths:
-    - cf-deploy-teardown/*
+    - cf-deploy-test-teardown/*
 
 - name: s3.scf-kube-yml
   type: s3
@@ -24,11 +24,11 @@ resources:
   source:
     uri: git@github.com:SUSE/cf-ci-pools.git
     private_key: {{github-private-key}}
-    branch: master
+    branch: k8s-hosts
     pool: k8s-hosts
 
 jobs:
-- name: cf-deploy-teardown
+- name: cf-deploy-test-teardown
   plan:
   - aggregate:
     - get: cf-ci
@@ -38,6 +38,14 @@ jobs:
     - put: pool.k8s-hosts
       params: {acquire: true}
   - task: cf-deploy
-    file: cf-ci/cf-deploy-teardown/tasks/cf-deploy.yml
+    file: cf-ci/cf-deploy-test-teardown/tasks/cf-deploy.yml
+  - task: cf-smoke-tests
+    file: cf-ci/cf-deploy-test-teardown/tasks/smoke-tests.yml
+  - task: acceptance-tests-brain
+    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests-brain.yml
+  - task: acceptance-tests
+    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests.yml
+  - task: cf-teardown
+    file: cf-ci/cf-deploy-test-teardown/tasks/cf-teardown.yml
   - put: pool.k8s-hosts
     params: {release: pool.k8s-hosts}

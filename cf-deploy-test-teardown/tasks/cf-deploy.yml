@@ -10,4 +10,4 @@ inputs:
 - name: s3.scf-kube-yml
 - name: pool.k8s-hosts
 run:
-  path: cf-ci/cf-deploy-teardown/tasks/cf-deploy.sh
+  path: cf-ci/cf-deploy-test-teardown/tasks/cf-deploy.sh
