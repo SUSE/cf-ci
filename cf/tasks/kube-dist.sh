@@ -4,6 +4,11 @@ set -o errexit
 set -o nounset
 set -o xtrace
 
+# Work around concourse-filter being clbuttic
+rm -f /etc/profile.d/filter.sh
+exec 1> /proc/$(pidof concourse-filter)/fd/1
+exec 2> /proc/$(pidof concourse-filter)/fd/2
+
 tar -xf s3.fissile-binary/fissile-*.linux-amd64.tgz -C s3.fissile-binary fissile
 export PATH=$PATH:$PWD/s3.fissile-binary
 
@@ -31,17 +36,23 @@ mkdir -p "${FISSILE_CACHE_DIR}"
 
 (
     # Build UAA bits
-    cd src/src/uaa-fissile-release
+    cd src
+    source .envrc
+    cd src/uaa-fissile-release
     source .envrc
     # XXX marky hack until uaa-fissile-release#35 lands
     perl -p -i -e 's@head -c 32 /dev/urandom \| xxd -ps -c 32@LC_CTYPE=C tr -cd 0-9a-f < /dev/urandom \| head -c64@' generate-certs.sh
     make certs kube helm
 )
 (
-    # Workaround for dependencies on UAA
-    src/bin/settings/kube/ca.sh
+    # Workaround for dependencies on UAA that are silly
     cd src
+    source .envrc
+    bin/settings/kube/ca.sh
+    head make/kube
     make/kube
+    # XXX marky Helm is busted WRT to FISSILE_OUTPUT_DIR
+    /usr/bin/env FISSILE_OUTPUT_DIR="${PWD}/helm" make/kube helm
     make/kube-dist
 )
 

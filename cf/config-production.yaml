@@ -15,7 +15,11 @@ job-limit-pool: scf-deploy
 
 s3-fissile-bucket: cf-opensusefs2
 s3-bucket: cf-opensusefs2
+s3-kube-bucket: *s3-bucket
+s3-helm-bucket: *s3-bucket
 s3-endpoint: ~
 s3-release-prefix: scf/releases/
+s3-kube-prefix: scf/kube/
+s3-helm-prefix: scf/helm/
 s3-access-key: "{{aws-access-key}}"
 s3-secret-key: "{{aws-secret-key}}"

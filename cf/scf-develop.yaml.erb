@@ -139,11 +139,20 @@ resources:
     type: s3
     source:
       access_key_id: {{s3-access-key}}
-      bucket: kube-dist
+      bucket: {{s3-kube-bucket}}
       endpoint: {{s3-endpoint}}
-      regexp: scf-kube-(.*).zip$
+      regexp: <%= s3_kube_prefix || "" %>scf-kube-(.*).zip$
       secret_access_key: {{s3-secret-key}}
-      private: true
+
+#  Commented out because currently it lives in `scf-kube-*.zip`
+#  - name: s3.helm-dist
+#    type: s3
+#    source:
+#      access_key_id: {{s3-access-key}}
+#      bucket: {{s3-helm-bucket}}
+#      endpoint: {{s3-endpoint}}
+#      regexp: <%= s3_helm_prefix || "" %>scf-helm-(.*).zip$
+#      secret_access_key: {{s3-secret-key}}
 
 <% if job_limit_pool %>
   - name: pool.job-limit
@@ -513,7 +522,6 @@ jobs:
         - combine-uaa-releases
         trigger: true
       - get: ci
-        trigger: true
       - get: s3.fissile-binary
         trigger: true
       - get: s3.stampy-binary
@@ -538,6 +546,10 @@ jobs:
       params:
         file: out/scf-kube-*.zip
         acl: public-read
+#    - put: s3.helm-dist
+#      params:
+#        file: out/scf-helm-*.zip
+#        acl: public-read
 
 groups:
 - name: releases
