@@ -39,7 +39,7 @@ resources:
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
-      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-role-packages
+      repository: <%= dockerhub_registry %><%= dockerhub_org %>/fissile-role-packages
       username: {{docker-username}}
       password: {{docker-password}}
 
@@ -48,27 +48,27 @@ resources:
     type: s3
     source:
       endpoint: {{s3-endpoint}}
-      access_key_id: {{s3-access-key}}
-      secret_access_key: {{s3-secret-key}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
       bucket: {{s3-bucket}}
-      regexp: <%= release %>-tarball-(.*)\.tgz
+      regexp: <%= s3_release_prefix || "" %><%= release %>-tarball-(.*)\.tgz
 <% end %>
 
   - name: s3.all-releases-tarball
     type: s3
     source:
       endpoint: {{s3-endpoint}}
-      access_key_id: {{s3-access-key}}
-      secret_access_key: {{s3-secret-key}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
       bucket: {{s3-bucket}}
-      regexp: all-releases-tarball-(.*)\.tgz
+      regexp: <%= s3_release_prefix || "" %>all-releases-tarball-(.*)\.tgz
 
 <% roles.each do |role| %>
   - name: docker.role-<%= role['name'] %>
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
-      repository: <%= dockerhub_registry %>/<%= dockerhub_org %>/fissile-<%= role['name'] %>
+      repository: <%= dockerhub_registry %><%= dockerhub_org %>/scf-<%= role['name'] %>
       username: {{docker-username}}
       password: {{docker-password}}
 <% end %>
@@ -79,8 +79,8 @@ resources:
       driver: s3
       bucket: {{s3-bucket}}
       key: scf-version
-      access_key_id: {{s3-access-key}}
-      secret_access_key: {{s3-secret-key}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
       endpoint: {{s3-endpoint}}
 
 <% if job_limit_pool %>
@@ -105,6 +105,7 @@ resource_types:
         repository: mrsixw/concourse-rsync-resource
 
 jobs:
+  <% if manual_pull_sources %>
   - name: pull-sources
     # This job is only used to serialize pulling the sources so we don't try
     # to pull the same thing twice simultaneously.  Doing this allows concourse
@@ -113,13 +114,17 @@ jobs:
       - aggregate:
         - get: src
         - get: ci
+  <% end %>
 
 <% releases.each do |release, path| %>
   - name: create-<%= release %>
     plan:
       - aggregate:
         - get: src
-          passed: [pull-sources]
+          passed:
+          <% if manual_pull_sources %>
+          - pull-sources
+          <% end %>
           trigger: true
         - get: ci
         <% if job_limit_pool %>
@@ -146,7 +151,10 @@ jobs:
     plan:
       - aggregate:
         - get: src
-          passed: [pull-sources]
+          passed:
+          <% if manual_pull_sources %>
+          - pull-sources
+          <% end %>
           trigger: true
         - get: ci
       - task: find-version
@@ -161,7 +169,7 @@ jobs:
   - name: combine-releases
     plan:
       - aggregate:
-        <% releases.keys.each do |release| %>
+        <% releases.keys.sort.each do |release| %>
         - get: s3.<%= release %>-tarball
           passed: [ create-<%= release %> ]
         <% end %>
@@ -169,11 +177,13 @@ jobs:
         - get: src
           passed:
           - find-version
-          <% releases.keys.each do |release| %>
+          <% releases.keys.sort.each do |release| %>
           - create-<%= release %>
           <% end %>
           trigger: true
         - get: semver.scf-version
+          passed:
+          - find-version
       - task: combine-releases
         config:
           platform: linux
@@ -267,7 +277,9 @@ jobs:
 groups:
 - name: releases
   jobs:
+  <% if manual_pull_sources %>
   - pull-sources
+  <% end %>
   <% releases.keys.each do |release| %>
   - create-<%= release %>
   <% end %>
