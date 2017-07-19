@@ -43,32 +43,66 @@ resources:
       username: {{docker-username}}
       password: {{docker-password}}
 
-<% releases.keys.each do |release| %>
-  - name: s3.<%= release %>-tarball
+<% scf_releases.keys.each do |release| %>
+  - name: s3.scf-<%= release %>-tarball
     type: s3
     source:
       endpoint: {{s3-endpoint}}
       access_key_id: <%= s3_access_key %>
       secret_access_key: <%= s3_secret_key %>
       bucket: {{s3-bucket}}
-      regexp: <%= s3_release_prefix || "" %><%= release %>-tarball-(.*)\.tgz
+      regexp: <%= s3_release_prefix || "" %>scf-<%= release %>-tarball-(.*)\.tgz
 <% end %>
 
-  - name: s3.all-releases-tarball
+<% uaa_releases.keys.each do |release| %>
+  - name: s3.uaa-<%= release %>-tarball
     type: s3
     source:
       endpoint: {{s3-endpoint}}
       access_key_id: <%= s3_access_key %>
       secret_access_key: <%= s3_secret_key %>
       bucket: {{s3-bucket}}
-      regexp: <%= s3_release_prefix || "" %>all-releases-tarball-(.*)\.tgz
+      regexp: <%= s3_release_prefix || "" %>uaa-<%= release %>-tarball-(.*)\.tgz
+<% end %>
 
-<% roles.each do |role| %>
-  - name: docker.role-<%= role['name'] %>
+<% unless scf_releases.empty? %>
+  - name: s3.scf-all-releases-tarball
+    type: s3
+    source:
+      endpoint: {{s3-endpoint}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
+      bucket: {{s3-bucket}}
+      regexp: <%= s3_release_prefix || "" %>scf-all-releases-tarball-(.*)\.tgz
+<% end %>
+
+<% unless uaa_releases.empty? %>
+  - name: s3.uaa-all-releases-tarball
+    type: s3
+    source:
+      endpoint: {{s3-endpoint}}
+      access_key_id: <%= s3_access_key %>
+      secret_access_key: <%= s3_secret_key %>
+      bucket: {{s3-bucket}}
+      regexp: <%= s3_release_prefix || "" %>uaa-all-releases-tarball-(.*)\.tgz
+<% end %>
+
+<% scf_roles.each do |role| %>
+  - name: docker.role-scf-<%= role['name'] %>
     type: docker-image
     source:
       insecure_registries: [0.0.0.0/0]
       repository: <%= dockerhub_registry %><%= dockerhub_org %>/scf-<%= role['name'] %>
+      username: {{docker-username}}
+      password: {{docker-password}}
+<% end %>
+
+<% uaa_roles.each do |role| %>
+  - name: docker.role-uaa-<%= role['name'] %>
+    type: docker-image
+    source:
+      insecure_registries: [0.0.0.0/0]
+      repository: <%= dockerhub_registry %><%= dockerhub_org %>/uaa-<%= role['name'] %>
       username: {{docker-username}}
       password: {{docker-password}}
 <% end %>
@@ -116,8 +150,8 @@ jobs:
         - get: ci
   <% end %>
 
-<% releases.each do |release, path| %>
-  - name: create-<%= release %>
+<% scf_releases.each do |release, path| %>
+  - name: create-scf-<%= release %>
     plan:
       - aggregate:
         - get: src
@@ -137,9 +171,42 @@ jobs:
           params:
             RELEASE_NAME: <%= release.sub(/-release$/, '') %>
             RELEASE_DIR: src/<%= path %> # src/ is the concourse input name
-        - put: s3.<%= release %>-tarball
+            FISSILE_REPOSITORY: scf
+        - put: s3.scf-<%= release %>-tarball
           params:
-            file: out/<%= release %>-tarball-*.tgz
+            file: out/scf-<%= release %>-tarball-*.tgz
+        <% if job_limit_pool %>
+        ensure:
+          put: pool.job-limit
+          params: { release: pool.job-limit }
+        <% end %>
+<% end %>
+
+<% uaa_releases.each do |release, path| %>
+  - name: create-uaa-<%= release %>
+    plan:
+      - aggregate:
+        - get: src
+          passed:
+          <% if manual_pull_sources %>
+          - pull-sources
+          <% end %>
+          trigger: true
+        - get: ci
+        <% if job_limit_pool %>
+        - put: pool.job-limit
+          params: { acquire: true }
+        <% end %>
+      - do:
+        - task: package-release
+          file: ci/cf/tasks/create-release.yml
+          params:
+            RELEASE_NAME: <%= release.sub(/-release$/, '') %>
+            RELEASE_DIR: src/<%= path %> # src/ is the concourse input name
+            FISSILE_REPOSITORY: uaa
+        - put: s3.uaa-<%= release %>-tarball
+          params:
+            file: out/uaa-<%= release %>-tarball-*.tgz
         <% if job_limit_pool %>
         ensure:
           put: pool.job-limit
@@ -166,19 +233,20 @@ jobs:
   # Combine all the release tarballs to a single one
   # This is needed bacause fissile want all releases to be built being doing
   # anything, even if we don't require it for the image
-  - name: combine-releases
+<% unless scf_releases.empty? %>
+  - name: combine-scf-releases
     plan:
       - aggregate:
-        <% releases.keys.sort.each do |release| %>
-        - get: s3.<%= release %>-tarball
-          passed: [ create-<%= release %> ]
+        <% scf_releases.keys.sort.each do |release| %>
+        - get: s3.scf-<%= release %>-tarball
+          passed: [ create-scf-<%= release %> ]
         <% end %>
         - get: ci
         - get: src
           passed:
           - find-version
-          <% releases.keys.sort.each do |release| %>
-          - create-<%= release %>
+          <% scf_releases.keys.sort.each do |release| %>
+          - create-scf-<%= release %>
           <% end %>
           trigger: true
         - get: semver.scf-version
@@ -196,29 +264,78 @@ jobs:
           - name: src
           - name: ci
           - name: semver.scf-version
-          <% releases.keys.each do |release| %>
-          - name: s3.<%= release %>-tarball
+          <% scf_releases.keys.each do |release| %>
+          - name: s3.scf-<%= release %>-tarball
+          <% end %>
+          run:
+            path: ci/cf/tasks/combine-releases.sh
+          params:
+          outputs:
+          - name: out
+        params:
+          FISSILE_REPOSITORY: scf
+      - put: s3.scf-all-releases-tarball
+        params:
+          file: out/scf-all-releases-tarball-*.tgz
+<% end %>
+
+<% unless uaa_releases.empty? %>
+  - name: combine-uaa-releases
+    plan:
+      - aggregate:
+        <% uaa_releases.keys.sort.each do |release| %>
+        - get: s3.uaa-<%= release %>-tarball
+          passed: [ create-uaa-<%= release %> ]
+        <% end %>
+        - get: ci
+        - get: src
+          passed:
+          - find-version
+          <% uaa_releases.keys.sort.each do |release| %>
+          - create-uaa-<%= release %>
+          <% end %>
+          trigger: true
+        - get: semver.scf-version
+          passed:
+          - find-version
+      - task: combine-releases
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: ubuntu
+              tag: "14.04"
+          inputs:
+          - name: src
+          - name: ci
+          - name: semver.scf-version
+          <% uaa_releases.keys.each do |release| %>
+          - name: s3.uaa-<%= release %>-tarball
           <% end %>
           run:
             path: ci/cf/tasks/combine-releases.sh
           outputs:
           - name: out
-      - put: s3.all-releases-tarball
         params:
-          file: out/all-releases-tarball-*.tgz
+          FISSILE_REPOSITORY: uaa
+      - put: s3.uaa-all-releases-tarball
+        params:
+          file: out/uaa-all-releases-tarball-*.tgz
+<% end %>
 
-<% roles.each do |role| %>
-  - name: <%= role['name'] %>-image
+<% scf_roles.each do |role| %>
+  - name: scf-<%= role['name'] %>-image
     plan:
       - aggregate:
         - get: s3.fissile-binary
           trigger: true
         - get: src
-          passed: [ combine-releases ]
+          passed: [ combine-scf-releases ]
           trigger: true
         - get: ci
-        - get: s3.all-releases-tarball
-          passed: [ combine-releases ]
+        - get: s3.scf-all-releases-tarball
+          passed: [ combine-scf-releases ]
         - get: docker.fissile-stemcell
           params:
             save: true
@@ -233,20 +350,28 @@ jobs:
           image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
-            RELEASES: <%= releases.keys.join(' ') %>
-            <% releases.each_pair do |release, path| %>
+            RELEASES: <%= scf_releases.keys.join(' ') %>
+            <% scf_releases.each_pair do |release, path| %>
             <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
             <% end %>
+            FISSILE_REPOSITORY: scf
+            PROJECT_DIR: <%= scf_dir %>
+          input_mapping:
+            s3.all-releases-tarball: s3.scf-all-releases-tarball
         - task: build-image
           privileged: true
           file: ci/cf/tasks/build-image.yml
           image: docker.fissile-stemcell
           params:
             ROLE_NAME: <%= role['name'] %>
-            RELEASES: <%= releases.keys.join(' ') %>
-            <% releases.each_pair do |release, path| %>
+            RELEASES: <%= scf_releases.keys.join(' ') %>
+            <% scf_releases.each_pair do |release, path| %>
             <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
             <% end %>
+            FISSILE_REPOSITORY: scf
+            PROJECT_DIR: <%= scf_dir %>
+          input_mapping:
+            s3.all-releases-tarball: s3.scf-all-releases-tarball
           output_mapping:
             out: fissile-output
         - put: docker.fissile-role-packages
@@ -260,7 +385,84 @@ jobs:
           file: ci/cf/tasks/adjust-role-image-from.yml
           params:
             ROLE_NAME: <%= role['name'] %>
-        - put: docker.role-<%= role['name'] %>
+            FISSILE_REPOSITORY: scf
+        - put: docker.role-scf-<%= role['name'] %>
+          params:
+            build: adjusted-role-image
+            load_base: docker.fissile-role-packages
+            tag: adjusted-role-image/<%= role['name'] %>.tag
+          get_params:
+            skip_download: true
+        <% if job_limit_pool %>
+        ensure:
+          put: pool.job-limit
+          params: { release: pool.job-limit }
+        <% end %>
+<% end %>
+
+<% uaa_roles.each do |role| %>
+  - name: uaa-<%= role['name'] %>-image
+    plan:
+      - aggregate:
+        - get: s3.fissile-binary
+          trigger: true
+        - get: src
+          passed: [ combine-uaa-releases ]
+          trigger: true
+        - get: ci
+        - get: s3.uaa-all-releases-tarball
+          passed: [ combine-uaa-releases ]
+        - get: docker.fissile-stemcell
+          params:
+            save: true
+        <% if job_limit_pool %>
+        - put: pool.job-limit
+          params: { acquire: true }
+        <% end %>
+      - do:
+        - task: compile-role
+          file: ci/cf/tasks/compile-role.yml
+          privileged: true # mount namespaces
+          image: docker.fissile-stemcell
+          params:
+            ROLE_NAME: <%= role['name'] %>
+            RELEASES: <%= uaa_releases.keys.join(' ') %>
+            <% uaa_releases.each_pair do |release, path| %>
+            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
+            FISSILE_REPOSITORY: uaa
+            PROJECT_DIR: <%= uaa_dir %>
+          input_mapping:
+            s3.all-releases-tarball: s3.uaa-all-releases-tarball
+        - task: build-image
+          privileged: true
+          file: ci/cf/tasks/build-image.yml
+          image: docker.fissile-stemcell
+          params:
+            ROLE_NAME: <%= role['name'] %>
+            RELEASES: <%= uaa_releases.keys.join(' ') %>
+            <% uaa_releases.each_pair do |release, path| %>
+            <%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
+            <% end %>
+            FISSILE_REPOSITORY: uaa
+            PROJECT_DIR: <%= uaa_dir %>
+          input_mapping:
+            s3.all-releases-tarball: s3.uaa-all-releases-tarball
+          output_mapping:
+            out: fissile-output
+        - put: docker.fissile-role-packages
+          params:
+            build: fissile-output/role-packages
+            load_base: docker.fissile-stemcell
+            tag: fissile-output/role-packages.tag
+          get_params:
+            save: true
+        - task: adjust-role-image-from
+          file: ci/cf/tasks/adjust-role-image-from.yml
+          params:
+            ROLE_NAME: <%= role['name'] %>
+            FISSILE_REPOSITORY: uaa
+        - put: docker.role-uaa-<%= role['name'] %>
           params:
             build: adjusted-role-image
             load_base: docker.fissile-role-packages
@@ -280,13 +482,28 @@ groups:
   <% if manual_pull_sources %>
   - pull-sources
   <% end %>
-  <% releases.keys.each do |release| %>
-  - create-<%= release %>
+  <% scf_releases.keys.each do |release| %>
+  - create-scf-<%= release %>
+  <% end %>
+  <% uaa_releases.keys.each do |release| %>
+  - create-uaa-<%= release %>
   <% end %>
   - find-version
-  - combine-releases
-- name: images
-  jobs:
-  <% roles.each do |role| %>
-  - <%= role['name'] %>-image
+  <% unless scf_releases.empty? %>
+  - combine-scf-releases
   <% end %>
+  <% unless uaa_releases.empty? %>
+  - combine-uaa-releases
+  <% end %>
+- name: scf-images
+  jobs:
+  <% scf_roles.each do |role| %>
+  - scf-<%= role['name'] %>-image
+  <% end %>
+<% unless uaa_roles.empty? %>
+- name: uaa-images
+  jobs:
+  <% uaa_roles.each do |role| %>
+  - uaa-<%= role['name'] %>-image
+  <% end %>
+<% end %>

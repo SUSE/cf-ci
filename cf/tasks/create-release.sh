@@ -6,6 +6,17 @@ set -o xtrace
 
 mkdir bosh-cache
 
+for var in FISSILE_REPOSITORY RELEASE_NAME RELEASE_DIR ; do
+    has_missing=0
+    if test -z "${!var:-}" ; then
+        printf "Required variable %s is missing\n" "${var}" >&2
+        has_missing=1
+    fi
+    if test "${has_missing}" = 1 ; then
+        exit 1
+    fi
+done
+
 RELEASE_DIR=${RELEASE_DIR}
 RELEASE_NAME=${RELEASE_NAME:-$(basename "${RELEASE_DIR}" -release)}
 if test -r "${RELEASE_DIR}/.ruby-version" ; then
@@ -29,7 +40,7 @@ function field() {
     # We need to delete that quoting
     awk "/^${1}:/ { print \$2 }" < "${release_info}" | tr -d \"\'
 }
-tar_name="${RELEASE_NAME}-release-tarball-$(field version)-$(field commit_hash).tgz"
+tar_name="${FISSILE_REPOSITORY}-${RELEASE_NAME}-release-tarball-$(field version)-$(field commit_hash).tgz"
 
 mkdir stage
 mv "${PWD}/bosh-cache"             stage/bosh-cache

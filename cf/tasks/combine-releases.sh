@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -o errexit -o nounset
+
 mkdir work
 
 version="$(tr -d '[:space:]' < semver.scf-version/version)"
@@ -10,4 +13,4 @@ for i in "${PWD}/s3."*-release-tarball ; do
     tar x -C "work/${release_name}" -zf "${i}"/*-release-tarball-*.tgz
 done
 
-tar c -C work -zf "${PWD}/out/all-releases-tarball-${version}.tgz" .
+tar c -C work -zf "${PWD}/out/${FISSILE_REPOSITORY}-all-releases-tarball-${version}.tgz" --checkpoint=.1000 .
