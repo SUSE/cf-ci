@@ -1,0 +1,16 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/cf-ci
+inputs:
+- name: src
+- name: ci
+- name: s3.certstrap-binary
+- name: s3.kube-dist
+- name: semver.scf-version
+run:
+  path: ci/cf/tasks/package-bits.sh
+outputs:
+- name: out
