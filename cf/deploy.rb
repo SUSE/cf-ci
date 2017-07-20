@@ -10,13 +10,22 @@ require 'yaml'
 
 ROLE_MANIFEST_RELPATH = 'container-host-files/etc/hcf/config/role-manifest.yml'
 ENVRC_RELPATH = '.envrc'
+UAA_RELPATH = 'src/uaa-fissile-release'
+UAA_ROLE_MANIFEST_RELPATH = 'role-manifest.yml'
+UAA_ENVRC_RELPATH = '.envrc'
 SECRETS_RELPATH = 'secure/concourse-secrets.yml.gpg'
 
 opts = OpenStruct.new(
-    scf_dir: '../../scf',
     secrets_dir: '../../cloudfoundry',
     prefix: '',
-    print: false)
+    print: false,
+    scf: OpenStruct.new(
+        dir: '../../scf',
+        ),
+    uaa: OpenStruct.new(
+        enabled: true,
+        ),
+    )
 parser = OptionParser.new do |parser|
     parser.banner = (<<-EOF).gsub(/^ +/, '')
         This script will deploy the pipeline to build SCF directly into concourse.
@@ -32,7 +41,16 @@ parser = OptionParser.new do |parser|
         unless File.exist? role_manifest
             fail "Role manifest not found in SCF directory #{scf_dir}"
         end
-        opts.scf_dir = scf_dir
+        opts.scf.dir = scf_dir
+        if opts.uaa.dir.nil?
+            uaa_dir = File.join(scf_dir, UAA_RELPATH)
+            uaa_role_manifest = File.jam(uaa_dir, UAA_ROLE_MANIFEST_RELPATH)
+            if File.exist? uaa_role_manifest
+                opts.uaa.dir = uaa_dir
+            else
+                puts "UAA role manifest not found at #{uaa_role_manifest}"
+            end
+        end
     end
     parser.on('--secrets-dir=DIR', 'Path to secrets repository checkout') do |secrets_dir|
         secrets_path = File.join(secrets_dir, SECRETS_RELPATH)
@@ -50,31 +68,15 @@ parser = OptionParser.new do |parser|
     parser.on('--prefix=PREFIX', 'Pipeline name prefix') do |prefix|
         opts.prefix = prefix.gsub(/-*$/, '') + '-'
     end
+    parser.on('--uaa[=no]', TrueClass, 'Enable building UAA components (defaults to building them)') do |v|
+        opts.uaa.enabled = v
+    end
 end
 parser.parse!
 
-opts.scf_dir = File.absolute_path(opts.scf_dir)
-opts.role_manifest = File.absolute_path(File.join(opts.scf_dir, ROLE_MANIFEST_RELPATH))
-fail "Role manifest not found at #{opts.role_manifest}" unless File.exist? opts.role_manifest
-
-opts.envrc = File.absolute_path(File.join(opts.scf_dir, ENVRC_RELPATH))
-fail ".envrc not found at #{opts.envrc}" unless File.exist? opts.envrc
-
-role_manifest = YAML.load_file(opts.role_manifest)
-release_paths = Open3.capture2('bash', '-c', "source '#{opts.envrc}' && echo $FISSILE_RELEASE").first.chomp.split(',')
-
 pipeline, variant = ARGV.take(2)
 
-# The releases we have. The key should be the same as the start of the generated
-# file name (e.g. cf-release-tarball-nnn.tgz); each should have two items,
-# "target" (the make target to run), and "path" (relative path from
-# scf-infrastructure to the release directory).
-releases = Hash[release_paths.map do |path|
-    name = File.basename(path)
-    name += '-release' unless name.end_with? '-release'
-    [name, Pathname.new(path).relative_path_from(Pathname.new(opts.scf_dir))]
-end]
-
+# Load the pipeline configuration YAML template file
 pipeline_name = "#{opts.prefix}scf-#{pipeline}"
 template = open("scf-#{pipeline}.yaml.erb", 'r') do |f|
     ERB.new(f.read, nil, '<>')
@@ -98,13 +100,51 @@ vars.select {|name| name == 'dockerhub-registry'}.map do |name, value|
     vars[name] = [nil, '', 'index.docker.io'].include?(value) ? '' : "#{value.sub(/\/+$/, '')}/"
 end
 
+opts.scf.dir = File.absolute_path(opts.scf.dir)
+opts.scf.role_manifest = File.absolute_path(File.join(opts.scf.dir, ROLE_MANIFEST_RELPATH))
+fail "Role manifest not found at #{opts.scf.role_manifest}" unless File.exist? opts.scf.role_manifest
+
+opts.scf.envrc = File.absolute_path(File.join(opts.scf.dir, ENVRC_RELPATH))
+fail ".envrc not found at #{opts.scf.envrc}" unless File.exist? opts.scf.envrc
+
+if opts.uaa.enabled
+    opts.uaa.dir = File.absolute_path(UAA_RELPATH, opts.scf.dir)
+    fail "Failed to find UAA submodule" unless Dir.exist? opts.uaa.dir
+    opts.uaa.role_manifest = File.absolute_path(UAA_ROLE_MANIFEST_RELPATH, opts.uaa.dir)
+    fail "Failed to find UAA role manifest" unless File.exist? opts.uaa.role_manifest
+    opts.uaa.envrc = File.absolute_path(UAA_ENVRC_RELPATH, opts.uaa.dir)
+    fail "Failed to find UAA envrc" unless File.exist? opts.uaa.envrc
+end
+
 # Expose variables to the ERB template
 b = binding
 vars.each_pair do |name, value|
     b.local_variable_set(name.gsub('-', '_'), value)
 end
-b.local_variable_set('roles',
-    role_manifest['roles'].reject { |r| r['type'] == 'docker' } )
+b.local_variable_set 'uaa_releases', {}
+b.local_variable_set 'uaa_roles', []
+
+def configure_project(b, project_name, opts)
+    config = opts[project_name]
+    role_manifest = YAML.load_file(config.role_manifest)
+    release_paths = Open3.capture2('bash', '-c', "source '#{config.envrc}' && echo $FISSILE_RELEASE").first.chomp.split(',')
+    roles = role_manifest['roles'].reject { |r| r['type'] == 'docker' }
+
+    # The releases we have. The key should be the release name (e.g.
+    # "nats-release"); the value is the relative path to the release directory.
+    releases = Hash[release_paths.map do |path|
+        name = File.basename(path)
+        name += '-release' unless name.end_with? '-release'
+        [name, Pathname.new(path).relative_path_from(Pathname.new(opts.scf.dir))]
+    end]
+    dir_relpath = Pathname.new(config.dir).relative_path_from(Pathname.new(opts.scf.dir))
+    b.local_variable_set("#{project_name}_releases", releases)
+    b.local_variable_set("#{project_name}_roles", roles)
+    b.local_variable_set("#{project_name}_dir", dir_relpath)
+end
+
+configure_project b, 'scf', opts
+configure_project b, 'uaa', opts if opts.uaa.enabled
 
 if opts.print
     # Dry run mode
