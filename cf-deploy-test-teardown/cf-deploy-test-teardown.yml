@@ -5,9 +5,20 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    branch: master
+    #branch: master
+    branch: prabal-helm-spike
     paths:
     - cf-deploy-test-teardown/*
+
+- name: s3.scf-helm-charts
+  type: s3
+  source:
+    access_key_id: {{s3-access-key}}
+    bucket: kube-config
+    endpoint: {{s3-endpoint}}
+    regexp: hcf-kube-charts-1.8.8-pre+cf251.486.g2c903fa8.zip
+    secret_access_key: {{s3-secret-key}}
+    private: true
 
 - name: s3.scf-kube-yml
   type: s3
@@ -24,7 +35,8 @@ resources:
   source:
     uri: git@github.com:SUSE/cf-ci-pools.git
     private_key: {{github-private-key}}
-    branch: k8s-hosts
+    #branch: k8s-hosts
+    branch: prabal-helm-spike
     pool: k8s-hosts
 
 jobs:
@@ -33,19 +45,21 @@ jobs:
   - aggregate:
     - get: cf-ci
       trigger: true
+    - get: s3.scf-helm-charts
+      trigger: true
     - get: s3.scf-kube-yml
       trigger: true
     - put: pool.k8s-hosts
       params: {acquire: true}
   - task: cf-deploy
     file: cf-ci/cf-deploy-test-teardown/tasks/cf-deploy.yml
-  - task: cf-smoke-tests
-    file: cf-ci/cf-deploy-test-teardown/tasks/smoke-tests.yml
-  - task: acceptance-tests-brain
-    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests-brain.yml
-  - task: acceptance-tests
-    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests.yml
-  - task: cf-teardown
-    file: cf-ci/cf-deploy-test-teardown/tasks/cf-teardown.yml
+  # - task: cf-smoke-tests
+  #   file: cf-ci/cf-deploy-test-teardown/tasks/smoke-tests.yml
+  # - task: acceptance-tests-brain
+  #   file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests-brain.yml
+  # - task: acceptance-tests
+  #   file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests.yml
+  # - task: cf-teardown
+  #   file: cf-ci/cf-deploy-test-teardown/tasks/cf-teardown.yml
   - put: pool.k8s-hosts
     params: {release: pool.k8s-hosts}
