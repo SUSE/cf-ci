@@ -31,7 +31,7 @@ s3-certstrap-bucket: cf-opensusefs2
 s3-certstrap-prefix: certstrap/
 
 # Files we generate
-s3-bucket: cf-opensusefs2
+s3-bucket: &s3-bucket cf-opensusefs2
 s3-kube-bucket: *s3-bucket
 s3-helm-bucket: *s3-bucket
 s3-endpoint: ~
