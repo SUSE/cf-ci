@@ -13,7 +13,15 @@ job-limit-repo: git@github.com:SUSE/cf-ci-pools.git
 job-limit-branch: scf-deploy
 job-limit-pool: scf-deploy
 
+# Binaries built elsewhere
 s3-fissile-bucket: cf-opensusefs2
+s3-fissile-prefix: fissile/
+s3-stampy-bucket: cf-opensusefs2
+s3-stampy-prefix: stampy/
+s3-certstrap-bucket: cf-opensusefs2
+s3-certstrap-prefix: certstrap/
+
+# Files we generate
 s3-bucket: cf-opensusefs2
 s3-kube-bucket: *s3-bucket
 s3-helm-bucket: *s3-bucket

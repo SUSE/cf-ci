@@ -25,17 +25,15 @@ resources:
       access_key_id: {{aws-access-key}}
       secret_access_key: {{aws-secret-key}}
       bucket: {{s3-fissile-bucket}}
-      regexp: fissile/fissile-(.*)\.linux-amd64\.tgz
+      regexp: <%= s3_fissile_prefix || "" %>fissile-(.*)\.linux-amd64\.tgz
 
   - name: s3.stampy-binary
     type: s3
     source:
-      access_key_id: {{s3-access-key}}
-      endpoint: {{s3-endpoint}}
-      secret_access_key: {{s3-secret-key}}
-      bucket: stampy
-      regexp: stampy-(.*)\.g.*linux-amd64\.tgz
-      private: true
+      access_key_id: {{aws-access-key}}
+      secret_access_key: {{aws-secret-key}}
+      bucket: {{s3-fissile-bucket}}
+      regexp: <%= s3_stampy_prefix || "" %>stampy-(.*)\.g.*linux-amd64\.tgz
 
   - name: s3.certstrap-binary
     type: s3
@@ -43,7 +41,7 @@ resources:
       access_key_id: {{aws-access-key}}
       secret_access_key: {{aws-secret-key}}
       bucket: {{s3-fissile-bucket}}
-      regexp: certstrap/certstrap-(.*)\.linux-amd64\.tgz
+      regexp: <%= s3_certstrap_prefix || "" %>certstrap-(.*)\.linux-amd64\.tgz
 
   - name: docker.fissile-stemcell
     type: docker-image
