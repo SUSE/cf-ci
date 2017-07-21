@@ -3,11 +3,15 @@
 set -ex
 
 #NOTES:
-zypper --non-interactive addrepo http://download.opensuse.org/repositories/Virtualization:containers/openSUSE_Leap_42.2/Virtualization:containers.repo
-zypper  --non-interactive --gpg-auto-import-keys refresh
-zypper --non-interactive install helm
-
-
+bin_dir="${bin_dir:-output/bin}"
+helm_url="${helm_url:-https://kubernetes-helm.storage.googleapis.com/helm-v${HELM_VERSION}-linux-amd64.tar.gz}"
+#zypper --non-interactive addrepo http://download.opensuse.org/repositories/Virtualization:containers/openSUSE_Leap_42.2/Virtualization:containers.repo
+#zypper  --non-interactive --gpg-auto-import-keys refresh
+mkdir -p "${bin_dir}"
+bin_dir="$(cd "${bin_dir}" && pwd)"
+zypper --non-interactive install wget
+wget -q "${helm_url}" -O - | tar xz -C "${bin_dir}" --strip-components=1 linux-amd64/helm
+chmod a+x "${bin_dir}/helm"
 
 
 #export k8s-host details from pool
