@@ -14,10 +14,19 @@ job-limit-branch: scf-deploy
 job-limit-pool: scf-deploy
 
 # Binaries built elsewhere
+s3-fissile-endpoint: ~
+s3-fissile-access-key: *aws-access-key
+s3-fissile-secret-key: *aws-secret-key
 s3-fissile-bucket: cf-opensusefs2
 s3-fissile-prefix: fissile/
-s3-stampy-bucket: cf-opensusefs2
-s3-stampy-prefix: stampy/
+s3-stampy-endpoint: *s3-endpoint
+s3-stampy-access-key: *s3-access-key
+s3-stampy-secret-key: *s3-secret-key
+s3-stampy-bucket: stampy
+s3-stampy-prefix: ""
+s3-certstrap-endpoint: ~
+s3-certstrap-access-key: *aws-access-key
+s3-certstrap-secret-key: *aws-secret-key
 s3-certstrap-bucket: cf-opensusefs2
 s3-certstrap-prefix: certstrap/
 

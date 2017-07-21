@@ -20,27 +20,28 @@ resources:
   - name: s3.fissile-binary
     type: s3
     source:
-      # Fissile is being pushed to Amazon S3 for world visibility
-      # endpoint: {{s3-endpoint}}
-      access_key_id: {{aws-access-key}}
-      secret_access_key: {{aws-secret-key}}
+      endpoint: {{s3-fissile-endpoint}}
+      access_key_id: {{s3-fissile-access-key}}
+      secret_access_key: {{s3-fissile-secret-key}}
       bucket: {{s3-fissile-bucket}}
       regexp: <%= s3_fissile_prefix || "" %>fissile-(.*)\.linux-amd64\.tgz
 
   - name: s3.stampy-binary
     type: s3
     source:
-      access_key_id: {{aws-access-key}}
-      secret_access_key: {{aws-secret-key}}
-      bucket: {{s3-fissile-bucket}}
+      endpoint: {{s3-stampy-endpoint}}
+      access_key_id: {{s3-stampy-access-key}}
+      secret_access_key: {{s3-stampy-secret-key}}
+      bucket: {{s3-stampy-bucket}}
       regexp: <%= s3_stampy_prefix || "" %>stampy-(.*)\.g.*linux-amd64\.tgz
 
   - name: s3.certstrap-binary
     type: s3
     source:
-      access_key_id: {{aws-access-key}}
-      secret_access_key: {{aws-secret-key}}
-      bucket: {{s3-fissile-bucket}}
+      endpoint: {{s3-certstrap-endpoint}}
+      access_key_id: {{s3-certstrap-access-key}}
+      secret_access_key: {{s3-certstrap-secret-key}}
+      bucket: {{s3-certstrap-bucket}}
       regexp: <%= s3_certstrap_prefix || "" %>certstrap-(.*)\.linux-amd64\.tgz
 
   - name: docker.fissile-stemcell
