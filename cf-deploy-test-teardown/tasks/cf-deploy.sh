@@ -3,13 +3,15 @@
 set -ex
 
 #NOTES:
-bin_dir="${bin_dir:-output/bin}"
+export HELM_VERSION="2.4.2"
+bin_dir="${bin_dir:-/usr/local/bin/}"
 helm_url="${helm_url:-https://kubernetes-helm.storage.googleapis.com/helm-v${HELM_VERSION}-linux-amd64.tar.gz}"
 #zypper --non-interactive addrepo http://download.opensuse.org/repositories/Virtualization:containers/openSUSE_Leap_42.2/Virtualization:containers.repo
 #zypper  --non-interactive --gpg-auto-import-keys refresh
-mkdir -p "${bin_dir}"
-bin_dir="$(cd "${bin_dir}" && pwd)"
+#mkdir -p "${bin_dir}"
+#bin_dir="$(cd "${bin_dir}" && pwd)"
 zypper --non-interactive install wget
+zypper --non-interactive install tar
 wget -q "${helm_url}" -O - | tar xz -C "${bin_dir}" --strip-components=1 linux-amd64/helm
 chmod a+x "${bin_dir}/helm"
 
@@ -29,6 +31,7 @@ kubectl config use-context ${K8S_HOSTNAME}
 
 #Tiller needs to be on k8shost and must not be part of this script
 helm init
+sleep 60
 
 unzip s3.scf-kube-yml/scf-kube-* -d scf-kube-yml
 unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
