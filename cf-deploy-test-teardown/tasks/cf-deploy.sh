@@ -1,6 +1,14 @@
 #!/bin/bash
 
-set -e
+set -ex
+
+#NOTES:
+zypper --non-interactive addrepo http://download.opensuse.org/repositories/Virtualization:containers/openSUSE_Leap_42.2/Virtualization:containers.repo
+zypper  --non-interactive refresh
+zypper --non-interactive install helm
+
+
+
 
 #export k8s-host details from pool
 set -a; source pool.k8s-hosts/metadata; set +a
@@ -11,29 +19,32 @@ sshpass -e ssh-copy-id -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP}
 ssh -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP} 'bash -s' < cf-ci/cf-deploy-test-teardown/tasks/k8s-ready-state-check.sh
 
 #target the kube cluster
-kubectl config set-cluster --server=${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNAME}
+kubectl config set-cluster --server=http://${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNAME}
 kubectl config set-context ${K8S_HOSTNAME} --cluster=${K8S_HOSTNAME}
 kubectl config use-context ${K8S_HOSTNAME}
+
+#Tiller needs to be on k8shost and must not be part of this script
+helm init
 
 unzip s3.scf-kube-yml/scf-kube-* -d scf-kube-yml
 unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
 
 #Deploy UAA
-kubectl create namespace uaa
+#kubectl create namespace uaa
 #kubectl create -n uaa -f scf-kube-yml/uaa/bosh/
 #kubectl create -n uaa -f scf-kube-yml/uaa/kube-test/exposed-ports.yml
-helm install scf-helm-charts/uaa/helm \
-     --namespace "uaa" \
-     --set "env.DOMAIN=${DOMAIN}" \
-     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-     --set "kube.external_ip=${K8S_HOST_IP}"
+# helm install scf-helm-charts/uaa/helm \
+#      --namespace "uaa" \
+#      --set "env.DOMAIN=${DOMAIN}" \
+#      --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
+#      --set "kube.external_ip=${K8S_HOST_IP}"
 
 
 #Deploy CF
 kubectl create namespace cf
 #kubectl create -n cf -f scf-kube-yml/cf/bosh
 #kubectl create -n cf -f scf-kube-yml/cf/bosh-task/post-deployment-setup.yml
-helm install scf-helm-charts/cf/helm \
+helm install scf-helm-charts/helm \
      --namespace "cf" \
      --set "env.CLUSTER_ADMIN_PASSWORD=$CLUSTER_ADMIN_PASSWORD" \
      --set "env.DOMAIN=${DOMAIN}" \
