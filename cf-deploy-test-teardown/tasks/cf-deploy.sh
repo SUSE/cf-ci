@@ -4,7 +4,7 @@ set -ex
 
 #NOTES:
 zypper --non-interactive addrepo http://download.opensuse.org/repositories/Virtualization:containers/openSUSE_Leap_42.2/Virtualization:containers.repo
-zypper  --non-interactive refresh
+zypper  --non-interactive --gpg-auto-import-keys refresh
 zypper --non-interactive install helm
 
 
