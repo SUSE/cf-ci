@@ -19,7 +19,7 @@ mkdir tmp
 
 # kube configs
 # helm charts
-( cd tmp ; unzip ../s3.kube-dist/scf-kube-*.zip )
+unzip ../s3.kube-dist/scf-kube-*.zip -d tmp
 
 # "Am I Ok" for k8s
 cp src/bin/dev/k8s-ready-state-check.sh tmp/
