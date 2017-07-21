@@ -7,39 +7,43 @@ set -o nounset
 #find . -print
 
 # Determine configuration.
-
 VERSION=$(cat semver.scf-version/version)
-PLATFORM=$(echo $(basename s3.certstrap-binary/certstrap-*.tgz .tgz)|sed -e 's|\(.*\)\.\([^.]*\)$|\2|')
-ARCHIVE="${PWD}/out/scf-${PLATFORM}-${VERSION}.zip"
 
-echo Packaging for $PLATFORM, taking $VERSION ...
+# Provide the certstrap binaries to SCF, for its cert-generator (CG).
+# We rename them a bit (strip version) into the form expected by CG.
+for OS in linux darwin
+do
+    cp s3.certstrap-binary.${OS}/certstrap-*.${OS}-amd64.tgz \
+	src/certstrap-${OS}-amd64.tgz
+done
+# Create the directory the cert-gen assumes to exist
+mkdir src/output
+( cd src ; make cert-generator )
 
-# Assembling the pieces ...
-mkdir tmp
+# We now have `src/output/scf-cert-generator.*-amd64.tgz`
 
-# kube configs
-# helm charts
-unzip ../s3.kube-dist/scf-kube-*.zip -d tmp
+for OS in linux darwin
+do
+    ARCHIVE="${PWD}/out/scf-${OS}-amd64-${VERSION}.zip"
 
-# "Am I Ok" for k8s
-cp src/bin/dev/k8s-ready-state-check.sh tmp/
+    echo Packaging for $OS, taking $VERSION ...
 
-# NOTE: Code below is a variant of `src/make/cert-generator`, modified
-# to take the certstrap binary from the task's input instead of
-# directly from AWS S3, etc. Further modified to not generate a
-# tarball, but leave things in the area of assembly.
+    # Assembling the pieces ...
+    mkdir tmp
 
-# certstrap binary
-mkdir -p tmp/scripts
-cat s3.certstrap-binary/certstrap-*.tgz | tar -xzC "tmp/scripts/" certstrap
+    # kube configs
+    # helm charts
+    unzip s3.kube-dist/scf-kube-*.zip -d tmp
 
-# certgen scripts
-sed "s#@@CERTSTRAP_OS@@#${PLATFORM}#" \
-    "src/bin/cert-generator-wrapper.sh.in" \
-    > "tmp/cert-generator.sh"
-chmod a+x "tmp/cert-generator.sh"
-cp "src/bin/generate-dev-certs.sh" "tmp/scripts/generate-scf-certs.sh"
-cp "src/src/uaa-fissile-release/generate-certs.sh" "tmp/scripts/generate-uaa-certs.sh"
+    # "Am I Ok" for k8s
+    cp src/bin/dev/k8s-ready-state-check.sh tmp
 
-# Package the assembly. This directly places it into the output
-( cd tmp ; zip -r9 $ARCHIVE * )
+    # cert scripts, and
+    # certstrap
+    tar -xzf src/output/scf-cert-generator.${OS}-amd64.tgz -C tmp
+
+    # Package the assembly. This directly places it into the output
+    ( cd tmp ; zip -r9 $ARCHIVE * )
+
+    rm -rf tmp
+done
