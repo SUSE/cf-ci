@@ -1,10 +1,8 @@
 #!/bin/bash
 
-set -x
+set -o xtrace
 set -o errexit
 set -o nounset
-
-#find . -print
 
 # Determine configuration.
 VERSION=$(cat semver.scf-version/version)
@@ -18,7 +16,7 @@ do
 done
 # Create the directory the cert-gen assumes to exist
 mkdir src/output
-( cd src ; make cert-generator )
+make -C src cert-generator
 
 # We now have `src/output/scf-cert-generator.*-amd64.tgz`
 
@@ -36,7 +34,7 @@ do
     unzip s3.kube-dist/scf-kube-*.zip -d tmp
 
     # "Am I Ok" for k8s
-    cp src/bin/dev/k8s-ready-state-check.sh tmp
+    cp src/bin/dev/k8s-ready-state-check.sh tmp/
 
     # cert scripts, and
     # certstrap

@@ -604,9 +604,6 @@ jobs:
 #        acl: public-read
 
 groups:
-- name: packaging
-  jobs:
-  - package-bits
 - name: releases
   jobs:
   <% if manual_pull_sources %>
@@ -640,3 +637,6 @@ groups:
 - name: extras
   jobs:
   - kube-dist
+- name: packaging
+  jobs:
+  - package-bits
