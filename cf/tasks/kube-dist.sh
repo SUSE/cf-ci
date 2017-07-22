@@ -16,7 +16,7 @@ tar -xf s3.stampy-binary/stampy-*.linux-amd64.tgz -C s3.stampy-binary stampy
 export PATH=$PATH:$PWD/s3.stampy-binary
 
 tar -xf s3.certstrap-binary.linux/certstrap-*.linux-amd64.tgz -C s3.certstrap-binary certstrap
-export PATH=$PATH:$PWD/s3.certstrap-binary
+export PATH=$PATH:$PWD/s3.certstrap-binary.linux
 
 source src/.envrc
 export FISSILE_WORK_DIR="${PWD}/fissile-work-dir"
