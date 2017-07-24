@@ -170,15 +170,14 @@ resources:
       regexp: <%= s3_kube_prefix || "" %>scf-kube-(.*).zip$
       secret_access_key: {{s3-secret-key}}
 
-#  Commented out because currently it lives in `scf-kube-*.zip`
-#  - name: s3.helm-dist
-#    type: s3
-#    source:
-#      access_key_id: {{s3-access-key}}
-#      bucket: {{s3-helm-bucket}}
-#      endpoint: {{s3-endpoint}}
-#      regexp: <%= s3_helm_prefix || "" %>scf-helm-(.*).zip$
-#      secret_access_key: {{s3-secret-key}}
+  - name: s3.helm-dist
+    type: s3
+    source:
+      access_key_id: {{s3-access-key}}
+      bucket: {{s3-helm-bucket}}
+      endpoint: {{s3-endpoint}}
+      regexp: <%= s3_helm_prefix || "" %>scf-helm-(.*).zip$
+      secret_access_key: {{s3-secret-key}}
 
 <% if job_limit_pool %>
   - name: pool.job-limit
@@ -598,10 +597,10 @@ jobs:
       params:
         file: out/scf-kube-*.zip
         acl: public-read
-#    - put: s3.helm-dist
-#      params:
-#        file: out/scf-helm-*.zip
-#        acl: public-read
+    - put: s3.helm-dist
+      params:
+        file: out/scf-helm-*.zip
+        acl: public-read
 
 groups:
 - name: releases
