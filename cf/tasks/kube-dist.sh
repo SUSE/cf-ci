@@ -20,7 +20,9 @@ tar -xf s3.certstrap-binary.linux/certstrap-*.linux-amd64.tgz \
     certstrap
 export PATH=$PATH:$PWD/s3.certstrap-binary.linux
 
-source src/.envrc
+pushd src
+source .envrc
+popd
 export FISSILE_WORK_DIR="${PWD}/fissile-work-dir"
 mkdir -p "${FISSILE_CACHE_DIR}"
 
@@ -37,25 +39,9 @@ mkdir -p "${FISSILE_CACHE_DIR}"
 )
 
 (
-    # Build UAA bits
-    cd src
-    source .envrc
-    cd src/uaa-fissile-release
-    source .envrc
-    # XXX marky hack until uaa-fissile-release#35 lands
-    perl -p -i -e 's@head -c 32 /dev/urandom \| xxd -ps -c 32@LC_CTYPE=C tr -cd 0-9a-f < /dev/urandom \| head -c64@' generate-certs.sh
-    make certs kube helm
-)
-(
-    # Workaround for dependencies on UAA that are silly
-    cd src
-    source .envrc
-    bin/settings/kube/ca.sh
-    head make/kube
-    make/kube
-    # XXX marky Helm is busted WRT to FISSILE_OUTPUT_DIR
-    /usr/bin/env FISSILE_OUTPUT_DIR="${PWD}/helm" make/kube helm
-    make/kube-dist
+    export FISSILE_BINARY="$PWD/s3.fissile-binary/fissile"
+    touch "${FISSILE_BINARY}" # ensure we don't try to install tools
+    timeout 5m make -C src uaa-certs kube helm kube-dist
 )
 
-mv src/scf-kube-*.zip out/
+mv src/scf-{kube,helm}-*.zip out/
