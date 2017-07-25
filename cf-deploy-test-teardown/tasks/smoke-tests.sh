@@ -11,8 +11,9 @@ kubectl config set-cluster --server=${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNA
 kubectl config set-context ${K8S_HOSTNAME} --cluster=${K8S_HOSTNAME}
 kubectl config use-context ${K8S_HOSTNAME}
 
-unzip s3.scf-kube-yml/scf-kube-* -d scf-kube-yml
+unzip s3.scf-alpha/scf-linux-amd64-1.8.8-* -d scf-alpha
 
-image=$(awk '/image/ { print $2 }' < scf-kube-yml/cf/bosh-task/smoke-tests.yml)
+image=$(awk '/image/ { print $2 }' < scf-alpha/kube/cf/bosh-task/smoke-tests.yml)
+sed -i 's/cf-dev\.io/${DOMAIN}/g' scf-alpha/kube/cf/bosh-task/smoke-tests.yml
 jsonify() { ruby -r yaml -r json -e 'YAML.load_stream(File.read "'"$1"'").each { |yaml| puts yaml.to_json}'; }
-kubectl run -n cf --attach --restart=Never --image ${image} --overrides="$(jsonify scf-kube-yml/cf/bosh-task/smoke-tests.yml)" smoke-tests
+kubectl run -n cf --attach --restart=Never --image ${image} --overrides="$(jsonify scf-alpha/kube/cf/bosh-task/smoke-tests.yml)" smoke-tests

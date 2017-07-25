@@ -2,6 +2,8 @@
 
 set -ex
 
+
+
 #NOTES:
 export HELM_VERSION="2.4.2"
 bin_dir="${bin_dir:-/usr/local/bin/}"
@@ -30,28 +32,29 @@ kubectl config set-context ${K8S_HOSTNAME} --cluster=${K8S_HOSTNAME}
 kubectl config use-context ${K8S_HOSTNAME}
 
 #Tiller needs to be on k8shost and must not be part of this script
-helm init
-sleep 60
+# helm init
+# sleep 60
 
-unzip s3.scf-kube-yml/scf-kube-* -d scf-kube-yml
-unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
+unzip s3.scf-alpha/scf-linux-amd64-1.8.8-* -d scf-alpha
+#unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
+
 
 #Deploy UAA
-#kubectl create namespace uaa
+kubectl create namespace uaa
 #kubectl create -n uaa -f scf-kube-yml/uaa/bosh/
 #kubectl create -n uaa -f scf-kube-yml/uaa/kube-test/exposed-ports.yml
-# helm install scf-helm-charts/uaa/helm \
-#      --namespace "uaa" \
-#      --set "env.DOMAIN=${DOMAIN}" \
-#      --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-#      --set "kube.external_ip=${K8S_HOST_IP}"
+helm install scf-alpha/helm/uaa \
+     --namespace "uaa" \
+     --set "env.DOMAIN=${DOMAIN}" \
+     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
+     --set "kube.external_ip=${K8S_HOST_IP}"
 
 
 #Deploy CF
 kubectl create namespace cf
 #kubectl create -n cf -f scf-kube-yml/cf/bosh
 #kubectl create -n cf -f scf-kube-yml/cf/bosh-task/post-deployment-setup.yml
-helm install scf-helm-charts/helm \
+helm install scf-alpha/helm/cf \
      --namespace "cf" \
      --set "env.CLUSTER_ADMIN_PASSWORD=$CLUSTER_ADMIN_PASSWORD" \
      --set "env.DOMAIN=${DOMAIN}" \
