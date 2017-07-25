@@ -37,14 +37,15 @@ kubectl config use-context ${K8S_HOSTNAME}
 
 unzip s3.scf-alpha/scf-linux-amd64-1.8.8-* -d scf-alpha
 #unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
-
-
+mkdir certs
+./scf-alpha/cert-generator.sh -d ${DOMAIN} -n cf -o certs
 #Deploy UAA
 kubectl create namespace uaa
 #kubectl create -n uaa -f scf-kube-yml/uaa/bosh/
 #kubectl create -n uaa -f scf-kube-yml/uaa/kube-test/exposed-ports.yml
 helm install scf-alpha/helm/uaa \
      --namespace "uaa" \
+     --values certs/uaa-cert-values.yaml \
      --set "env.DOMAIN=${DOMAIN}" \
      --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
      --set "kube.external_ip=${K8S_HOST_IP}"
@@ -56,9 +57,14 @@ kubectl create namespace cf
 #kubectl create -n cf -f scf-kube-yml/cf/bosh-task/post-deployment-setup.yml
 helm install scf-alpha/helm/cf \
      --namespace "cf" \
+     --values certs/scf-cert-values.yaml \
      --set "env.CLUSTER_ADMIN_PASSWORD=$CLUSTER_ADMIN_PASSWORD" \
      --set "env.DOMAIN=${DOMAIN}" \
      --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
      --set "env.UAA_HOST=${UAA_HOST}" \
      --set "env.UAA_PORT=${UAA_PORT}" \
      --set "kube.external_ip=${K8S_HOST_IP}"
+
+sleep 20m
+
+kubectl get pods --all-namespaces
