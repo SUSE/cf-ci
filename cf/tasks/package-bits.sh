@@ -27,12 +27,12 @@ do
     echo Packaging for $OS, taking $VERSION ...
 
     # Assembling the pieces ...
-    mkdir tmp
+    mkdir -p tmp/kube tmp/helm
 
     # kube configs
-    unzip s3.kube-dist/scf-kube-*.zip -d tmp
+    unzip s3.kube-dist/scf-kube-*.zip -d tmp/kube
     # helm charts
-    unzip s3.helm-dist/scf-helm-*.zip -d tmp
+    unzip s3.helm-dist/scf-helm-*.zip -d tmp/helm
 
     # "Am I Ok" for k8s
     cp src/bin/dev/k8s-ready-state-check.sh tmp/
