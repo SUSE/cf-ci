@@ -6,7 +6,7 @@ resources:
   source:
     uri: https://github.com/SUSE/cf-ci.git
     #branch: master
-    branch: prabal-helm-spike
+    branch: prabal-alpha-test
     paths:
     - cf-deploy-test-teardown/*
 
