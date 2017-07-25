@@ -1,8 +1,8 @@
 #!/bin/bash
 
+set -o xtrace
 set -o errexit
 set -o nounset
-set -o xtrace
 
 # Work around concourse-filter being clbuttic
 rm -f /etc/profile.d/filter.sh
@@ -23,10 +23,10 @@ export PATH=$PATH:$PWD/s3.certstrap-binary.linux
 pushd src
 source .envrc
 popd
+
 export FISSILE_WORK_DIR="${PWD}/fissile-work-dir"
 mkdir -p "${FISSILE_CACHE_DIR}"
 
-#ci/cf/tasks/common/start-docker.sh
 (
     export FISSILE_REPOSITORY="scf"
     export ARTIFACT_DIR="${PWD}/s3.scf-all-releases-tarball"
@@ -38,10 +38,16 @@ mkdir -p "${FISSILE_CACHE_DIR}"
     ci/cf/tasks/common/extract-all-releases.sh
 )
 
-(
-    export FISSILE_BINARY="$PWD/s3.fissile-binary/fissile"
-    touch "${FISSILE_BINARY}" # ensure we don't try to install tools
-    timeout 5m make -C src uaa-certs kube helm kube-dist
-)
+# Provide the certstrap binaries to SCF, for its cert-generator (CG).
+# We rename them a bit (strip version) into the form expected by CG.
+for OS in linux darwin
+do
+    cp s3.certstrap-binary.${OS}/certstrap-*.${OS}-amd64.tgz \
+	src/certstrap-${OS}-amd64.tgz
+done
 
-mv src/scf-{kube,helm}-*.zip out/
+export FISSILE_BINARY=$PWD/s3.fissile-binary/fissile
+touch "${FISSILE_BINARY}" # Ensure this is newer than anything else to avoid install_tools
+make -C src uaa-certs kube helm bundle-dist
+
+mv src/scf-{linux,darwin}-amd64-*.zip out/
