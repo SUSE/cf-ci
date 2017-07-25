@@ -182,6 +182,11 @@ resource_types:
     source:
         repository: mrsixw/concourse-rsync-resource
 
+  - name: pool
+    type: docker-image
+    source:
+      repository: mookas/pool-resource
+
 jobs:
   <% if manual_pull_sources %>
   - name: pull-sources
