@@ -35,10 +35,13 @@ kubectl config use-context ${K8S_HOSTNAME}
 # helm init
 # sleep 60
 
-unzip s3.scf-alpha/scf-linux-amd64-1.8.8-* -d scf-alpha
+unzip s3.scf-alpha/scf-linux-amd64-* -d scf-alpha
 #unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
 mkdir certs
-./scf-alpha/cert-generator.sh -d ${DOMAIN} -n cf -o certs
+PATH=pwd
+cd certs
+./cert-generator.sh -d ${DOMAIN} -n cf -o certs
+cd $PATH
 #Deploy UAA
 kubectl create namespace uaa
 #kubectl create -n uaa -f scf-kube-yml/uaa/bosh/
