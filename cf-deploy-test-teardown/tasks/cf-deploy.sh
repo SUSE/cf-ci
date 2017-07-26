@@ -44,6 +44,7 @@ kubectl create namespace uaa
 #kubectl create -n uaa -f scf-kube-yml/uaa/bosh/
 #kubectl create -n uaa -f scf-kube-yml/uaa/kube-test/exposed-ports.yml
 helm install scf-alpha/helm/uaa \
+     --set kube.storage_class.persistent=persistent \
      --namespace "uaa" \
      --values certs/uaa-cert-values.yaml \
      --set "env.DOMAIN=${DOMAIN}" \
@@ -56,6 +57,7 @@ kubectl create namespace cf
 #kubectl create -n cf -f scf-kube-yml/cf/bosh
 #kubectl create -n cf -f scf-kube-yml/cf/bosh-task/post-deployment-setup.yml
 helm install scf-alpha/helm/cf \
+     --set kube.storage_class.persistent=persistent \
      --namespace "cf" \
      --values certs/scf-cert-values.yaml \
      --set "env.CLUSTER_ADMIN_PASSWORD=$CLUSTER_ADMIN_PASSWORD" \
