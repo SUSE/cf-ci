@@ -161,24 +161,6 @@ resources:
       secret_access_key: <%= s3_secret_key %>
       endpoint: {{s3-endpoint}}
 
-  - name: s3.kube-dist
-    type: s3
-    source:
-      access_key_id: {{s3-access-key}}
-      bucket: {{s3-kube-bucket}}
-      endpoint: {{s3-endpoint}}
-      regexp: <%= s3_kube_prefix || "" %>scf-kube-(.*).zip$
-      secret_access_key: {{s3-secret-key}}
-
-  - name: s3.helm-dist
-    type: s3
-    source:
-      access_key_id: {{s3-access-key}}
-      bucket: {{s3-helm-bucket}}
-      endpoint: {{s3-endpoint}}
-      regexp: <%= s3_helm_prefix || "" %>scf-helm-(.*).zip$
-      secret_access_key: {{s3-secret-key}}
-
 <% if job_limit_pool %>
   - name: pool.job-limit
     type: pool
@@ -291,33 +273,6 @@ jobs:
       - put: semver.scf-version
         params:
           file: out/version
-
-  - name: package-bits
-    plan:
-      - aggregate:
-        - get: src
-          passed:
-          <% if manual_pull_sources %>
-          - pull-sources
-          <% end %>
-          trigger: true
-        - get: ci
-        - get: s3.certstrap-binary.linux
-        - get: s3.certstrap-binary.darwin
-        - get: s3.kube-dist
-        - get: s3.helm-dist
-        - get: semver.scf-version
-          passed:
-          - find-version
-      - task: package-bits
-        file: ci/cf/tasks/package-bits.yml
-      - aggregate:
-        - put: s3.scf-config.linux
-          params:
-            file: out/scf-linux-amd64-*.zip
-        - put: s3.scf-config.darwin
-          params:
-            file: out/scf-darwin-amd64-*.zip
 
   # Combine all the release tarballs to a single one
   # This is needed bacause fissile want all releases to be built being doing
@@ -565,26 +520,40 @@ jobs:
         <% end %>
 <% end %>
 
-  - name: kube-dist
+  - name: bundle-dist
     plan:
     - aggregate:
       - get: src
         passed:
         - combine-scf-releases
         - combine-uaa-releases
+        <% scf_roles.map {|r| r['name']}.sort.each do |role| %>
+        - scf-<%= role %>-image
+        <% end %>
+        <% uaa_roles.map {|r| r['name']}.sort.each do |role| %>
+        - uaa-<%= role %>-image
+        <% end %>
         trigger: true
       - get: ci
       - get: s3.fissile-binary
         trigger: true
       - get: s3.stampy-binary
       - get: s3.certstrap-binary.linux
+      - get: s3.certstrap-binary.darwin
       - get: s3.scf-all-releases-tarball
-        passed: [ combine-scf-releases ]
+        passed:
+        - combine-scf-releases
+        <% scf_roles.map {|r| r['name']}.sort.each do |role| %>
+        - scf-<%= role %>-image
+        <% end %>
       - get: s3.uaa-all-releases-tarball
-        passed: [ combine-uaa-releases ]
-    - task: kube-dist
-      file: ci/cf/tasks/kube-dist.yml
-      privileged: true
+        passed:
+        - combine-uaa-releases
+        <% uaa_roles.map {|r| r['name']}.sort.each do |role| %>
+        - uaa-<%= role %>-image
+        <% end %>
+    - task: bundle-dist
+      file: ci/cf/tasks/bundle-dist.yml
       params:
         SCF_RELEASES: <%= scf_releases.keys.join(' ') %>
         UAA_RELEASES: <%= uaa_releases.keys.join(' ') %>
@@ -594,14 +563,13 @@ jobs:
         <% uaa_releases.each_pair do |release, path| %>
         UAA_<%= release.upcase.gsub('-', '_') %>_PATH: <%= path %>
         <% end %>
-    - put: s3.kube-dist
-      params:
-        file: out/scf-kube-*.zip
-        acl: public-read
-    - put: s3.helm-dist
-      params:
-        file: out/scf-helm-*.zip
-        acl: public-read
+    - aggregate:
+      - put: s3.scf-config.linux
+        params:
+          file: out/scf-linux-amd64-*.zip
+      - put: s3.scf-config.darwin
+        params:
+          file: out/scf-darwin-amd64-*.zip
 
 groups:
 - name: releases
@@ -634,9 +602,6 @@ groups:
   - uaa-<%= role['name'] %>-image
   <% end %>
 <% end %>
-- name: extras
-  jobs:
-  - kube-dist
 - name: packaging
   jobs:
-  - package-bits
+  - bundle-dist

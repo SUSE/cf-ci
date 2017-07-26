@@ -7,12 +7,13 @@ image_resource:
 inputs:
 - name: src
 - name: ci
+- name: s3.fissile-binary
+- name: s3.stampy-binary
 - name: s3.certstrap-binary.linux
 - name: s3.certstrap-binary.darwin
-- name: s3.kube-dist
-- name: s3.helm-dist
-- name: semver.scf-version
+- name: s3.scf-all-releases-tarball
+- name: s3.uaa-all-releases-tarball
 run:
-  path: ci/cf/tasks/package-bits.sh
+  path: ci/cf/tasks/bundle-dist.sh
 outputs:
 - name: out
