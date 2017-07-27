@@ -39,7 +39,7 @@ unzip s3.scf-alpha/scf-linux-amd64-* -d scf-alpha
 #unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
 mkdir certs
 PATH=pwd
-cd certs
+cd scf-alpha
 ./cert-generator.sh -d ${DOMAIN} -n cf -o certs
 cd $PATH
 #Deploy UAA
