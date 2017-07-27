@@ -3,7 +3,7 @@
 set -ex
 
 
-DIR_PATH=pwd
+DIR_PATH=$(pwd)
 #NOTES:
 export HELM_VERSION="2.4.2"
 bin_dir="${bin_dir:-/usr/local/bin/}"
@@ -24,8 +24,6 @@ chmod a+x ${bin_dir}/direnv
 #install helm
 wget -q "${helm_url}" -O - | tar xz -C "${bin_dir}" --strip-components=1 linux-amd64/helm
 chmod a+x "${bin_dir}/helm"
-
-
 
 #export k8s-host details from pool
 set -a; source pool.k8s-hosts/metadata; set +a
