@@ -3,19 +3,28 @@
 set -ex
 
 
-
+DIR_PATH=pwd
 #NOTES:
 export HELM_VERSION="2.4.2"
 bin_dir="${bin_dir:-/usr/local/bin/}"
 helm_url="${helm_url:-https://kubernetes-helm.storage.googleapis.com/helm-v${HELM_VERSION}-linux-amd64.tar.gz}"
+direnv_url="${direnv_url:-https://github.com/direnv/direnv/releases/download/v2.11.3/direnv.linux-amd64}"
 #zypper --non-interactive addrepo http://download.opensuse.org/repositories/Virtualization:containers/openSUSE_Leap_42.2/Virtualization:containers.repo
 #zypper  --non-interactive --gpg-auto-import-keys refresh
 #mkdir -p "${bin_dir}"
 #bin_dir="$(cd "${bin_dir}" && pwd)"
 zypper --non-interactive install wget
 zypper --non-interactive install tar
+zypper --non-interactive install which
+
+#install direnv
+wget -O ${bin_dir}/direnv --no-verbose ${direnv_url}
+chmod a+x ${bin_dir}/direnv
+
+#install helm
 wget -q "${helm_url}" -O - | tar xz -C "${bin_dir}" --strip-components=1 linux-amd64/helm
 chmod a+x "${bin_dir}/helm"
+
 
 
 #export k8s-host details from pool
@@ -38,10 +47,9 @@ kubectl config use-context ${K8S_HOSTNAME}
 unzip s3.scf-alpha/scf-linux-amd64-* -d scf-alpha
 #unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
 mkdir certs
-PATH=pwd
 cd scf-alpha
 ./cert-generator.sh -d ${DOMAIN} -n cf -o ../certs
-cd $PATH
+cd $DIR_PATH
 #Deploy UAA
 kubectl create namespace uaa
 #kubectl create -n uaa -f scf-kube-yml/uaa/bosh/
