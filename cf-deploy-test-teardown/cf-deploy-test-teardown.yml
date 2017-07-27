@@ -16,7 +16,7 @@ resources:
     access_key_id: {{s3-access-key}}
     bucket: scf-alpha
     endpoint: {{s3-endpoint}}
-    regexp: scf-linux-amd64-(.*).zip
+    regexp: scf-2.0.1-alpha.cf265.linux-(.*).zip
     secret_access_key: {{s3-secret-key}}
     private: true
 

@@ -42,7 +42,7 @@ kubectl config use-context ${K8S_HOSTNAME}
 # helm init
 # sleep 60
 
-unzip s3.scf-alpha/scf-linux-amd64-* -d scf-alpha
+unzip s3.scf-alpha/scf-2.0.1-alpha.cf265.linux-* -d scf-alpha
 #unzip s3.scf-helm-charts/hcf-kube-charts-* -d scf-helm-charts
 mkdir certs
 cd scf-alpha
