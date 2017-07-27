@@ -76,6 +76,6 @@ helm install scf-alpha/helm/cf \
      --set "env.UAA_PORT=${UAA_PORT}" \
      --set "kube.external_ip=${K8S_HOST_IP}"
 
-sleep 20m
+sleep 120m
 
 kubectl get pods --all-namespaces

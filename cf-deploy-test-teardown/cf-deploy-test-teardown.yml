@@ -55,10 +55,10 @@ jobs:
     file: cf-ci/cf-deploy-test-teardown/tasks/cf-deploy.yml
   - task: cf-smoke-tests
     file: cf-ci/cf-deploy-test-teardown/tasks/smoke-tests.yml
-  # - task: acceptance-tests-brain
-  #   file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests-brain.yml
-  # - task: acceptance-tests
-  #   file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests.yml
+  - task: acceptance-tests-brain
+    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests-brain.yml
+  - task: acceptance-tests
+    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests.yml
   - task: cf-teardown
     file: cf-ci/cf-deploy-test-teardown/tasks/cf-teardown.yml
   - put: pool.k8s-hosts
