@@ -40,7 +40,7 @@ unzip s3.scf-alpha/scf-linux-amd64-* -d scf-alpha
 mkdir certs
 PATH=pwd
 cd scf-alpha
-./cert-generator.sh -d ${DOMAIN} -n cf -o certs
+./cert-generator.sh -d ${DOMAIN} -n cf -o ../certs
 cd $PATH
 #Deploy UAA
 kubectl create namespace uaa
