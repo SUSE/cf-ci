@@ -6,6 +6,7 @@ image_resource:
     repository: splatform/opensuse-kubectl
 
 inputs:
+- name: src
 - name: cf-ci
 - name: s3.scf-alpha
 # - name: s3.scf-kube-yml
