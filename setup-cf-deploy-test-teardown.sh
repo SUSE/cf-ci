@@ -14,9 +14,11 @@ then
     exit 1
 fi
 
-fly -t "$target" set-pipeline -p ${PIPELINE_PREFIX}uaa-kube-dist -c uaa-kube-dist/uaa-kube-dist.yml \
+fly -t "$target" set-pipeline \
+    -p ${PIPELINE_PREFIX}cf-deploy-test-teardown \
+    -c cf-deploy-test-teardown/cf-deploy-test-teardown.yml \
     -v s3-bucket=cf-opensusefs2 \
     -l <(gpg -d --no-tty "${secrets}" 2> /dev/null)
 
-fly -t "$target" expose-pipeline -p ${PIPELINE_PREFIX}uaa-kube-dist
-fly -t "$target" unpause-pipeline -p ${PIPELINE_PREFIX}uaa-kube-dist
+fly -t "$target" expose-pipeline  -p ${PIPELINE_PREFIX}cf-deploy-test-teardown
+fly -t "$target" unpause-pipeline -p ${PIPELINE_PREFIX}cf-deploy-test-teardown
