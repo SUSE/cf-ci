@@ -1,14 +1,6 @@
 # Concourse pipeline to build deploy and teardown cf against a kube cluster
 
 resources:
-- name: src
-  type: git
-  source:
-    uri: https://github.com/SUSE/scf.git
-    branch: develop
-    paths:
-    - bin/dev/kube-ready-state-check.sh
-
 - name: cf-ci
   type: git
   source:
@@ -52,8 +44,6 @@ jobs:
   plan:
   - aggregate:
     - get: cf-ci
-      trigger: true
-    - get: src
       trigger: true
     - get: s3.scf-alpha
       trigger: true
