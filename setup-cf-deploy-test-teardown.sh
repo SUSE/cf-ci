@@ -5,7 +5,7 @@ secdir="${2:-../cloudfoundry/secure}"
 secfile="concourse-secrets.yml.gpg"
 secrets="${secdir}/${secfile}"
 
-# EV 'PP' = prefix to pipeline name for local customization of test
+# EV 'PIPELINE_PREFIX' = prefix to pipeline name for local customization of test
 #           pipelines
 
 if [ ! -f "${secrets}" ]
@@ -15,10 +15,10 @@ then
 fi
 
 fly -t "$target" set-pipeline \
-    -p ${PP}cf-deploy-test-teardown \
+    -p ${PIPELINE_PREFIX}cf-deploy-test-teardown \
     -c cf-deploy-test-teardown/cf-deploy-test-teardown.yml \
     -v s3-bucket=cf-opensusefs2 \
     -l <(gpg -d --no-tty "${secrets}" 2> /dev/null)
 
-fly -t "$target" expose-pipeline  -p ${PP}cf-deploy-test-teardown
-fly -t "$target" unpause-pipeline -p ${PP}cf-deploy-test-teardown
+fly -t "$target" expose-pipeline  -p ${PIPELINE_PREFIX}cf-deploy-test-teardown
+fly -t "$target" unpause-pipeline -p ${PIPELINE_PREFIX}cf-deploy-test-teardown

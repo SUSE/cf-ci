@@ -5,7 +5,7 @@ secdir="${2:-../cloudfoundry/secure}"
 secfile="concourse-secrets.yml.gpg"
 secrets="${secdir}/${secfile}"
 
-# EV 'PP' = prefix to pipeline name for local customization of test
+# EV 'PIPELINE_PREFIX' = prefix to pipeline name for local customization of test
 #           pipelines
 
 if [ ! -f "${secrets}" ]
@@ -14,9 +14,9 @@ then
     exit 1
 fi
 
-fly -t "$target" set-pipeline -p ${PP}cf-kube-dist -c cf-kube-dist/cf-kube-dist.yml \
+fly -t "$target" set-pipeline -p ${PIPELINE_PREFIX}cf-kube-dist -c cf-kube-dist/cf-kube-dist.yml \
     -v s3-bucket=cf-opensusefs2 \
     -l <(gpg -d --no-tty "${secrets}" 2> /dev/null)
 
-fly -t "$target" expose-pipeline -p ${PP}cf-kube-dist
-fly -t "$target" unpause-pipeline -p ${PP}cf-kube-dist
+fly -t "$target" expose-pipeline -p ${PIPELINE_PREFIX}cf-kube-dist
+fly -t "$target" unpause-pipeline -p ${PIPELINE_PREFIX}cf-kube-dist
