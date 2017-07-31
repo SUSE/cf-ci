@@ -5,17 +5,17 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    branch: master
+    #branch: master
+    branch: prabal-helm-deploy-test
     paths:
     - helm-deploy-test/*
 
 - name: s3.scf-config.linux
   type: s3
   source:
-    endpoint: {{s3-config-endpoint}}
-    access_key_id: {{s3-config-access-key}}
-    secret_access_key: {{s3-config-secret-key}}
-    bucket: {{s3-config-bucket}}
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+    bucket: cf-opensusefs2
     regexp: config/scf-linux-amd64-(.*).zip$
 
 - name: pool.k8s-hosts

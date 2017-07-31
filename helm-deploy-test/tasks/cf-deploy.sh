@@ -17,7 +17,7 @@ ssh -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP} 'bash -s' \
     < kube-ready-state-check.sh
 
 #target the kube cluster
-kubectl config set-cluster --server=${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNAME}
+kubectl config set-cluster --server=http://${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNAME}
 kubectl config set-context ${K8S_HOSTNAME} --cluster=${K8S_HOSTNAME}
 kubectl config use-context ${K8S_HOSTNAME}
 
