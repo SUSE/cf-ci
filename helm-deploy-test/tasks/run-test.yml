@@ -6,7 +6,7 @@ image_resource:
     repository: splatform/opensuse-kubectl
 inputs:
 - name: ci
-- name: s3.scf-config.linux
+- name: s3.scf-config
 - name: pool.kube-hosts
 run:
-  path: ci/helm-deploy-test/tasks/smoke-tests.sh
+  path: ci/helm-deploy-test/tasks/run-test.sh
