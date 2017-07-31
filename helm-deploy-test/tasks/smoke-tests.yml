@@ -6,6 +6,7 @@ image_resource:
     repository: splatform/opensuse-kubectl
 inputs:
 - name: cf-ci
+- name: s3.scf-config.linux
 - name: pool.k8s-hosts
 run:
-  path: cf-ci/cf-deploy-test-teardown/tasks/cf-teardown.sh
+  path: cf-ci/helm-deploy-test/tasks/smoke-tests.sh

@@ -1,0 +1,14 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/opensuse-kubectl
+
+inputs:
+- name: src
+- name: cf-ci
+- name: s3.scf-config.linux
+- name: pool.k8s-hosts
+run:
+  path: cf-ci/helm-deploy-test/tasks/cf-deploy.sh

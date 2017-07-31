@@ -15,10 +15,10 @@ then
 fi
 
 fly -t "$target" set-pipeline \
-    -p ${PIPELINE_PREFIX}cf-deploy-test-teardown \
-    -c cf-deploy-test-teardown/cf-deploy-test-teardown.yml \
+    -p ${PIPELINE_PREFIX}kube-deploy-test \
+    -c kube-deploy-test/kube-deploy-test.yml \
     -v s3-bucket=cf-opensusefs2 \
     -l <(gpg -d --no-tty "${secrets}" 2> /dev/null)
 
-fly -t "$target" expose-pipeline  -p ${PIPELINE_PREFIX}cf-deploy-test-teardown
-fly -t "$target" unpause-pipeline -p ${PIPELINE_PREFIX}cf-deploy-test-teardown
+fly -t "$target" expose-pipeline  -p ${PIPELINE_PREFIX}kube-deploy-test
+fly -t "$target" unpause-pipeline -p ${PIPELINE_PREFIX}kube-deploy-test

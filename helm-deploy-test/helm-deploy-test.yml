@@ -1,0 +1,60 @@
+# Concourse pipeline to build deploy and teardown cf against a kube cluster
+
+resources:
+- name: src
+  type: git
+  source:
+    uri: https://github.com/SUSE/scf.git
+    branch: develop
+    paths:
+    - bin/dev/kube-ready-state-check.sh
+
+- name: cf-ci
+  type: git
+  source:
+    uri: https://github.com/SUSE/cf-ci.git
+    branch: master
+    paths:
+    - helm-deploy-test/*
+
+- name: s3.scf-config.linux
+  type: s3
+  source:
+    endpoint: {{s3-config-endpoint}}
+    access_key_id: {{s3-config-access-key}}
+    secret_access_key: {{s3-config-secret-key}}
+    bucket: {{s3-config-bucket}}
+    regexp: config/scf-linux-amd64-(.*).zip$
+
+- name: pool.k8s-hosts
+  type: pool
+  source:
+    uri: git@github.com:SUSE/cf-ci-pools.git
+    private_key: {{github-private-key}}
+    branch: k8s-hosts
+    pool: k8s-hosts
+
+jobs:
+- name: helm-deploy-test
+  plan:
+  - aggregate:
+    - get: cf-ci
+      trigger: true
+    - get: src
+      trigger: true
+    - get: s3.scf-config.linux
+      trigger: true
+    - put: pool.k8s-hosts
+      params: {acquire: true}
+  - task: cf-deploy
+    file: cf-ci/helm-deploy-test/tasks/cf-deploy.yml
+  - task: cf-smoke-tests
+    file: cf-ci/helm-deploy-test/tasks/smoke-tests.yml
+  - task: acceptance-tests-brain
+    file: cf-ci/helm-deploy-test/tasks/acceptance-tests-brain.yml
+  - task: acceptance-tests
+    file: cf-ci/helm-deploy-test/tasks/acceptance-tests.yml
+  - task: cf-teardown
+    file: cf-ci/helm-deploy-test/tasks/cf-teardown.yml
+  - put: pool.k8s-hosts
+    params: {release: pool.k8s-hosts}

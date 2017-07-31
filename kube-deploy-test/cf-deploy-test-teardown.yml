@@ -15,17 +15,16 @@ resources:
     uri: https://github.com/SUSE/cf-ci.git
     branch: master
     paths:
-    - cf-deploy-test-teardown/*
+    - kube-deploy-test/*
 
-- name: s3.scf-kube-yml
+- name: s3.scf-config.linux
   type: s3
   source:
-    access_key_id: {{s3-access-key}}
-    bucket: kube-dist
-    endpoint: {{s3-endpoint}}
-    regexp: scf-kube-(.*).zip$
-    secret_access_key: {{s3-secret-key}}
-    private: true
+    endpoint: {{s3-config-endpoint}}
+    access_key_id: {{s3-config-access-key}}
+    secret_access_key: {{s3-config-secret-key}}
+    bucket: {{s3-config-bucket}}
+    regexp: config/scf-linux-amd64-(.*).zip$
 
 - name: pool.k8s-hosts
   type: pool
@@ -36,26 +35,26 @@ resources:
     pool: k8s-hosts
 
 jobs:
-- name: cf-deploy-test-teardown
+- name: kube-deploy-test
   plan:
   - aggregate:
     - get: cf-ci
       trigger: true
     - get: src
       trigger: true
-    - get: s3.scf-kube-yml
+    - get: s3.scf-config.linux
       trigger: true
     - put: pool.k8s-hosts
       params: {acquire: true}
   - task: cf-deploy
-    file: cf-ci/cf-deploy-test-teardown/tasks/cf-deploy.yml
+    file: cf-ci/kube-deploy-test/tasks/cf-deploy.yml
   - task: cf-smoke-tests
-    file: cf-ci/cf-deploy-test-teardown/tasks/smoke-tests.yml
+    file: cf-ci/kube-deploy-test/tasks/smoke-tests.yml
   - task: acceptance-tests-brain
-    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests-brain.yml
+    file: cf-ci/kube-deploy-test/tasks/acceptance-tests-brain.yml
   - task: acceptance-tests
-    file: cf-ci/cf-deploy-test-teardown/tasks/acceptance-tests.yml
+    file: cf-ci/kube-deploy-test/tasks/acceptance-tests.yml
   - task: cf-teardown
-    file: cf-ci/cf-deploy-test-teardown/tasks/cf-teardown.yml
+    file: cf-ci/kube-deploy-test/tasks/cf-teardown.yml
   - put: pool.k8s-hosts
     params: {release: pool.k8s-hosts}
