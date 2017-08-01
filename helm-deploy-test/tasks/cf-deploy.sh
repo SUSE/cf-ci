@@ -2,8 +2,6 @@
 
 set -ex
 
-#DIR_PATH=$(pwd)
-
 #export kube-host details from pool
 set -a; source pool.kube-hosts/metadata; set +a
 
@@ -11,10 +9,6 @@ set -a; source pool.kube-hosts/metadata; set +a
 curl -O https://raw.githubusercontent.com/SUSE/scf/develop/bin/dev/kube-ready-state-check.sh
 
 #check kube host readiness to deploy CF
-#ssh-keygen -N "" -f /root/.ssh/id_rsa
-#sshpass -e ssh-copy-id -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP}
-# ssh -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP} 'bash -s' \
-#     < kube-ready-state-check.sh
 sshpass -e ssh -o StrictHostKeyChecking=no "${K8S_USER}@${K8S_HOST_IP}" -- \
     bash -s < kube-ready-state-check.sh
 
@@ -27,13 +21,9 @@ unzip s3.scf-config.linux/scf-linux-amd64-* -d scf-config
 
 #Certs generation
 mkdir certs
-#cd scf-config
 pushd scf-config
-pwd
 ./cert-generator.sh -d ${DOMAIN} -n cf -o ../certs
-#cd $DIR_PATH
 popd
-pwd
 
 #Deploy UAA
 kubectl create namespace uaa

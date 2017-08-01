@@ -9,10 +9,8 @@ set -a; source pool.kube-hosts/metadata; set +a
 curl -O https://raw.githubusercontent.com/SUSE/scf/develop/bin/dev/kube-ready-state-check.sh
 
 #check kube host readiness to deploy CF
-ssh-keygen -N "" -f /root/.ssh/id_rsa
-sshpass -e ssh-copy-id -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP}
-ssh -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP} 'bash -s' \
-    < kube-ready-state-check.sh
+sshpass -e ssh -o StrictHostKeyChecking=no "${K8S_USER}@${K8S_HOST_IP}" -- \
+    bash -s < kube-ready-state-check.sh
 
 #target the kube cluster
 kubectl config set-cluster --server=http://${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNAME}
