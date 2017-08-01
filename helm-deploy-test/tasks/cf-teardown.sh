@@ -3,7 +3,7 @@
 set -e
 
 #export k8s-host details from pool
-set -a; source pool.k8s-hosts/metadata; set +a
+set -a; source pool.kube-hosts/metadata; set +a
 
 #target the kube cluster
 kubectl config set-cluster --server=http://${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNAME}

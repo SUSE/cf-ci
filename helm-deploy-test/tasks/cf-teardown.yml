@@ -5,7 +5,7 @@ image_resource:
   source:
     repository: splatform/opensuse-kubectl
 inputs:
-- name: cf-ci
-- name: pool.k8s-hosts
+- name: ci
+- name: pool.kube-hosts
 run:
-  path: cf-ci/helm-deploy-test/tasks/cf-teardown.sh
+  path: ci/helm-deploy-test/tasks/cf-teardown.sh

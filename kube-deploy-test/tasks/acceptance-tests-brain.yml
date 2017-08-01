@@ -5,8 +5,8 @@ image_resource:
   source:
     repository: splatform/opensuse-kubectl
 inputs:
-- name: cf-ci
+- name: ci
 - name: s3.scf-config.linux
-- name: pool.k8s-hosts
+- name: pool.kube-hosts
 run:
-  path: cf-ci/kube-deploy-test/tasks/acceptance-tests-brain.sh
+  path: ci/kube-deploy-test/tasks/acceptance-tests-brain.sh

@@ -6,8 +6,8 @@ image_resource:
     repository: splatform/opensuse-kubectl
 
 inputs:
-- name: cf-ci
+- name: ci
 - name: s3.scf-config.linux
-- name: pool.k8s-hosts
+- name: pool.kube-hosts
 run:
-  path: cf-ci/helm-deploy-test/tasks/cf-deploy.sh
+  path: ci/helm-deploy-test/tasks/cf-deploy.sh

@@ -3,7 +3,7 @@
 set -e
 
 #export k8s-host details from pool
-set -a; source pool.k8s-hosts/metadata; set +a
+set -a; source pool.kube-hosts/metadata; set +a
 
 #kube-ready-state-check script
 curl -O https://raw.githubusercontent.com/SUSE/scf/develop/bin/dev/kube-ready-state-check.sh
