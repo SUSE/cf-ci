@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 #export k8s-host details from pool
 set -a; source pool.k8s-hosts/metadata; set +a

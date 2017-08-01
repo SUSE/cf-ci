@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 export PATH=$PATH:/opt/rubies/ruby-2.3.1/bin:$HOME/bin
 

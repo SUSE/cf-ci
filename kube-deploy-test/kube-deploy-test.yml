@@ -5,8 +5,7 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    #branch: master
-    branch: prabal-helm-deploy-test
+    branch: master
     paths:
     - kube-deploy-test/*
 
