@@ -41,7 +41,7 @@ helm install scf-config/helm/uaa \
 
 #Deploy CF
 kubectl create namespace cf
-helm install scf-alpha/helm/cf \
+helm install scf-config/helm/cf \
      --set kube.storage_class.persistent=${STORAGECLASS} \
      --namespace "cf" \
      --values certs/scf-cert-values.yaml \
