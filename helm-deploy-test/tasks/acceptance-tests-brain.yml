@@ -1,0 +1,12 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/opensuse-kubectl
+inputs:
+- name: ci
+- name: s3.scf-config.linux
+- name: pool.kube-hosts
+run:
+  path: ci/helm-deploy-test/tasks/acceptance-tests-brain.sh

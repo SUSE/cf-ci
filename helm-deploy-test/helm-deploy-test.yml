@@ -1,0 +1,55 @@
+# Concourse pipeline to build deploy and teardown cf against a kube cluster
+
+resources:
+- name: ci
+  type: git
+  source:
+    uri: https://github.com/SUSE/cf-ci.git
+    branch: master
+    paths:
+    - helm-deploy-test/*
+
+- name: s3.scf-config.linux
+  type: s3
+  source:
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+    bucket: cf-opensusefs2
+    regexp: config/scf-linux-amd64-(.*).zip$
+
+- name: pool.kube-hosts
+  type: pool
+  source:
+    uri: git@github.com:SUSE/cf-ci-pools.git
+    private_key: {{github-private-key}}
+    branch: k8s-hosts
+    pool: k8s-hosts
+
+jobs:
+- name: helm-deploy-test
+  plan:
+  - aggregate:
+    - get: ci
+      trigger: false
+    - get: s3.scf-config.linux
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+  - task: cf-deploy
+    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+  - task: cf-smoke-tests
+    file: ci/helm-deploy-test/tasks/smoke-tests.yml
+  - task: acceptance-tests-brain
+    file: ci/helm-deploy-test/tasks/acceptance-tests-brain.yml
+  - task: acceptance-tests
+    file: ci/helm-deploy-test/tasks/acceptance-tests.yml
+  - task: cf-teardown
+    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+  # Do not put the pools release in an ensure block
+  # we have test tasks after cf-deploy tasks. If they succeed only then the teardown task will run,
+  # leading to the release of lock. Otherwise, the teardown and release lock won't happen,
+  # making sure that we look into the failure.
+  # Failure should not be a common thing and must inflict this pain of manual teardown and
+  # release lock in case failure happens. Thus, forcing us to an inquiry.
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}
