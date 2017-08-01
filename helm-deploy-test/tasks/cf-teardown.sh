@@ -10,7 +10,6 @@ kubectl config set-cluster --server=http://${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S
 kubectl config set-context ${K8S_HOSTNAME} --cluster=${K8S_HOSTNAME}
 kubectl config use-context ${K8S_HOSTNAME}
 
-ssh-keygen -N "" -f /root/.ssh/id_rsa
-sshpass -e ssh-copy-id -o StrictHostKeyChecking=no ${K8S_USER}@${K8S_HOST_IP}
-kubectl delete namespace uaa; kubectl delete namespace cf
+kubectl delete namespace uaa
+kubectl delete namespace cf
 for release in $(helm list | tail -n +2 | awk '{print $1}'); do helm delete $release || true; done
