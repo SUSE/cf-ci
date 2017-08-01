@@ -4,7 +4,7 @@ set -ex
 
 DIR_PATH=$(pwd)
 
-#export k8s-host details from pool
+#export kube-host details from pool
 set -a; source pool.k8s-hosts/metadata; set +a
 
 #kube-ready-state-check script
@@ -51,6 +51,3 @@ helm install scf-config/helm/cf \
      --set "env.UAA_HOST=${UAA_HOST}" \
      --set "env.UAA_PORT=${UAA_PORT}" \
      --set "kube.external_ip=${K8S_HOST_IP}"
-
-sleep 60m
-kubectl get pods --all-namespaces

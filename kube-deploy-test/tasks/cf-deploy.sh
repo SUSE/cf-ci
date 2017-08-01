@@ -30,6 +30,3 @@ kubectl create -n uaa -f scf-config/kube/uaa/kube-test/exposed-ports.yml
 kubectl create namespace cf
 kubectl create -n cf -f scf-config/kube/cf/bosh
 kubectl create -n cf -f scf-config/kube/cf/bosh-task/post-deployment-setup.yml
-
-sleep 60m
-kubectl get pods --all-namespaces
