@@ -7,7 +7,7 @@ image_resource:
 
 inputs:
 - name: ci
-- name: s3.scf-config.linux
+- name: s3.scf-config
 - name: pool.kube-hosts
 run:
   path: ci/helm-deploy-test/tasks/cf-deploy.sh

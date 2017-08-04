@@ -1,15 +1,23 @@
 #!/bin/bash
 
-set -e
+set -o errexit -o nounset
 
-#export k8s-host details from pool
-set -a; source pool.kube-hosts/metadata; set +a
+# Export kube-host details from pool
+set -o allexport
+source pool.kube-hosts/metadata
+CF_NAMESPACE=cf
+UAA_NAMESPACE=uaa
+set +o allexport
 
-#target the kube cluster
-kubectl config set-cluster --server=http://${K8S_HOST_IP}:${K8S_HOST_PORT} ${K8S_HOSTNAME}
-kubectl config set-context ${K8S_HOSTNAME} --cluster=${K8S_HOSTNAME}
-kubectl config use-context ${K8S_HOSTNAME}
+# Connect to Kubernetes
+bash -x ci/helm-deploy-test/tasks/common/connect-kube-host.sh
 
-kubectl delete namespace uaa
-kubectl delete namespace cf
-for release in $(helm list | tail -n +2 | awk '{print $1}'); do helm delete $release || true; done
+for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
+    for name in $(helm list --deployed --short --namespace "${namespace}") ; do
+        helm delete "${name}" || true
+    done
+    while kubectl get namespace "${namespace}" ; do
+        kubectl delete namespace "${namespace}" || true
+        sleep 10
+    done
+done
