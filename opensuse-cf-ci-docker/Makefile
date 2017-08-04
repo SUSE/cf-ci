@@ -1,4 +1,4 @@
-IMAGE ?= splatform/opensuse-kubectl
+IMAGE ?= splatform/opensuse-cf-ci
 TAG ?= latest
 
 build:
