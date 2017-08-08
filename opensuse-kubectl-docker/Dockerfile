@@ -18,9 +18,10 @@ RUN true \
     wget \
     tar \
     direnv \
-    aaa_base bash-completion docker-bash-completion systemd-bash-completion \
+    bash-completion docker-bash-completion systemd-bash-completion \
     && wget -q https://kubernetes-helm.storage.googleapis.com/helm-v2.4.2-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
     && chmod a+x /usr/local/bin/helm \
+    && echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc \
     && echo "source <(helm completion bash)" >> ~/.bashrc \
     && curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl \
