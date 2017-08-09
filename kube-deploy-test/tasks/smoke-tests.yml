@@ -3,7 +3,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: splatform/opensuse-kubectl
+    repository: splatform/cf-ci-orchestration
 inputs:
 - name: ci
 - name: s3.scf-config.linux

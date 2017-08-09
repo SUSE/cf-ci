@@ -1,4 +1,4 @@
-IMAGE ?= splatform/opensuse-cf-ci
+IMAGE ?= splatform/cf-ci-orchestration
 TAG ?= latest
 
 build:
