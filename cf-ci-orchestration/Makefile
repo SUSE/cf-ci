@@ -1,4 +1,4 @@
-IMAGE ?= splatform/opensuse-kubectl
+IMAGE ?= splatform/cf-ci-orchestration
 TAG ?= latest
 
 build:
