@@ -1,22 +1,24 @@
 #!/bin/bash
 
 target="$1"
-secdir="${2:-../cloudfoundry/secure}"
-secfile="concourse-secrets.yml.gpg"
-secrets="${secdir}/${secfile}"
 
-# EV 'PIPELINE_PREFIX' = prefix to pipeline name for local customization of test
-#           pipelines
+# EV 'PIPELINE_PREFIX' = prefix to pipeline name for local
+#                        customization of test pipelines
 
-if [ ! -f "${secrets}" ]
-then
-    echo -e 1>&2 "$0: Failed to find the secrets file ${secrets}\n\tPlease specify the correct directory holding \"${secfile}\"."
-    exit 1
+if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
+    if test -r "${CONCOURSE_SECRETS_FILE:-}" ; then
+        secrets_file="${CONCOURSE_SECRETS_FILE}"
+    else
+        printf "ERROR: Secrets file %s is not readable\n" "${CONCOURSE_SECRETS_FILE}" >&2
+        exit 2
+    fi
 fi
 
-fly -t "$target" set-pipeline -p ${PIPELINE_PREFIX}cf-kube-dist -c cf-kube-dist/cf-kube-dist.yml \
+fly -t "$target" set-pipeline \
+    -p ${PIPELINE_PREFIX}cf-kube-dist \
+    -c cf-kube-dist/cf-kube-dist.yml \
     -v s3-bucket=cf-opensusefs2 \
-    -l <(gpg -d --no-tty "${secrets}" 2> /dev/null)
+    -l <(gpg -d --no-tty "${secrets_file}" 2> /dev/null)
 
-fly -t "$target" expose-pipeline -p ${PIPELINE_PREFIX}cf-kube-dist
+fly -t "$target" expose-pipeline  -p ${PIPELINE_PREFIX}cf-kube-dist
 fly -t "$target" unpause-pipeline -p ${PIPELINE_PREFIX}cf-kube-dist
