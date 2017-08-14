@@ -6,14 +6,11 @@ set -o errexit
 # EV 'PIPELINE_PREFIX' = prefix to pipeline name for local customization of test
 #           pipelines
 
-PIPELINE_NAME=cf-kube-dist
+pipeline_name=cf-kube-dist
 
-if test -z "${1:-}"; then
-    printf "Usage:\n%s <target>\n" "${0}" >&2
-    exit 1
-fi
-
+set +o nounset
 target="${1}"
+set -o nounset
 
 if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     if test -r "${CONCOURSE_SECRETS_FILE:-}" ; then
@@ -27,11 +24,19 @@ else
     exit 3
 fi
 
-fly -t "${target}" set-pipeline \
-    -p "${PIPELINE_PREFIX}${PIPELINE_NAME}" \
-    -c "${PIPELINE_NAME}/${PIPELINE_NAME}.yml" \
+fly \
+    ${target:+"--target=${target}"} \
+    set-pipeline \
+    -p "${PIPELINE_PREFIX:-}${pipeline_name}" \
+    -c "${pipeline_name}/${pipeline_name}.yml" \
     -v s3-bucket=cf-opensusefs2 \
     -l <(gpg -d --no-tty "${secrets_file}" 2> /dev/null)
 
-fly -t "${target}" expose-pipeline  -p "${PIPELINE_PREFIX}${PIPELINE_NAME}"
-fly -t "${target}" unpause-pipeline -p "${PIPELINE_PREFIX}${PIPELINE_NAME}"
+fly \
+    ${target:+"--target=${target}"} \
+    expose-pipeline \
+    -p "${PIPELINE_PREFIX:-}${pipeline_name}"
+fly \
+    ${target:+"--target=${target}"} \
+    unpause-pipeline \
+    -p "${PIPELINE_PREFIX:-}${pipeline_name}"
