@@ -8,9 +8,7 @@ set -o errexit
 
 pipeline_name=cf-ci-orchestration
 
-set +o nounset
-target="${1}"
-set -o nounset
+target="${1:-}"
 
 if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     if test -r "${CONCOURSE_SECRETS_FILE:-}" ; then
