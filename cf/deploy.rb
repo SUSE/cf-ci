@@ -81,13 +81,8 @@ template = open("scf-#{pipeline}.yaml.erb", 'r') do |f|
 end
 
 # Load the secrets file, followed by the local config overrides
-if secrets_path.nil?
-    fail "Neither CONCOURSE_SECRETS_FILE env var nor --secrets-dir option defined"
-end
-
-unless File.exist? secrets_path
-    fail "Secrets not found at #{secrets_path}"
-end
+fail "Neither CONCOURSE_SECRETS_FILE env var nor --secrets-dir option defined" if secrets_path.nil?
+fail "Secrets not found at #{secrets_path}" unless File.exist? secrets_path
 
 variant ||= 'production'
 config_file_name = "config-#{variant}.yaml"
