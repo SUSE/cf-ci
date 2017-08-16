@@ -15,6 +15,8 @@ UAA_ROLE_MANIFEST_RELPATH = 'role-manifest.yml'
 UAA_ENVRC_RELPATH = '.envrc'
 SECRETS_RELPATH = 'secure/concourse-secrets.yml.gpg'
 
+secrets_path = ENV['CONCOURSE_SECRETS_FILE']
+
 opts = OpenStruct.new(
     secrets_dir: '../../cloudfoundry',
     prefix: '',
@@ -54,10 +56,6 @@ parser = OptionParser.new do |parser|
     end
     parser.on('--secrets-dir=DIR', 'Path to secrets repository checkout') do |secrets_dir|
         secrets_path = File.join(secrets_dir, SECRETS_RELPATH)
-        unless File.exist? secrets_path
-            fail "Secrets not found at #{secrets_path}"
-        end
-        opts.secrets_dir = secrets_dir
     end
     parser.on('--target=concourse', 'Fly target') do |fly_target|
         opts.target = fly_target
@@ -83,6 +81,9 @@ template = open("scf-#{pipeline}.yaml.erb", 'r') do |f|
 end
 
 # Load the secrets file, followed by the local config overrides
+fail "Neither CONCOURSE_SECRETS_FILE env var nor --secrets-dir option defined" if secrets_path.nil?
+fail "Secrets not found at #{secrets_path}" unless File.exist? secrets_path
+
 variant ||= 'production'
 config_file_name = "config-#{variant}.yaml"
 gpg_r, gpg_w = IO.pipe
