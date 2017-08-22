@@ -13,5 +13,4 @@ s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
 s3-config-bucket: cf-opensusefs2
-s3-config-prefix: config/
-
+s3-config-prefix: scf/config/
