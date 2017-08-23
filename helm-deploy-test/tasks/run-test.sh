@@ -26,11 +26,11 @@ kube_overrides() {
 EOF
 }
 
-image=$(awk '$1 == "image:" { print $2 }' "s3.scf-config/kube/cf/bosh-task/${TEST_NAME}.yml")
+image=$(awk '$1 == "image:" { print $2 }' "s3.scf-config/kube/cf/bosh-task/${TEST_NAME}.yaml")
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
     --restart=Never \
     --image="${image}" \
-    --overrides="$(kube_overrides "s3.scf-config/kube/cf/bosh-task/${TEST_NAME}.yml")" \
+    --overrides="$(kube_overrides "s3.scf-config/kube/cf/bosh-task/${TEST_NAME}.yaml")" \
     "${TEST_NAME}"
