@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
 # This script is intended to be run on a SLES box installed as a KVM host.
-# After OS installation, the following commands should also be run to set up directory permissions and the default network (as root):
-# usermod -aG libvirt root
-# virsh net-define net-default.xml
-# virsh net-start default
-# ntpdate time.nist.gov
-# systemctl enable ntpd
-# systemctl start ntpd
+# After OS installation, the following commands should also be run to set up directory
+# permissions and the default network (as root):
+# - usermod -aG libvirt root
+# - virsh net-define net-default.xml
+# - virsh net-start default
+# - ntpdate time.nist.gov
+# - systemctl enable ntpd
+# - systemctl start ntpd
 
 set -o errexit
 
@@ -23,7 +24,7 @@ export OBJECT_STORAGE_YAML_BUCKET=${OBJECT_STORAGE_YAML_BUCKET:-kube-config}
 mkdir -p "$KUBE_VM_IMAGE_PATH"
 cd "$KUBE_VM_IMAGE_PATH"
 
-if [[ -z $KUBE_VM_NAME ]]; then
+if [[ -z "$KUBE_VM_NAME" ]]; then
   echo "A VM name must be provided"
   exit 1
 fi
@@ -80,15 +81,15 @@ unset KUBE_VM_DEFAULT_IP
 # TODO: Clean up variable assignment (timeouts)
 IP_WAIT_TIMEOUT=150
 KUBE_VM_DEFAULT_MAC=$(virsh domiflist "$KUBE_VM_NAME" | grep default | grep -oE '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}') || true
-if [[ -z $KUBE_VM_DEFAULT_MAC ]]; then
+if [[ -z "$KUBE_VM_DEFAULT_MAC" ]]; then
   echo "No MAC address for default interface on VM $KUBE_VM_NAME. Check output of \`sudo virsh domiflist $KUBE_VM_NAME\`"
   exit 1
 fi
-while [[ -z $KUBE_VM_DEFAULT_IP ]]; do
+while [[ -z "$KUBE_VM_DEFAULT_IP" ]]; do
   echo "Checking if IP lease exists for interface $KUBE_VM_DEFAULT_MAC"
-  KUBE_VM_DEFAULT_IP=$(virsh net-dhcp-leases default | grep "$KUBE_VM_DEFAULT_MAC" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}') || true
-  if [[ -z $KUBE_VM_DEFAULT_IP ]]; then
-    if [[ $IP_WAIT_TIMEOUT -ge 0 ]]; then
+  KUBE_VM_DEFAULT_IP=$(virsh net-dhcp-leases default --mac "$KUBE_VM_DEFAULT_MAC" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}') || true
+  if [[ -z "$KUBE_VM_DEFAULT_IP" ]]; then
+    if [[ "$IP_WAIT_TIMEOUT" -ge 0 ]]; then
       (( IP_WAIT_TIMEOUT -= 15 ))
       echo "No IP assigned for $KUBE_VM_DEFAULT_MAC. Retrying in 15 seconds"
       sleep 15
@@ -101,25 +102,21 @@ done
 echo "Docker VM IP found: $KUBE_VM_DEFAULT_IP. Waiting for sshd to start"
 SSHD_TIMEOUT=60
 while [[ $SSHD_TIMEOUT -ge 0 ]]; do
-  echo '' | nc $KUBE_VM_DEFAULT_IP 22 | grep -i ssh && break
+  nc $KUBE_VM_DEFAULT_IP 22 </dev/null | grep 'SSH-' && break
   sleep 5
   (( SSHD_TIMEOUT -= 5 ))
 done
 ssh-keygen -R $KUBE_VM_DEFAULT_IP
-ssh -o StrictHostKeyChecking=no -Ti "$KUBE_VM_KEY" vagrant@$KUBE_VM_DEFAULT_IP << EOF
-sudo bash -o errexit << EOSU
+ssh -o StrictHostKeyChecking=no -Ti "$KUBE_VM_KEY" vagrant@$KUBE_VM_DEFAULT_IP -- sudo bash -o errexit << EOF
 hostname $KUBE_VM_NAME
 echo $KUBE_VM_NAME > /etc/hostname
 cp /etc/sysconfig/network/ifcfg-eth0 /etc/sysconfig/network/ifcfg-eth1
 echo DHCLIENT_SET_DEFAULT_ROUTE='yes' /etc/sysconfig/network/ifcfg-eth1
 wicked ifup eth1
-EOSU
 EOF
 
-echo "Sleeping 15 seconds for bridged interface to obtain IP"
-sleep 15
-KUBE_VM_BRIDGED_IP=$(ssh -i "$KUBE_VM_KEY" vagrant@$KUBE_VM_DEFAULT_IP '/sbin/ifconfig eth1' | grep -oE 'addr:10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed 's/addr://g')
-if [[ -z $KUBE_VM_BRIDGED_IP ]]; then
+KUBE_VM_BRIDGED_IP=$(ssh -i "$KUBE_VM_KEY" vagrant@$KUBE_VM_DEFAULT_IP 'ip -4 addr show eth1' | tr / ' ' | awk '/inet/ { print $2 }')
+if [[ -z "$KUBE_VM_BRIDGED_IP" ]]; then
   echo "There was a problem getting the IP of the bridged interface. See output of \`ifconfig eth1\` in VM $KUBE_VM_NAME"
   exit 1
 fi
