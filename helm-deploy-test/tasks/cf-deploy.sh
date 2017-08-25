@@ -2,7 +2,7 @@
 set -o errexit -o nounset
 
 # Set kube config from pool
-cp pool.kube-hosts/metadata /root/.kube/config
+mkdir /root/.kube/ && cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
 # The IP address assigned to the kube node. The example value here
