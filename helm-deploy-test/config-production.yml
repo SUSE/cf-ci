@@ -2,7 +2,8 @@
 src-repo: https://github.com/SUSE/scf.git
 src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
-src-ci-branch: master
+#src-ci-branch: master
+src-ci-branch: prabal-caasp-pools
 
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
 kube-pool-key: *github-private-key

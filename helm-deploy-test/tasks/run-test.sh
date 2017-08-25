@@ -1,14 +1,12 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-# Export kube-host details from pool
-set -o allexport
-source pool.kube-hosts/metadata
-CF_NAMESPACE=cf
-set +o allexport
+# Set kube config from pool
+cp pool.kube-hosts/metadata /root/.kube/config
 
-# Connect to Kubernetes
-bash -x ci/helm-deploy-test/tasks/common/connect-kube-host.sh
+set -o allexport
+CF_NAMESPACE=scf
+set +o allexport
 
 unzip s3.scf-config/scf-linux-*.zip -d s3.scf-config/
 

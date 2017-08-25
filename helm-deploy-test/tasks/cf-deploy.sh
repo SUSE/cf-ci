@@ -1,28 +1,32 @@
 #!/bin/bash
-
 set -o errexit -o nounset
 
-# Export kube-host details from pool
-set -o allexport
-source pool.kube-hosts/metadata
-CF_NAMESPACE=cf
-UAA_NAMESPACE=uaa
-UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
-set +o allexport
+# Set kube config from pool
+cp pool.kube-hosts/metadata /root/.kube/config
 
-# Connect to Kubernetes
-bash -x ci/helm-deploy-test/tasks/common/connect-kube-host.sh
+set -o allexport
+# The IP address assigned to the kube node. The example value here
+# is what the vagrant setup assigns
+external_ip=$(ruby -r yaml -e "puts YAML.load_file('pool.kube-hosts/metadata')['contexts'][0]['context']['cluster']")
+# Domain for SCF. DNS for *.DOMAIN must point to the kube node's
+# external ip. This must match the value passed to the
+# cert-generator.sh script.
+DOMAIN=${external_ip}.nip.io
+# Password for SCF to authenticate with UAA
+UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
+# UAA host/port that SCF will talk to. The example values here are
+# for the UAA deployment included with the SCF distribution.
+UAA_HOST=uaa.${external_ip}.nip.io
+UAA_PORT=2793
+
+CF_NAMESPACE=scf
+UAA_NAMESPACE=uaa
+set +o allexport
 
 unzip s3.scf-config/scf-linux-*.zip -d s3.scf-config/
 
-# Check that the cluster is reasonable
-if test -n "${K8S_USER:-}" -a -n "${SSHPASS:-}" ; then
-    sshpass -e ssh -o StrictHostKeyChecking=no "${K8S_USER}@${K8S_HOST_IP}" -- \
-        bash -s < s3.scf-config/kube-ready-state-check.sh
-else
-    printf "%bWarning: SSH password not supplied, not checking cluster sanity%b\n" \
-        "\033[0;33;1m" "\033[0m" >&2
-fi
+# Check that the kube of the cluster is reasonable
+bash s3.scf-config/kube-ready-state-check.sh kube
 
 # Generate certificates
 mkdir certs/
@@ -37,7 +41,7 @@ helm install s3.scf-config/helm/uaa/ \
     --values certs/uaa-cert-values.yaml \
     --set "env.DOMAIN=${DOMAIN}" \
     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-    --set "kube.external_ip=${K8S_HOST_IP}"
+    --set "kube.external_ip=${external_ip}"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
@@ -47,9 +51,9 @@ helm install s3.scf-config/helm/cf/ \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.DOMAIN=${DOMAIN}" \
     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-    --set "env.UAA_HOST=uaa.${DOMAIN}" \
-    --set "env.UAA_PORT=2793" \
-    --set "kube.external_ip=${K8S_HOST_IP}"
+    --set "env.UAA_HOST=${UAA_HOST}" \
+    --set "env.UAA_PORT=${UAA_PORT}" \
+    --set "kube.external_ip=${external_ip}"
 
 # Wait until CF is ready
 

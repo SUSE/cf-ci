@@ -1,16 +1,13 @@
 #!/bin/bash
-
 set -o errexit -o nounset
 
-# Export kube-host details from pool
+# Set kube config from pool
+cp pool.kube-hosts/metadata /root/.kube/config
+
 set -o allexport
-source pool.kube-hosts/metadata
-CF_NAMESPACE=cf
+CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 set +o allexport
-
-# Connect to Kubernetes
-bash -x ci/helm-deploy-test/tasks/common/connect-kube-host.sh
 
 for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
     for name in $(helm list --deployed --short --namespace "${namespace}") ; do
