@@ -13,7 +13,7 @@
 set -o errexit
 
 export KUBE_VM_NAME=${KUBE_VM_NAME:-$1}
-export KUBE_VM_IMAGE_NAME=${KUBE_VM_IMAGE_NAME:-scf-libvirt-v2.0.6}
+export KUBE_VM_IMAGE_NAME=${KUBE_VM_IMAGE_NAME:-scf-libvirt-v2.0.7}
 export KUBE_VM_IMAGE_PATH=${KUBE_VM_IMAGE_PATH:-~/qcow2-disks}
 export KUBE_VM_MEM_GIB=${KUBE_VM_MEM_GIB:-8}
 
