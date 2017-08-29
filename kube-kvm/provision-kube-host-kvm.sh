@@ -17,10 +17,6 @@ export KUBE_VM_IMAGE_NAME=${KUBE_VM_IMAGE_NAME:-scf-libvirt-v2.0.6}
 export KUBE_VM_IMAGE_PATH=${KUBE_VM_IMAGE_PATH:-~/qcow2-disks}
 export KUBE_VM_MEM_GIB=${KUBE_VM_MEM_GIB:-8}
 
-# Used for displaying external setup information at end of provisioning
-export OBJECT_STORAGE_BASE_URL=${OBJECT_STORAGE_BASE_URL:-\${OBJECT_STORAGE_BASE_URL}}
-export OBJECT_STORAGE_YAML_BUCKET=${OBJECT_STORAGE_YAML_BUCKET:-kube-config}
-
 mkdir -p "$KUBE_VM_IMAGE_PATH"
 cd "$KUBE_VM_IMAGE_PATH"
 
@@ -41,9 +37,9 @@ if [[ ! -f vm-key ]]; then
   curl -sL -o "vm-key" https://raw.githubusercontent.com/mitchellh/vagrant/v1.9.6/keys/vagrant
   chmod 400 vm-key
 fi
-KUBE_VM_KEY=${KUBE_VM_KEY:-$PWD/vm-key} 
+KUBE_VM_KEY=${KUBE_VM_KEY:-$PWD/vm-key}
 
-if [[ $KUBE_VM_MEM_GIB -gt $(( $(free -g | grep [0-9] | head -1 | awk '{print $2}') - 2 )) ]]; then
+if [[ $KUBE_VM_MEM_GIB -gt $(free -g | awk 'NR == 2 { print $2 - 2 }') ]]; then
   echo KUBE_VM_MEM_GIB value $KUBE_VM_MEM_GIB exceeds system resources
   exit 1
 fi
@@ -61,7 +57,7 @@ if virsh domstate $KUBE_VM_NAME 2>/dev/null; then
   rm -f "$RUNNING_VM_IMAGE"
 fi
 
-cp "$KUBE_VM_IMAGE_NAME.qcow2" "$KUBE_VM_IMAGE_NAME-$KUBE_VM_NAME.qcow2"
+cp --reflink=auto "$KUBE_VM_IMAGE_NAME.qcow2" "$KUBE_VM_IMAGE_NAME-$KUBE_VM_NAME.qcow2"
 # TODO: Test if virbr0 is present
 virt-install \
   --name "$KUBE_VM_NAME" \
@@ -76,25 +72,34 @@ virt-install \
   --hvm
 
 echo "Sleeping 30 seconds to allow VM to start and obtain IP"
-sleep 30 
+sleep 30
+IP_WAIT_TIMEOUT=600
+unset KUBE_VM_DEFAULT_MAC
+while [[ -z "$KUBE_VM_DEFAULT_MAC" ]]; do
+  echo "Checking if default interface has MAC address"
+  KUBE_VM_DEFAULT_MAC=$(virsh domiflist "$KUBE_VM_NAME" | grep default | grep -oE '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}') || true
+  if [[ -z "$KUBE_VM_DEFAULT_MAC" ]]; then
+    if [[ $IP_WAIT_TIMEOUT -ge 0 ]]; then
+      (( IP_WAIT_TIMEOUT -= 15 ))
+      echo "MAC address not yet available. Retrying in 15 seconds"
+      sleep 15
+    else
+      echo "No MAC address for default interface on VM $KUBE_VM_NAME after 10 minutes. Check output of \`sudo virsh domiflist $KUBE_VM_NAME\`"
+      exit 1
+    fi
+  fi
+done
 unset KUBE_VM_DEFAULT_IP
-# TODO: Clean up variable assignment (timeouts)
-IP_WAIT_TIMEOUT=150
-KUBE_VM_DEFAULT_MAC=$(virsh domiflist "$KUBE_VM_NAME" | grep default | grep -oE '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}') || true
-if [[ -z "$KUBE_VM_DEFAULT_MAC" ]]; then
-  echo "No MAC address for default interface on VM $KUBE_VM_NAME. Check output of \`sudo virsh domiflist $KUBE_VM_NAME\`"
-  exit 1
-fi
 while [[ -z "$KUBE_VM_DEFAULT_IP" ]]; do
   echo "Checking if IP lease exists for interface $KUBE_VM_DEFAULT_MAC"
   KUBE_VM_DEFAULT_IP=$(virsh net-dhcp-leases default --mac "$KUBE_VM_DEFAULT_MAC" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}') || true
   if [[ -z "$KUBE_VM_DEFAULT_IP" ]]; then
-    if [[ "$IP_WAIT_TIMEOUT" -ge 0 ]]; then
+    if [[ $IP_WAIT_TIMEOUT -ge 0 ]]; then
       (( IP_WAIT_TIMEOUT -= 15 ))
       echo "No IP assigned for $KUBE_VM_DEFAULT_MAC. Retrying in 15 seconds"
       sleep 15
     else
-      echo "No IP assigned for $KUBE_VM_DEFAULT_MAC after 3 minutes. Exiting."
+      echo "No IP assigned for $KUBE_VM_DEFAULT_MAC after 10 minutes. Exiting."
       exit 1
     fi
   fi
