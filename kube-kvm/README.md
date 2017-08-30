@@ -43,11 +43,7 @@ testing has been done:
 - The default network defined in `net-default.xml` should be created and started:
   - `virsh net-define net-default.xml`
   - `virsh net-start default`
-- The ntp service should be installed, synced, and started
-  - `sudo systemctl stop ntpd` (if already started)
-  - `sudo ntpdate time.nist.gov`
-  - `sudo systemctl enable ntpd`
-  - `sudo systemctl start ntpd`
+- A system time service (ntp or timedatectl) should be installed, synced, and started
 - The KVM host machine should have internet access through a Linux host bridge device named
   `br0`. This is the default configuration when installing SLES as a KVM host. If using
   Wicked as your network manager, you can follow the instructions in step 4 of
@@ -60,9 +56,7 @@ deployed Kubernetes host VM. This may alternatively be configured by setting the
 `KUBE_VM_NAME` environment variable.
 
 #### WARNING:
-```
-If a VM with the name passed via the name argument already exists, it will be deleted!
-```
+_**If a VM with the name passed via the name argument already exists, it will be deleted!**_
 
 Other variables which can be set to modify the behaviour of the deployment scripts are:
 
@@ -75,7 +69,8 @@ KUBE_VM_MEM_GIB    # The memory to allocate to the VM. Defaults to 8GiB
 
 ## Deployment
 
-To deploy a new VM, run `./provision-kube-host-kvm.sh <vm-name>`. See the above Warning
+To deploy a new VM, run `./provision-kube-host-kvm.sh <vm-name>`. See the above
+[warning](#warning)
 
 # How to Use the VM
 
@@ -83,7 +78,7 @@ Once the deployment of your VM is finished, the provisioning script will output 
 about how to set your kubernetes config to access the VM, which will look like:
 
 ```
-kubectl config set-cluster --server=10.9.169.158:8080 my_vm
+kubectl config set-cluster --server=${IP}:8080 my_vm
 kubectl config set-context my_vm --cluster=my_vm
 kubectl config use-context my_vm
 ```
