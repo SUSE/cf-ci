@@ -39,7 +39,9 @@ deployed from our chart bundle distributions, which use images on our docker hub
 This script is intended to be run on a SLES box which has been installed as a KVM host. It
 should also run on other KVM hosts which meet the following requirements, though limited
 testing has been done:
-- The `libvirt` user should be a member of the `root` group: `usermod -aG libvirt root`
+- This script should be used on a KVM host with libvirt installed
+- The qemu user should have access to the path which the disk images will be stored in.
+  This is set by `KUBE_VM_IMAGE_PATH` (defaults to `~/qcow2-disks`)
 - The default network defined in `net-default.xml` should be created and started:
   - `virsh net-define net-default.xml`
   - `virsh net-start default`

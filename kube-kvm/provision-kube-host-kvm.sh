@@ -12,7 +12,7 @@
 
 set -o errexit
 
-export KUBE_VM_NAME=${KUBE_VM_NAME:-$1}
+export KUBE_VM_NAME=${1:-${KUBE_VM_NAME}}
 export KUBE_VM_IMAGE_NAME=${KUBE_VM_IMAGE_NAME:-scf-libvirt-v2.0.7}
 export KUBE_VM_IMAGE_PATH=${KUBE_VM_IMAGE_PATH:-~/qcow2-disks}
 export KUBE_VM_MEM_GIB=${KUBE_VM_MEM_GIB:-8}
@@ -40,7 +40,7 @@ if [[ ! -f "${KUBE_VM_KEY}" ]] && [[ "${KUBE_VM_KEY}" == "$PWD/vm-key" ]]; then
 fi
 
 # Check that provisioning the VM would leave host machine with at least 2 GiB for OS/KVM overhead
-if [[ ${KUBE_VM_MEM_GIB} -gt $(free -g | awk 'NR == 2 { print $2 - 2 }') ]]; then
+if [[ ${KUBE_VM_MEM_GIB} -gt $(free -g | awk '/Mem:/ { print $2 - 2 }') ]]; then
   echo "KUBE_VM_MEM_GIB value ${KUBE_VM_MEM_GIB} exceeds system resources"
   exit 1
 fi
@@ -59,6 +59,7 @@ if virsh domstate "${KUBE_VM_NAME}" 2>/dev/null; then
 fi
 
 qemu-img create -f qcow2 -b "${KUBE_VM_IMAGE_NAME}.qcow2" "${KUBE_VM_IMAGE_NAME}-${KUBE_VM_NAME}.qcow2"
+chown qemu:qemu "${KUBE_VM_IMAGE_NAME}-${KUBE_VM_NAME}.qcow2"
 # TODO: Test if virbr0 is present
 virt-install \
   --name "${KUBE_VM_NAME}" \
@@ -106,7 +107,7 @@ done
 echo "Docker VM IP found: ${KUBE_VM_DEFAULT_IP}. Waiting for sshd to start"
 SSHD_TIMEOUT=60
 while [[ ${SSHD_TIMEOUT} -ge 0 ]]; do
-  nc "${KUBE_VM_DEFAULT_IP}" 22 </dev/null | grep 'SSH-' && break
+  nc "${KUBE_VM_DEFAULT_IP}" 22 </dev/null | grep --quiet 'SSH-' && break
   sleep 5
   (( SSHD_TIMEOUT -= 5 ))
 done
