@@ -41,7 +41,7 @@ should also run on other KVM hosts which meet the following requirements, though
 testing has been done:
 - This script should be used on a KVM host with libvirt installed
 - The qemu user should have access to the path which the disk images will be stored in.
-  This is set by `KUBE_VM_IMAGE_PATH` (defaults to `~/qcow2-disks`)
+  This is set by `KUBE_VM_IMAGE_PATH` (defaults to `/var/lib/libvirt/images/`)
 - The default network defined in `net-default.xml` should be created and started:
   - `virsh net-define net-default.xml`
   - `virsh net-start default`
@@ -65,7 +65,7 @@ Other variables which can be set to modify the behaviour of the deployment scrip
 ```
 KUBE_VM_IMAGE_NAME # The name of the image in s3 to use. Defaults to the latest VM image
 KUBE_VM_IMAGE_PATH # The path to use for storing images, VM disks, and the vm key
-                   # This defaults to $HOME/qcow2-disks
+                   # This defaults to /var/lib/libvirt/images
 KUBE_VM_MEM_GIB    # The memory to allocate to the VM. Defaults to 8GiB
 ```
 

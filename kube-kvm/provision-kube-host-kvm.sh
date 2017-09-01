@@ -14,7 +14,7 @@ set -o errexit
 
 export KUBE_VM_NAME=${1:-${KUBE_VM_NAME}}
 export KUBE_VM_IMAGE_NAME=${KUBE_VM_IMAGE_NAME:-scf-libvirt-v2.0.7}
-export KUBE_VM_IMAGE_PATH=${KUBE_VM_IMAGE_PATH:-~/qcow2-disks}
+export KUBE_VM_IMAGE_PATH=${KUBE_VM_IMAGE_PATH:-/var/lib/libvirt/images}
 export KUBE_VM_MEM_GIB=${KUBE_VM_MEM_GIB:-8}
 
 if [[ -z "${KUBE_VM_NAME}" ]]; then
