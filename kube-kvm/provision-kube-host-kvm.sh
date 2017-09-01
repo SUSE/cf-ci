@@ -35,7 +35,7 @@ fi
 # Fetch VM access key if it doesn't exist
 KUBE_VM_KEY=${KUBE_VM_KEY:-$PWD/vm-key}
 if [[ ! -f "${KUBE_VM_KEY}" ]] && [[ "${KUBE_VM_KEY}" == "$PWD/vm-key" ]]; then
-  curl -sL -o "{KUBE_VM_KEY}" https://raw.githubusercontent.com/mitchellh/vagrant/v1.9.6/keys/vagrant
+  curl -sL -o "${KUBE_VM_KEY}" https://raw.githubusercontent.com/mitchellh/vagrant/v1.9.6/keys/vagrant
   chmod 400 vm-key
 fi
 
