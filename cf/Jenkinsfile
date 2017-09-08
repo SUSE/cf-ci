@@ -1,0 +1,98 @@
+pipeline {
+    agent { label 'scf' }
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+        timeout(time: 5, unit: 'HOURS')
+    }
+    parameters {
+        string(
+            name: 'CONFIG_NAME',
+            description: 'Zip archive name of configs to deploy',
+        )
+        string(
+            name: 'CONFIG_PATH',
+            description: 'Prefix for path to zip file',
+            defaultValue: 'https://s3.amazonaws.com/cf-opensusefs2/scf/config/'
+        )
+    }
+    stages {
+        stage('deploy') {
+            steps {
+                ansiColor('xterm') {
+                    timeout(time: 2, unit: 'HOURS') {
+                        deleteDir()
+                        sh """
+                            name="\$(printf %s '${params.CONFIG_NAME}' | perl -ne 'use URI::Escape; print uri_escape(\$_)')"
+                            curl -o scf.zip -L "${params.CONFIG_PATH}\${name}"
+                            unzip scf.zip
+                            kubectl create -f - <<< '{"kind":"StorageClass","apiVersion":"storage.k8s.io/v1","metadata":{"name":"'"${JOB_BASE_NAME}-${BUILD_NUMBER}-"'hostpath"},"provisioner":"kubernetes.io/host-path"}'
+
+                            addr="\$(ip -4 -o addr show eth0 | awk '{ print \$4 }' | awk -F/ '{ print \$1 }')"
+                            domain="\${addr}.nip.io"
+                            mkdir certs
+                            ./cert-generator.sh -d "\${domain}" -n ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf -o certs
+
+                            helm install helm/uaa \
+                                --name ${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa \
+                                --namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa \
+                                --set env.CLUSTER_ADMIN_PASSWORD=changeme \
+                                --set env.DOMAIN=\${domain} \
+                                --set env.UAA_ADMIN_CLIENT_SECRET=uaa-admin-client-secret \
+                                --set env.UAA_HOST=uaa.\${domain} \
+                                --set env.UAA_PORT=2793 \
+                                --set kube.external_ip=\${addr} \
+                                --set kube.storage_class.persistent=${JOB_BASE_NAME}-${BUILD_NUMBER}-hostpath \
+                                --values certs/uaa-cert-values.yaml
+
+                            helm install helm/cf \
+                                --name ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf \
+                                --namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf \
+                                --set env.CLUSTER_ADMIN_PASSWORD=changeme \
+                                --set env.DOMAIN=\${domain} \
+                                --set env.UAA_ADMIN_CLIENT_SECRET=uaa-admin-client-secret \
+                                --set env.UAA_HOST=uaa.\${domain} \
+                                --set env.UAA_PORT=2793 \
+                                --set kube.external_ip=\${addr} \
+                                --set kube.storage_class.persistent=${JOB_BASE_NAME}-${BUILD_NUMBER}-hostpath \
+                                --values certs/scf-cert-values.yaml
+
+                            echo Waiting for all pods to be ready...
+                            set +o xtrace
+                            for ns in "${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa" "${JOB_BASE_NAME}-${BUILD_NUMBER}-scf" ; do
+                                while ! ( kubectl get pods -n "\${ns}" | awk '{ if (match(\$2, /^([0-9]+)\\/([0-9]+)\$/, c) && c[1] != c[2]) { print ; exit 1 } }' ) ; do
+                                    sleep 10
+                                done
+                            done
+                            kubectl get pods --all-namespaces
+                        """
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+            sh '''#!/bin/bash
+            set -o xtrace
+            if kubectl get storageclass ${JOB_BASE_NAME}-${BUILD_NUMBER}-hostpath ; then
+                kubectl delete storageclass ${JOB_BASE_NAME}-${BUILD_NUMBER}-hostpath
+            fi
+            if kubectl get namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf ; then
+                kubectl delete namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf
+            fi
+            if kubectl get namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa ; then
+                kubectl delete namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa
+            fi
+            helm list --all --short | grep "${JOB_BASE_NAME}-${BUILD_NUMBER}-" | xargs --no-run-if-empty helm delete --purge
+            while kubectl get namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf ; do
+                sleep 1
+            done
+            while kubectl get namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa ; do
+                sleep 1
+            done
+            '''
+        }
+    }
+}
