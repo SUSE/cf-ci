@@ -1,8 +1,13 @@
+String ipAddress() {
+    return sh(returnStdout: true, script: "ip -4 -o addr show eth0 | awk '{ print \$4 }' | awk -F/ '{ print \$1 }'").trim()
+}
+
+String domain() {
+    return ipAddress() + ".nip.io"
+}
+
 void runTest(String testName) {
     sh """
-        addr="\$(ip -4 -o addr show eth0 | awk '{ print \$4 }' | awk -F/ '{ print \$1 }')"
-        domain="\${addr}.nip.io"
-
         kube_overrides() {
             ruby <<EOF
                 require 'yaml'
@@ -10,7 +15,7 @@ void runTest(String testName) {
                 obj = YAML.load_file('\$1')
                 obj['spec']['containers'].each do |container|
                     container['env'].each do |env|
-                        env['value'] = '\${domain}' if env['name'] == 'DOMAIN'
+                        env['value'] = '${domain()}' if env['name'] == 'DOMAIN'
                     end
                 end
                 puts obj.to_json
@@ -76,20 +81,18 @@ pipeline {
 
                         ./kube-ready-state-check.sh || /bin/true
 
-                        addr="\$(ip -4 -o addr show eth0 | awk '{ print \$4 }' | awk -F/ '{ print \$1 }')"
-                        domain="\${addr}.nip.io"
                         mkdir certs
-                        ./cert-generator.sh -d "\${domain}" -n ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf -o certs
+                        ./cert-generator.sh -d "${domain()}" -n ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf -o certs
 
                         helm install helm/uaa \
                             --name ${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa \
                             --namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-uaa \
                             --set env.CLUSTER_ADMIN_PASSWORD=changeme \
-                            --set env.DOMAIN=\${domain} \
+                            --set env.DOMAIN=${domain()} \
                             --set env.UAA_ADMIN_CLIENT_SECRET=uaa-admin-client-secret \
-                            --set env.UAA_HOST=uaa.\${domain} \
+                            --set env.UAA_HOST=uaa.${domain()} \
                             --set env.UAA_PORT=2793 \
-                            --set kube.external_ip=\${addr} \
+                            --set kube.external_ip=${ipAddress()} \
                             --set kube.storage_class.persistent=${JOB_BASE_NAME}-${BUILD_NUMBER}-hostpath \
                             --values certs/uaa-cert-values.yaml
 
@@ -97,11 +100,11 @@ pipeline {
                             --name ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf \
                             --namespace ${JOB_BASE_NAME}-${BUILD_NUMBER}-scf \
                             --set env.CLUSTER_ADMIN_PASSWORD=changeme \
-                            --set env.DOMAIN=\${domain} \
+                            --set env.DOMAIN=${domain()} \
                             --set env.UAA_ADMIN_CLIENT_SECRET=uaa-admin-client-secret \
-                            --set env.UAA_HOST=uaa.\${domain} \
+                            --set env.UAA_HOST=uaa.${domain()} \
                             --set env.UAA_PORT=2793 \
-                            --set kube.external_ip=\${addr} \
+                            --set kube.external_ip=${ipAddress()} \
                             --set kube.storage_class.persistent=${JOB_BASE_NAME}-${BUILD_NUMBER}-hostpath \
                             --values certs/scf-cert-values.yaml
 
