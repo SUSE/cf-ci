@@ -79,6 +79,7 @@ pipeline {
                         unzip scf.zip
                         kubectl create -f - <<< '{"kind":"StorageClass","apiVersion":"storage.k8s.io/v1","metadata":{"name":"'"${JOB_BASE_NAME}-${BUILD_NUMBER}-"'hostpath"},"provisioner":"kubernetes.io/host-path"}'
 
+                        # This is more informational -- even if it fails, we want to try running things anyway to see how far we get.
                         ./kube-ready-state-check.sh || /bin/true
 
                         mkdir certs
