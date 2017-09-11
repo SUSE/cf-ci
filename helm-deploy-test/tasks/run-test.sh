@@ -9,7 +9,7 @@ DOMAIN=$(ruby -r yaml -e "puts YAML.load_file('pool.kube-hosts/metadata')['conte
 CF_NAMESPACE=scf
 set +o allexport
 
-unzip s3.scf-config/scf-linux-*.zip -d s3.scf-config/
+unzip s3.scf-config/scf-*.zip -d s3.scf-config/
 
 kube_overrides() {
     ruby <<EOF

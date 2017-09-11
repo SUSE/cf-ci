@@ -21,7 +21,7 @@ CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 set +o allexport
 
-unzip s3.scf-config/scf-linux-*.zip -d s3.scf-config/
+unzip s3.scf-config/scf-*.zip -d s3.scf-config/
 
 # Check that the kube of the cluster is reasonable
 bash s3.scf-config/kube-ready-state-check.sh kube
