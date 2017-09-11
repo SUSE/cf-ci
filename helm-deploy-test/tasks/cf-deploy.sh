@@ -5,8 +5,7 @@ set -o errexit -o nounset
 mkdir /root/.kube/ && cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
-# The IP address assigned to the kube node. The example value here
-# is what the vagrant setup assigns
+# The IP address assigned to the kube node.
 external_ip=$(ruby -r yaml -e "puts YAML.load_file('pool.kube-hosts/metadata')['contexts'][0]['context']['cluster']")
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
@@ -14,8 +13,7 @@ external_ip=$(ruby -r yaml -e "puts YAML.load_file('pool.kube-hosts/metadata')['
 DOMAIN=${external_ip}.nip.io
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
-# UAA host/port that SCF will talk to. The example values here are
-# for the UAA deployment included with the SCF distribution.
+# UAA host/port that SCF will talk to.
 UAA_HOST=uaa.${external_ip}.nip.io
 UAA_PORT=2793
 
@@ -56,7 +54,6 @@ helm install s3.scf-config/helm/cf/ \
     --set "kube.external_ip=${external_ip}"
 
 # Wait until CF is ready
-
 is_namespace_pending() {
     local namespace="$1"
     if kubectl get pods --namespace="${namespace}" --output=custom-columns=':.status.conditions[?(@.type == "Ready")].status' | grep --silent False ; then

@@ -5,6 +5,7 @@ set -o errexit -o nounset
 mkdir /root/.kube/ && cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
+DOMAIN=$(ruby -r yaml -e "puts YAML.load_file('pool.kube-hosts/metadata')['contexts'][0]['context']['cluster']").nip.io
 CF_NAMESPACE=scf
 set +o allexport
 
