@@ -12,10 +12,12 @@ void runTest(String testName) {
             ruby <<EOF
                 require 'yaml'
                 require 'json'
+                domain = '${domain()}'
                 obj = YAML.load_file('\$1')
                 obj['spec']['containers'].each do |container|
                     container['env'].each do |env|
-                        env['value'] = '${domain()}' if env['name'] == 'DOMAIN'
+                        value = env['name'] == 'DOMAIN' ? domain : env['value']
+                        env['value'] = value.to_s
                     end
                 end
                 puts obj.to_json
