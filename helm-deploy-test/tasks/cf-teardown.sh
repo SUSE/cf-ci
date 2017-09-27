@@ -2,7 +2,8 @@
 set -o errexit -o nounset
 
 # Set kube config from pool
-mkdir /root/.kube/ && cp  pool.kube-hosts/metadata /root/.kube/config
+mkdir -p /root/.kube/
+cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
 CF_NAMESPACE=scf
