@@ -24,7 +24,7 @@ void runTest(String testName) {
 EOF
         }
 
-        image=\$(awk '\$1 == "image:" { print \$2 }' "kube/cf/bosh-task/${testName}.yaml")
+        image=\$(awk '\$1 == "image:" { print \$2 }' "kube/cf/bosh-task/${testName}.yaml" | tr -d '"')
 
         kubectl run \
             --namespace=${JOB_BASE_NAME}-${BUILD_NUMBER}-scf \
