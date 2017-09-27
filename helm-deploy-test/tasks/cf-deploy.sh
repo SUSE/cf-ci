@@ -7,7 +7,7 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
 # The IP address assigned to the kube node.
-external_ip=$(ruby -r yaml -e "puts YAML.load_file('pool.kube-hosts/metadata')['contexts'][0]['context']['cluster']")
+external_ip=$(kubectl get nodes -o jsonpath='{.items[].status.addresses[?(@.type=="InternalIP")].address}' | head -n1)
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
 # cert-generator.sh script.

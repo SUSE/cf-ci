@@ -6,7 +6,7 @@ mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
-DOMAIN=$(ruby -r yaml -e "puts YAML.load_file('pool.kube-hosts/metadata')['contexts'][0]['context']['cluster']").nip.io
+DOMAIN=$(kubectl get nodes -o jsonpath='{.items[].status.addresses[?(@.type=="InternalIP")].address}' | head -n1).nip.io
 CF_NAMESPACE=scf
 set +o allexport
 
