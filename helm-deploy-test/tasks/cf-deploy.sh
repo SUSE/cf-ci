@@ -1,28 +1,31 @@
 #!/bin/bash
-
 set -o errexit -o nounset
 
-# Export kube-host details from pool
+# Set kube config from pool
+mkdir -p /root/.kube/
+cp  pool.kube-hosts/metadata /root/.kube/config
+
 set -o allexport
-source pool.kube-hosts/metadata
-CF_NAMESPACE=cf
-UAA_NAMESPACE=uaa
+# The IP address assigned to the kube node.
+external_ip=$(kubectl get nodes -o jsonpath='{.items[].status.addresses[?(@.type=="InternalIP")].address}' | head -n1)
+# Domain for SCF. DNS for *.DOMAIN must point to the kube node's
+# external ip. This must match the value passed to the
+# cert-generator.sh script.
+DOMAIN=${external_ip}.nip.io
+# Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
+# UAA host/port that SCF will talk to.
+UAA_HOST=uaa.${external_ip}.nip.io
+UAA_PORT=2793
+
+CF_NAMESPACE=scf
+UAA_NAMESPACE=uaa
 set +o allexport
 
-# Connect to Kubernetes
-bash -x ci/helm-deploy-test/tasks/common/connect-kube-host.sh
+unzip s3.scf-config/scf-*.zip -d s3.scf-config/
 
-unzip s3.scf-config/scf-linux-*.zip -d s3.scf-config/
-
-# Check that the cluster is reasonable
-if test -n "${K8S_USER:-}" -a -n "${SSHPASS:-}" ; then
-    sshpass -e ssh -o StrictHostKeyChecking=no "${K8S_USER}@${K8S_HOST_IP}" -- \
-        bash -s < s3.scf-config/kube-ready-state-check.sh
-else
-    printf "%bWarning: SSH password not supplied, not checking cluster sanity%b\n" \
-        "\033[0;33;1m" "\033[0m" >&2
-fi
+# Check that the kube of the cluster is reasonable
+bash s3.scf-config/kube-ready-state-check.sh kube
 
 # Generate certificates
 mkdir certs/
@@ -37,7 +40,7 @@ helm install s3.scf-config/helm/uaa/ \
     --values certs/uaa-cert-values.yaml \
     --set "env.DOMAIN=${DOMAIN}" \
     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-    --set "kube.external_ip=${K8S_HOST_IP}"
+    --set "kube.external_ip=${external_ip}"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
@@ -47,12 +50,11 @@ helm install s3.scf-config/helm/cf/ \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.DOMAIN=${DOMAIN}" \
     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-    --set "env.UAA_HOST=uaa.${DOMAIN}" \
-    --set "env.UAA_PORT=2793" \
-    --set "kube.external_ip=${K8S_HOST_IP}"
+    --set "env.UAA_HOST=${UAA_HOST}" \
+    --set "env.UAA_PORT=${UAA_PORT}" \
+    --set "kube.external_ip=${external_ip}"
 
 # Wait until CF is ready
-
 is_namespace_pending() {
     local namespace="$1"
     if kubectl get pods --namespace="${namespace}" --output=custom-columns=':.status.conditions[?(@.type == "Ready")].status' | grep --silent False ; then

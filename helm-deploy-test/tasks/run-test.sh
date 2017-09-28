@@ -1,16 +1,16 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-# Export kube-host details from pool
+# Set kube config from pool
+mkdir -p /root/.kube/
+cp  pool.kube-hosts/metadata /root/.kube/config
+
 set -o allexport
-source pool.kube-hosts/metadata
-CF_NAMESPACE=cf
+DOMAIN=$(kubectl get nodes -o jsonpath='{.items[].status.addresses[?(@.type=="InternalIP")].address}' | head -n1).nip.io
+CF_NAMESPACE=scf
 set +o allexport
 
-# Connect to Kubernetes
-bash -x ci/helm-deploy-test/tasks/common/connect-kube-host.sh
-
-unzip s3.scf-config/scf-linux-*.zip -d s3.scf-config/
+unzip s3.scf-config/scf-*.zip -d s3.scf-config/
 
 kube_overrides() {
     ruby <<EOF
