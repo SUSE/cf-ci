@@ -26,7 +26,7 @@ kube_overrides() {
 EOF
 }
 
-image=$(awk '$1 == "image:" { print $2 }' "s3.scf-config/kube/cf/bosh-task/${TEST_NAME}.yaml")
+image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "s3.scf-config/kube/cf/bosh-task/${TEST_NAME}.yaml")
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
