@@ -19,7 +19,8 @@ kube_overrides() {
         obj = YAML.load_file('$1')
         obj['spec']['containers'].each do |container|
             container['env'].each do |env|
-                env['value'] = '$DOMAIN' if env['name'] == 'DOMAIN'
+                env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
+                env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
             end
         end
         puts obj.to_json
