@@ -31,3 +31,8 @@ RUN true \
     && echo "source <(kubectl completion bash)" >> ~/.bashrc \
     && zypper clean -a \
     && true
+
+RUN true \
+    && curl -L https://github.com/SUSE/stampy/releases/download/0.0.0/stampy-0.0.0.22.gbb93bf3.linux-amd64.tgz | tar xz stampy \
+    && mv stampy /usr/local/bin/stampy \
+    && chmod +x /usr/local/bin/stampy
