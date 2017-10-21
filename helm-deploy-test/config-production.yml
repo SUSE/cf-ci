@@ -2,7 +2,7 @@
 src-repo: https://github.com/SUSE/scf.git
 src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
-src-ci-branch: master
+src-ci-branch: harts-add-performance-collection
 
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
 kube-pool-key: *github-private-key
@@ -14,3 +14,4 @@ s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
 s3-config-bucket: cf-opensusefs2
 s3-config-prefix: scf/config/master/
+s3-metrics-prefix: scf-metrics/

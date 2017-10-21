@@ -18,13 +18,22 @@ resources:
     bucket: ((s3-config-bucket))
     regexp: ((s3-config-prefix))scf-(.*).linux-amd64\.zip$
 
-- name: pool.kube-hosts
-  type: pool
+- name: s3.scf-metrics
+  type: s3
   source:
-    uri: ((kube-pool-repo))
-    private_key: ((kube-pool-key))
-    branch: ((kube-pool-branch))
-    pool: ((kube-pool-pool))
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket))
+    regexp: scf/metrics/scf-metrics-(.*).csv
+
+# - name: pool.kube-hosts
+#   type: pool
+#   source:
+#     uri: ((kube-pool-repo))
+#     private_key: ((kube-pool-key))
+#     branch: ((kube-pool-branch))
+#     pool: ((kube-pool-pool))
 
 jobs:
 - name: helm-deploy-test
@@ -33,30 +42,48 @@ jobs:
     - get: ci
     - get: s3.scf-config
       trigger: true
-    - put: pool.kube-hosts
-      params: {acquire: true}
-    on_failure:
-      put: pool.kube-hosts
-      params: {release: pool.kube-hosts}
-  - task: cf-deploy
-    file: ci/helm-deploy-test/tasks/cf-deploy.yml
-  - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
-    params:
-      TEST_NAME: smoke-tests
-  - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
-    params:
-      TEST_NAME: acceptance-tests-brain
-  - task: acceptance-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
-    params:
-      TEST_NAME: acceptance-tests
+    #- put: pool.kube-hosts
+    #  params: {acquire: true}
+    #on_failure:
+    #  put: pool.kube-hosts
+    #  params: {release: pool.kube-hosts}
+  - task: create-test-file
+    file: ci/helm-deploy-test/tasks/create-test-file.yml
+  # - put: s3.scf-metrics
+  #   params:
+  #     file: scf-metrics/*.csv
+  - task: append-line
+    file: ci/helm-deploy-test/tasks/append-line.yml
+  # - put: s3.scf-metrics
+  #   params:
+  #     file: scf-metrics/*.csv
+  - task: append-line2
+    file: ci/helm-deploy-test/tasks/append-line2.yml
+  # - put: s3.scf-metrics
+  #   params:
+  #     file: scf-metrics/*.csv
+#  - task: cf-deploy
+#    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+#  - task: cf-smoke-tests
+#    file: ci/helm-deploy-test/tasks/run-test.yml
+#    params:
+#      TEST_NAME: smoke-tests
+#  - task: acceptance-tests-brain
+#    file: ci/helm-deploy-test/tasks/run-test.yml
+#    params:
+#      TEST_NAME: acceptance-tests-brain
+#  - task: acceptance-tests
+#    file: ci/helm-deploy-test/tasks/run-test.yml
+#    params:
+#      TEST_NAME: acceptance-tests
 
   # We intentionally don't put the teardown and pool release steps in an ensure
   # block, so that when tests fail we have a chance of examining why things are
   # failing.
-  - task: cf-teardown
-    file: ci/helm-deploy-test/tasks/cf-teardown.yml
-  - put: pool.kube-hosts
-    params: {release: pool.kube-hosts}
+#  - task: cf-teardown
+#    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+  - put:  s3.scf-metrics
+    params:
+      file: scf-metrics/*.csv
+  #- put: pool.kube-hosts
+  #  params: {release: pool.kube-hosts}

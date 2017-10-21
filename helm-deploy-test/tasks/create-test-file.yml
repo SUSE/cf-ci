@@ -7,7 +7,7 @@ image_resource:
     tag: staging
 inputs:
 - name: ci
-- name: s3.scf-config
-- name: pool.kube-hosts
+outputs:
+- name: scf-metrics
 run:
-  path: ci/helm-deploy-test/tasks/run-test.sh
+  path: ci/helm-deploy-test/tasks/create-test-file.sh
