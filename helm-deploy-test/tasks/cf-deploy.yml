@@ -5,6 +5,11 @@ image_resource:
   source:
     repository: splatform/cf-ci-orchestration
 
+params:
+  KUBE_REGISTRY_HOSTNAME: ((kube-registry-hostname))
+  KUBE_REGISTRY_USERNAME: ((kube-registry-username))
+  KUBE_REGISTRY_PASSWORD: ((kube-registry-password))
+
 inputs:
 - name: ci
 - name: s3.scf-config
