@@ -40,7 +40,10 @@ helm install s3.scf-config/helm/uaa/ \
     --values certs/uaa-cert-values.yaml \
     --set "env.DOMAIN=${DOMAIN}" \
     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-    --set "kube.external_ip=${external_ip}"
+    --set "kube.external_ip=${external_ip}" \
+    --set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}" \
+    --set "kube.registry.username=${KUBE_REGISTRY_USERNAME}" \
+    --set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
@@ -52,7 +55,10 @@ helm install s3.scf-config/helm/cf/ \
     --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "kube.external_ip=${external_ip}"
+    --set "kube.external_ip=${external_ip}" \
+    --set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}" \
+    --set "kube.registry.username=${KUBE_REGISTRY_USERNAME}" \
+    --set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}"
 
 # Wait until CF is ready
 is_namespace_pending() {
