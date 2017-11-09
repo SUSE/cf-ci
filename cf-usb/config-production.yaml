@@ -1,0 +1,12 @@
+src-repo: https://github.com/SUSE/cf-usb-sidecar.git
+src-branch: develop
+
+ci-repo: https://github.com/SUSE/cf-ci.git
+ci-branch: master
+
+docker-server: ""
+docker-tag: latest
+
+s3-bucket: cf-usb-release-blobstore
+s3-prefix: helm/ci/
+s3-disable-ssl: false

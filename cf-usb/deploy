@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -o nounset -o errexit
+
+if test -z "${1:-}" -o ! -r "config-${1:-}.yaml" ; then
+    exec >&2
+    echo "Failed to find configuration file config-${1:-}.yaml"
+    echo "Usage: ${0} <config-variant>"
+    exit 1
+fi
+
+alt_secrets_file="CONCOURSE_SECRETS_FILE_${1}"
+if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
+    CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
+fi
+
+fly set-pipeline \
+    --pipeline="cf-usb" \
+    --config="cf-usb.yaml" \
+    --load-vars-from="config-${1}.yaml" \
+    --load-vars-from=<(gpg --decrypt --batch --quiet "${CONCOURSE_SECRETS_FILE}")
