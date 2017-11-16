@@ -33,14 +33,28 @@ pushd s3.scf-config/
 ./cert-generator.sh -d "${DOMAIN}" -n "${CF_NAMESPACE}" -o ../certs/
 popd
 
+HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
+             --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
+             --set "kube.external_ip=${external_ip}")
+if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
+    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
+fi
+if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
+    HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
+fi
+if [ -n "${KUBE_REGISTRY_PASSWORD:-}" ]; then
+    HELM_PARAMS+=(--set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}")
+fi
+if [ -n "${KUBE_ORGANIZATION:-}" ]; then
+   HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
+fi
+
 # Deploy UAA
 kubectl create namespace "${UAA_NAMESPACE}"
 helm install s3.scf-config/helm/uaa/ \
     --namespace "${UAA_NAMESPACE}" \
     --values certs/uaa-cert-values.yaml \
-    --set "env.DOMAIN=${DOMAIN}" \
-    --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
-    --set "kube.external_ip=${external_ip}"
+    "${HELM_PARAMS[@]}"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
@@ -48,11 +62,9 @@ helm install s3.scf-config/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
     --values certs/scf-cert-values.yaml \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
-    --set "env.DOMAIN=${DOMAIN}" \
-    --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "kube.external_ip=${external_ip}"
+    ${HELM_PARAMS[@]}
 
 # Wait until CF is ready
 is_namespace_pending() {
@@ -64,7 +76,7 @@ is_namespace_pending() {
 }
 for namespace in "${UAA_NAMESPACE}" "${CF_NAMESPACE}" ; do
     start=$(date +%s)
-    for (( i = 0  ; i < 240 ; i ++ )) ; do
+    for (( i = 0  ; i < 480 ; i ++ )) ; do
         if ! is_namespace_pending "${namespace}" ; then
             break
         fi
