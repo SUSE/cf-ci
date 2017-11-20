@@ -7,6 +7,9 @@ ci-branch: master
 docker-server: ""
 docker-tag: latest
 
+s3-endpoint: ~
+s3-access-key: *aws-access-key
+s3-secret-key: *aws-secret-key
 s3-bucket: cf-opensusefs2
 s3-prefix: helm/ci/
 s3-disable-ssl: false

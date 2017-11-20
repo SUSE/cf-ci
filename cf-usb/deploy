@@ -17,5 +17,7 @@ fi
 fly set-pipeline \
     --pipeline="cf-usb" \
     --config="cf-usb.yaml" \
-    --load-vars-from="config-${1}.yaml" \
-    --load-vars-from=<(gpg --decrypt --batch --quiet "${CONCOURSE_SECRETS_FILE}")
+    --load-vars-from=<(
+        gpg --decrypt --batch --quiet "${CONCOURSE_SECRETS_FILE}"
+        cat "config-${1}.yaml"
+    )
