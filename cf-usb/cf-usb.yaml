@@ -30,7 +30,6 @@ resources:
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar
     tag: ((docker-tag))
-    tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.buildbase
@@ -38,7 +37,6 @@ resources:
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-buildbase
     tag: ((docker-tag))
-    tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.mysql
@@ -46,14 +44,12 @@ resources:
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql
     tag: ((docker-tag))
-    tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.mysql-setup
   type: docker-image
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql-setup
-    tag: ((docker-tag))
     tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
@@ -85,9 +81,11 @@ jobs:
           out: csm-binary
       - put: docker.base
         params:
+          tag_as_latest: true
           build: csm-binary
     - put: docker.buildbase
       params:
+        tag_as_latest: true
         build: src
         dockerfile: src/scripts/docker/Dockerfile-build
 - name: dev-mysql
@@ -137,12 +135,14 @@ jobs:
       params:
         build: mysql-binary
         load_base: docker.base-fixed
+        tag_as_latest: true
         tag: mysql-binary/tag
     - put: docker.mysql-setup
       params:
         build: mysql-binary
         dockerfile: mysql-binary/Dockerfile-setup
         load_base: docker.buildbase-fixed
+        tag_as_latest: true
         tag: mysql-binary/tag
     - put: s3.mysql
       params:
