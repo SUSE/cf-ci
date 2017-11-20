@@ -1,0 +1,149 @@
+---
+resources:
+- name: src
+  type: git
+  source:
+    uri: ((src-repo))
+    private_key: ((github-private-key))
+    branch: ((src-branch))
+- name: ci
+  type: git
+  source:
+    uri: ((ci-repo))
+    private_key: ((github-private-key))
+    branch: ((ci-branch))
+    paths:
+    - cf-usb/tasks
+- name: semver.cf-usb
+  type: semver
+  source:
+    initial_version: 0.0.0
+    driver: s3
+    bucket: ((s3-bucket))
+    key: ((s3-prefix))cf-usb.version
+    access_key_id: ((s3-access-key))
+    secret_access_key: ((s3-secret-key))
+    endpoint: ((s3-endpoint))
+    disable_ssl: ((s3-disable-ssl))
+- name: docker.base
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
+- name: docker.buildbase
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-buildbase
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
+- name: docker.mysql
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
+- name: docker.mysql-setup
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql-setup
+    tag_as_latest: true
+    username: ((docker-username))
+    password: ((docker-password))
+- name: s3.mysql
+  type: s3
+  source:
+    bucket: ((s3-bucket))
+    access_key_id: ((s3-access-key))
+    secret_access_key: ((s3-secret-key))
+    endpoint: ((s3-endpoint))
+    disable_ssl: ((s3-disable-ssl))
+    regexp: ((s3-prefix))cf-usb-(.*).tgz
+
+jobs:
+- name: catalog-service-manager
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: ci
+      trigger: true
+  - aggregate:
+    - do:
+      - task: generate
+        file: ci/cf-usb/tasks/csm-generate.yml
+      - task: build
+        file: ci/cf-usb/tasks/csm-build.yml
+        output_mapping:
+          out: csm-binary
+      - put: docker.base
+        params:
+          tag_as_latest: true
+          build: csm-binary
+    - put: docker.buildbase
+      params:
+        tag_as_latest: true
+        build: src
+        dockerfile: src/scripts/docker/Dockerfile-build
+- name: dev-mysql
+  plan:
+  - aggregate:
+    - get: src
+      passed: [catalog-service-manager]
+      trigger: true
+    - get: ci
+      passed: [catalog-service-manager]
+    - get: semver.cf-usb
+    - get: docker.base
+      passed: [catalog-service-manager]
+      params:
+        save: true
+      trigger: true
+    - get: docker.buildbase
+      passed: [catalog-service-manager]
+      params:
+        save: true
+      trigger: true
+  - aggregate:
+    - do:
+      - task: generate
+        file: ci/cf-usb/tasks/csm-generate.yml
+      - task: build
+        file: ci/cf-usb/tasks/mysql-build.yml
+        input_mapping:
+          version: semver.cf-usb
+        output_mapping:
+          docker-out: mysql-binary
+          helm-out: mysql-helm
+    - task: fix-base
+      file: ci/cf-usb/tasks/fix-base.yml
+      input_mapping:
+        in: docker.base
+      output_mapping:
+        out: docker.base-fixed
+    - task: fix-buildbase
+      file: ci/cf-usb/tasks/fix-base.yml
+      input_mapping:
+        in: docker.buildbase
+      output_mapping:
+        out: docker.buildbase-fixed
+  - aggregate:
+    - put: docker.mysql
+      params:
+        build: mysql-binary
+        load_base: docker.base-fixed
+        tag_as_latest: true
+        tag: mysql-binary/tag
+    - put: docker.mysql-setup
+      params:
+        build: mysql-binary
+        dockerfile: mysql-binary/Dockerfile-setup
+        load_base: docker.buildbase-fixed
+        tag_as_latest: true
+        tag: mysql-binary/tag
+    - put: s3.mysql
+      params:
+        file: mysql-helm/cf-usb-*.tgz
