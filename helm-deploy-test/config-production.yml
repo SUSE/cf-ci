@@ -20,3 +20,4 @@ s3-config-prefix-sles: scf/config/
 registry-hostname: *docker-internal-registry
 registry-username: *docker-internal-username
 registry-password: *docker-internal-password
+organization: splatform
