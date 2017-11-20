@@ -30,6 +30,7 @@ resources:
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar
     tag: ((docker-tag))
+    tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.buildbase
@@ -37,6 +38,7 @@ resources:
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-buildbase
     tag: ((docker-tag))
+    tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.mysql
@@ -44,6 +46,7 @@ resources:
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql
     tag: ((docker-tag))
+    tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.mysql-setup
@@ -51,6 +54,7 @@ resources:
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql-setup
     tag: ((docker-tag))
+    tag_as_latest: true
     username: ((docker-username))
     password: ((docker-password))
 - name: s3.mysql
