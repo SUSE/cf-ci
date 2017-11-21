@@ -97,6 +97,8 @@ jobs:
     - get: ci
       passed: [catalog-service-manager]
     - get: semver.cf-usb
+      params:
+        pre: pre
     - get: docker.base
       passed: [catalog-service-manager]
       params:
@@ -147,3 +149,6 @@ jobs:
     - put: s3.mysql
       params:
         file: mysql-helm/cf-usb-*.tgz
+  - put: semver.cf-usb
+    params:
+      pre: pre
