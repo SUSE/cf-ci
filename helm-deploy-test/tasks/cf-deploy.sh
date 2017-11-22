@@ -35,7 +35,8 @@ popd
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ip=${external_ip}")
+             --set "kube.external_ip=${external_ip}"
+             --set "kube.auth=rbac")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
 fi
