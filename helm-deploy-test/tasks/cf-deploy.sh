@@ -98,5 +98,5 @@ helm install s3.scf-config/helm/cf/ \
     --set "env.UAA_PORT=${UAA_PORT}" \
     ${HELM_PARAMS[@]}
 
-# Wait for SCF namespace
+# Wait for CF namespace
 wait_for_namespace "${CF_NAMESPACE}"
