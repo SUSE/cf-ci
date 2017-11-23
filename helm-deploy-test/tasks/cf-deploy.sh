@@ -64,6 +64,7 @@ helm install s3.scf-config/helm/cf/ \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
+    --set "blobstore.disk_sizes.blobstore_data=50" \
     ${HELM_PARAMS[@]}
 
 # Wait until CF is ready
