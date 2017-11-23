@@ -49,6 +49,8 @@ jobs:
       params: {release: pool.kube-hosts}
   - task: cf-deploy
     file: ci/helm-deploy-test/tasks/cf-deploy.yml
+    params:
+      CAP_CHART: opensuse
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
@@ -69,7 +71,6 @@ jobs:
       TEST_NAME: acceptance-tests
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
-
   # We intentionally don't put the teardown and pool release steps in an ensure
   # block, so that when tests fail we have a chance of examining why things are
   # failing.
@@ -77,6 +78,7 @@ jobs:
     file: ci/helm-deploy-test/tasks/cf-teardown.yml
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
+
 - name: helm-deploy-test-SLES
   plan:
   - aggregate:
@@ -95,6 +97,7 @@ jobs:
       KUBE_REGISTRY_USERNAME: ((registry-username))
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: sles
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
@@ -115,7 +118,6 @@ jobs:
       TEST_NAME: acceptance-tests
     input_mapping:
       s3.scf-config: s3.scf-config-sles
-
   # We intentionally don't put the teardown and pool release steps in an ensure
   # block, so that when tests fail we have a chance of examining why things are
   # failing.
