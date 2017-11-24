@@ -63,6 +63,9 @@ if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
         printf "ERROR: Secrets file %s is not readable\n" "${CONCOURSE_SECRETS_FILE}" >&2
         exit 2
     fi
+else
+    echo "CONCOURSE_SECRETS_FILE variable is not set"
+    exit 1
 fi
 
 fly \
