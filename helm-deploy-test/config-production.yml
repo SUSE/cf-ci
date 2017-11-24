@@ -12,10 +12,10 @@ kube-pool-pool: k8s-hosts
 s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
-s3-config-bucket-opensuse: cf-opensusefs2
-s3-config-prefix-opensuse: scf/config/master/
-s3-config-bucket-sles: cf-opensusefs2
-s3-config-prefix-sles: scf/config/
+s3-config-bucket-opensuse: cap-release-archives
+s3-config-prefix-opensuse: master/
+s3-config-bucket-sles: cap-release-archives
+s3-config-prefix-sles: master/
 
 registry-hostname: *docker-internal-registry
 registry-username: *docker-internal-username

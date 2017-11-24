@@ -35,7 +35,8 @@ popd
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ip=${external_ip}")
+             --set "kube.external_ip=${external_ip}"
+             --set "kube.auth=rbac")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
 fi
@@ -51,14 +52,14 @@ fi
 
 # Deploy UAA
 kubectl create namespace "${UAA_NAMESPACE}"
-helm install s3.scf-config/helm/uaa/ \
+helm install s3.scf-config/helm/uaa-${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --values certs/uaa-cert-values.yaml \
     "${HELM_PARAMS[@]}"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
-helm install s3.scf-config/helm/cf/ \
+helm install s3.scf-config/helm/cf-${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --values certs/scf-cert-values.yaml \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
