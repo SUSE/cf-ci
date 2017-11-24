@@ -27,11 +27,11 @@ kube_overrides() {
 EOF
 }
 
-image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "s3.scf-config/kube/cf-${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
+image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "s3.scf-config/kube/cf${CAP_CHART_SUFFIX:-}/bosh-task/${TEST_NAME}.yaml")
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
     --restart=Never \
     --image="${image}" \
-    --overrides="$(kube_overrides "s3.scf-config/kube/cf-${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+    --overrides="$(kube_overrides "s3.scf-config/kube/cf${CAP_CHART_SUFFIX:-}/bosh-task/${TEST_NAME}.yaml")" \
     "${TEST_NAME}"
