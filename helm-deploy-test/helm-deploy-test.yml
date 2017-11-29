@@ -25,7 +25,7 @@ resources:
     access_key_id: ((s3-config-access-key))
     secret_access_key: ((s3-config-secret-key))
     bucket: ((s3-config-bucket-sles))
-    regexp: ((s3-config-prefix-sles))scf-sles-(.*).linux-amd64\.zip$
+    regexp: ((s3-config-prefix-sles))scf-sle-(.*).linux-amd64\.zip$
 
 - name: pool.kube-hosts
   type: pool
@@ -100,28 +100,28 @@ jobs:
       KUBE_REGISTRY_USERNAME: ((registry-username))
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
-      CAP_CHART: sles
+      #CAP_CHART: sles
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
     file: ci/helm-deploy-test/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
-      CAP_CHART: sles
+      #CAP_CHART: sles
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
     file: ci/helm-deploy-test/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
-      CAP_CHART: sles
+      #CAP_CHART: sles
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
     file: ci/helm-deploy-test/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests
-      CAP_CHART: sles
+      #CAP_CHART: sles
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   # We intentionally don't put the teardown and pool release steps in an ensure
