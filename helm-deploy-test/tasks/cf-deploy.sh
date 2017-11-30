@@ -50,24 +50,7 @@ if [ -n "${KUBE_ORGANIZATION:-}" ]; then
    HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
 fi
 
-# Deploy UAA
-kubectl create namespace "${UAA_NAMESPACE}"
-helm install s3.scf-config/helm/uaa${CAP_CHART}/ \
-    --namespace "${UAA_NAMESPACE}" \
-    --values certs/uaa-cert-values.yaml \
-    "${HELM_PARAMS[@]}"
-
-# Deploy CF
-kubectl create namespace "${CF_NAMESPACE}"
-helm install s3.scf-config/helm/cf${CAP_CHART}/ \
-    --namespace "${CF_NAMESPACE}" \
-    --values certs/scf-cert-values.yaml \
-    --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
-    --set "env.UAA_HOST=${UAA_HOST}" \
-    --set "env.UAA_PORT=${UAA_PORT}" \
-    ${HELM_PARAMS[@]}
-
-# Wait until CF is ready
+# Wait until CF namespaces are ready
 is_namespace_pending() {
     local namespace="$1"
     if kubectl get pods --namespace="${namespace}" --output=custom-columns=':.status.conditions[?(@.type == "Ready")].status' | grep --silent False ; then
@@ -75,7 +58,9 @@ is_namespace_pending() {
     fi
     return 1
 }
-for namespace in "${UAA_NAMESPACE}" "${CF_NAMESPACE}" ; do
+
+wait_for_namespace() {
+    local namespace="$1"
     start=$(date +%s)
     for (( i = 0  ; i < 480 ; i ++ )) ; do
         if ! is_namespace_pending "${namespace}" ; then
@@ -91,5 +76,37 @@ for namespace in "${UAA_NAMESPACE}" "${CF_NAMESPACE}" ; do
     if is_namespace_pending "${namespace}" ; then
         printf "Namespace %s is still pending\n" "${namespace}"
         exit 1
-    fi
-done
+    fi 
+}
+
+# Deploy UAA
+kubectl create namespace "${UAA_NAMESPACE}"
+helm install s3.scf-config/helm/uaa${CAP_CHART}/ \
+    --namespace "${UAA_NAMESPACE}" \
+    --values certs/uaa-cert-values.yaml \
+    "${HELM_PARAMS[@]}"
+
+# Wait for UAA namespace
+wait_for_namespace "${UAA_NAMESPACE}"
+
+get_uaa_secret () {
+    kubectl get secret secret \
+    --namespace uaa \
+    -o jsonpath="{.data['$1']}"
+}
+
+CA_CERT="$(get_uaa_secret ${CA_CERT} | base64 -d -)"
+
+# Deploy CF
+kubectl create namespace "${CF_NAMESPACE}"
+helm install s3.scf-config/helm/cf${CAP_CHART}/ \
+    --namespace "${CF_NAMESPACE}" \
+    --values certs/scf-cert-values.yaml \
+    --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+    --set "env.UAA_HOST=${UAA_HOST}" \
+    --set "env.UAA_PORT=${UAA_PORT}" \
+    --set "env.HCP_CA_CERT=${CA_CERT}" \
+    "${HELM_PARAMS[@]}"
+
+# Wait for CF namespace
+wait_for_namespace "${CF_NAMESPACE}"
