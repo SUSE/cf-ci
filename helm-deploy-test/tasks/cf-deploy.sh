@@ -6,8 +6,8 @@ mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
-# The IP address assigned to the kube node.
-external_ip=$(kubectl get nodes -o jsonpath='{.items[].status.addresses[?(@.type=="InternalIP")].address}' | head -n1)
+# The IP address assigned to the first kubelet node.
+external_ip=$(kubectl get nodes -o json | jq -r '.items[] | select(.spec.unschedulable == true | not) | .metadata.annotations["alpha.kubernetes.io/provided-node-ip"]' | head -n1)
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
 # cert-generator.sh script.
