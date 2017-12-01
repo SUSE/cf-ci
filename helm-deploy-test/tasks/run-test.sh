@@ -6,7 +6,7 @@ mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
-DOMAIN=$(kubectl get nodes -o jsonpath='{.items[].status.addresses[?(@.type=="InternalIP")].address}' | head -n1).nip.io
+DOMAIN=$(kubectl get nodes -o jsonpath='{.items[].status.addresses[?(@.type=="InternalIP")].address}' | head -n1).xip.io
 CF_NAMESPACE=scf
 set +o allexport
 
