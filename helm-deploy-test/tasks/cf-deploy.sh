@@ -88,7 +88,7 @@ get_uaa_secret () {
     -o jsonpath="{.data['$1']}"
 }
 
-CA_CERT="$(get_uaa_secret ${CA_CERT} | base64 -d -)"
+CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
