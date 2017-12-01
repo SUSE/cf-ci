@@ -27,12 +27,6 @@ unzip s3.scf-config/scf-*.zip -d s3.scf-config/
 # Check that the kube of the cluster is reasonable
 bash s3.scf-config/kube-ready-state-check.sh kube
 
-# Generate certificates
-mkdir certs/
-pushd s3.scf-config/
-./cert-generator.sh -d "${DOMAIN}" -n "${CF_NAMESPACE}" -o ../certs/
-popd
-
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
              --set "kube.external_ip=${external_ip}"
@@ -83,7 +77,6 @@ wait_for_namespace() {
 kubectl create namespace "${UAA_NAMESPACE}"
 helm install s3.scf-config/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
-    --values certs/uaa-cert-values.yaml \
     "${HELM_PARAMS[@]}"
 
 # Wait for UAA namespace
@@ -101,7 +94,6 @@ CA_CERT="$(get_uaa_secret ${CA_CERT} | base64 -d -)"
 kubectl create namespace "${CF_NAMESPACE}"
 helm install s3.scf-config/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
-    --values certs/scf-cert-values.yaml \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
