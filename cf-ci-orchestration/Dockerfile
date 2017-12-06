@@ -25,7 +25,7 @@ RUN true \
     && echo "eval \"\$(direnv hook bash)\"" >> ~/.bashrc \
     && echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc \
     && echo "source <(helm completion bash)" >> ~/.bashrc \
-    && curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
+    && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.7.7/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl \
     && echo "source <(kubectl completion bash)" >> ~/.bashrc \
