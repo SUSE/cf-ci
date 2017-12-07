@@ -56,7 +56,7 @@ is_namespace_pending() {
 wait_for_namespace() {
     local namespace="$1"
     start=$(date +%s)
-    for (( i = 0  ; i < 480 ; i ++ )) ; do
+    for (( i = 0  ; i < 960 ; i ++ )) ; do
         if ! is_namespace_pending "${namespace}" ; then
             break
         fi
