@@ -13,7 +13,7 @@ KUBE_ORGANIZATION=splatform
 CAP_CHART=""  # use -opensuse for CAP-opensuse installs
 cap_install_version=${CAP_INSTALL_VERSION:-2.4.1-beta4}
 cap_install_url=${CAP_INSTALL_URL:-https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.4.1-beta3%2Bcf278.0.g12f5d3a8.linux-amd64.zip}
-cap_upgrade_verison=${CAP_UPGRADE_VERSION:-2.5.0-beta4}
+cap_upgrade_version=${CAP_UPGRADE_VERSION:-2.5.0-beta4}
 cap_upgrade_url=${CAP_UPGRADE_URL:-https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.5.0-beta4%2Bcf278.0.gafa3d0e9.linux-amd64.zip}
 
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
@@ -30,7 +30,7 @@ UAA_NAMESPACE=uaa
 
 # Fetch CAP bundle
 curl ${cap_install_url} -o ${cap_install_version}.zip
-curl ${cap_upgrade_url} -o ${cap_upgrade_verison}.zip
+curl ${cap_upgrade_url} -o ${cap_upgrade_version}.zip
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
@@ -152,10 +152,10 @@ rm -rf ${cap_install_version}/
 rm ${cap_install_version}.zip
 
 # unzip CAP bundle
-unzip ${cap_upgrade_verison}.zip -d ${cap_upgrade_verison}
+unzip ${cap_upgrade_version}.zip -d ${cap_upgrade_version}
 
 # Upgrade UAA
-helm upgrade uaa ${cap_upgrade_verison}/helm/uaa${CAP_CHART}/ \
+helm upgrade uaa ${cap_upgrade_version}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     "${HELM_PARAMS[@]}"
 
@@ -171,7 +171,7 @@ get_uaa_secret () {
 CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
 # Upgrade CF
-helm upgrade scf ${cap_upgrade_verison}/helm/cf${CAP_CHART}/ \
+helm upgrade scf ${cap_upgrade_version}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
@@ -187,13 +187,13 @@ kubectl delete pod -n scf smoke-tests
 kubectl delete pod -n scf acceptance-tests-brain
 
 # Run smoke-tests
-run_tests smoke-tests ${cap_upgrade_verison}
+run_tests smoke-tests ${cap_upgrade_version}
 
 # Run acceptance-tests-brain
-run_tests acceptance-tests-brain ${cap_upgrade_verison}
+run_tests acceptance-tests-brain ${cap_upgrade_version}
 
 # Run CATS
-run_tests acceptance-tests ${cap_upgrade_verison}
+run_tests acceptance-tests ${cap_upgrade_version}
 
 # Teardown
 for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
@@ -207,5 +207,5 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
 done
 
 # Clean CAP bundles
-rm -rf ${cap_upgrade_verison}/
-rm ${cap_upgrade_verison}.zip
+rm -rf ${cap_upgrade_version}/
+rm ${cap_upgrade_version}.zip
