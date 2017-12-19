@@ -11,10 +11,10 @@ KUBE_REGISTRY_USERNAME=${DOCKER_INTERNAL_USERNAME}
 KUBE_REGISTRY_PASSWORD=${DOCKER_INTERNAL_PASSWORD}
 KUBE_ORGANIZATION=splatform
 CAP_CHART=""  # use -opensuse for CAP-opensuse installs
-cap_install_version=${CAP_INSTALL_VERSION:-2.4.1-beta4}
-cap_install_url=${CAP_INSTALL_URL:-https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.4.1-beta3%2Bcf278.0.g12f5d3a8.linux-amd64.zip}
-cap_upgrade_version=${CAP_UPGRADE_VERSION:-2.5.0-beta4}
-cap_upgrade_url=${CAP_UPGRADE_URL:-https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.5.0-beta4%2Bcf278.0.gafa3d0e9.linux-amd64.zip}
+cap_install_version=${CAP_INSTALL_VERSION:-}
+cap_install_url=${CAP_INSTALL_URL:-}
+cap_upgrade_version=${CAP_UPGRADE_VERSION:-}
+cap_upgrade_url=${CAP_UPGRADE_URL:-}
 
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip.
