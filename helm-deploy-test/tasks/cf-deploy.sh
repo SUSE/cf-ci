@@ -97,7 +97,7 @@ helm install s3.scf-config/helm/cf${CAP_CHART}/ \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "env.HCP_CA_CERT=${CA_CERT}" \
+    --set "env.UAA_CA_CERT=${CA_CERT}" \
     "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace
