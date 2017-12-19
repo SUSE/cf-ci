@@ -45,19 +45,16 @@ if [ -n "${KUBE_ORGANIZATION:-}" ]; then
 fi
 
 # Wait until CF namespaces are ready
-is_namespace_pending() {
+is_namespace_running() {
     local namespace="$1"
-    if kubectl get pods --namespace="${namespace}" --output=custom-columns=':.status.conditions[?(@.type == "Ready")].status' | grep --silent False ; then
-        return 0
-    fi
-    return 1
+    kubectl get pods --namespace=uaa --output=custom-columns=':.status.containerStatuses[].ready' | sed '/^$/d' | grep -v --quiet true
 }
 
 wait_for_namespace() {
     local namespace="$1"
     start=$(date +%s)
     for (( i = 0  ; i < 960 ; i ++ )) ; do
-        if ! is_namespace_pending "${namespace}" ; then
+        if is_namespace_running "${namespace}" ; then
             break
         fi
         now=$(date +%s)
@@ -67,7 +64,7 @@ wait_for_namespace() {
     now=$(date +%s)
     printf "\rDone waiting for %s at %s (%ss)\n" "${namespace}" "$(date --rfc-2822)" $((${now} - ${start}))
     kubectl get pods --namespace="${namespace}"
-    if is_namespace_pending "${namespace}" ; then
+    if ! is_namespace_running "${namespace}" ; then
         printf "Namespace %s is still pending\n" "${namespace}"
         exit 1
     fi 
