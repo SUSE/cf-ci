@@ -5,16 +5,16 @@ set -o errexit -o nounset
 #set -x
 
 # Set variables
-external_ip=${EXTERNAL_IP:-}
+external_ip=${EXTERNAL_IP}
 KUBE_REGISTRY_HOSTNAME=${DOCKER_INTERNAL_REGISTRY}
 KUBE_REGISTRY_USERNAME=${DOCKER_INTERNAL_USERNAME}
 KUBE_REGISTRY_PASSWORD=${DOCKER_INTERNAL_PASSWORD}
 KUBE_ORGANIZATION=splatform
 CAP_CHART=""  # use -opensuse for CAP-opensuse installs
-cap_install_version=${CAP_INSTALL_VERSION:-}
-cap_install_url=${CAP_INSTALL_URL:-}
-cap_upgrade_version=${CAP_UPGRADE_VERSION:-}
-cap_upgrade_url=${CAP_UPGRADE_URL:-}
+cap_install_version=${CAP_INSTALL_VERSION}
+cap_install_url=${CAP_INSTALL_URL}
+cap_upgrade_version=${CAP_UPGRADE_VERSION}
+cap_upgrade_url=${CAP_UPGRADE_URL}
 
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip.
