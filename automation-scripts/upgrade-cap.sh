@@ -11,10 +11,10 @@ KUBE_REGISTRY_USERNAME=${DOCKER_INTERNAL_USERNAME}
 KUBE_REGISTRY_PASSWORD=${DOCKER_INTERNAL_PASSWORD}
 KUBE_ORGANIZATION=splatform
 CAP_CHART=""  # use -opensuse for CAP-opensuse installs
-cap_install_version=${CAP_INSTALL_VERSION}
-cap_install_url=${CAP_INSTALL_URL}
-cap_upgrade_version=${CAP_UPGRADE_VERSION}
-cap_upgrade_url=${CAP_UPGRADE_URL}
+cap_install_version=${CAP_INSTALL_VERSION:-2.5.0-beta4}
+cap_install_url=${CAP_INSTALL_URL:-https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.5.0-beta4%2Bcf278.0.gafa3d0e9.linux-amd64.zip}
+cap_upgrade_version=${CAP_UPGRADE_VERSION:-2.6.1-rc1}
+cap_upgrade_url=${CAP_UPGRADE_URL:-https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.6.1-rc1%2Bcf278.0.g52d7a644.linux-amd64.zip}
 
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip.
@@ -105,7 +105,7 @@ helm install ${cap_install_version}/helm/cf${CAP_CHART}/ \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "env.HCP_CA_CERT=${CA_CERT}" \
+    --set "env.UAA_CA_CERT=${CA_CERT}" \
     "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace
@@ -147,6 +147,10 @@ run_tests acceptance-tests-brain ${cap_install_version}
 
 # DO NOT RUN CATS
 
+# Delete old test pods
+kubectl delete pod -n scf smoke-tests
+kubectl delete pod -n scf acceptance-tests-brain
+
 # Clean CAP bundles
 rm -rf ${cap_install_version}/
 rm ${cap_install_version}.zip
@@ -162,12 +166,6 @@ helm upgrade uaa ${cap_upgrade_version}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA namespace
 wait_for_namespace "${UAA_NAMESPACE}"
 
-get_uaa_secret () {
-    kubectl get secret secret \
-    --namespace uaa \
-    -o jsonpath="{.data['$1']}"
-}
-
 CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
 # Upgrade CF
@@ -181,10 +179,6 @@ helm upgrade scf ${cap_upgrade_version}/helm/cf${CAP_CHART}/ \
 
 # Wait for CF namespace
 wait_for_namespace "${CF_NAMESPACE}"
-
-# Delete old test pods
-kubectl delete pod -n scf smoke-tests
-kubectl delete pod -n scf acceptance-tests-brain
 
 # Run smoke-tests
 run_tests smoke-tests ${cap_upgrade_version}
@@ -205,6 +199,8 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
         sleep 10
     done
 done
+helm del --purge uaa
+helm del --purge scf
 
 # Clean CAP bundles
 rm -rf ${cap_upgrade_version}/
