@@ -31,7 +31,3 @@ RUN true \
     && echo "source <(kubectl completion bash)" >> ~/.bashrc \
     && zypper clean -a \
     && true
-
-RUN true \
-    && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -o /usr/local/bin/jq
-    && chmod +x /usr/local/bin/jq
