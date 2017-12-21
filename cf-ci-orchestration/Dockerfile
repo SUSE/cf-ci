@@ -33,5 +33,5 @@ RUN true \
     && true
 
 RUN true \
-    && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -o /usr/local/bin/jq \
+    && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O /usr/local/bin/jq \
     && chmod +x /usr/local/bin/jq
