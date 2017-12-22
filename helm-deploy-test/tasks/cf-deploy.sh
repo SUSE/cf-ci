@@ -77,7 +77,7 @@ PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}"
 # Deploy UAA
 kubectl create namespace "${UAA_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}" | kubectl create -f -
+    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
 fi
 helm install s3.scf-config/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
@@ -97,7 +97,7 @@ CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}" | kubectl create -f -
+    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 helm install s3.scf-config/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
