@@ -47,9 +47,10 @@ fi
 # Wait until CF namespaces are ready
 is_namespace_ready() {
     local namespace="$1"
-    kubectl get pods --namespace=uaa --output=custom-columns=':.status.containerStatuses[].ready' \
+    $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
         | sed '/^$/d' \
-        | grep --invert-match --quiet true
+        | sort \
+        | uniq)
 }
 
 wait_for_namespace() {
