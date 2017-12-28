@@ -27,6 +27,11 @@ kube_overrides() {
 EOF
 }
 
+container_status() {
+  kubectl get --output=json --namespace=scf pod $1 \
+    | jq '.status.containerStatuses[0].state.terminated.exitCode | tonumber' 2>/dev/null
+}
+
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "s3.scf-config/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
@@ -34,4 +39,10 @@ kubectl run \
     --restart=Never \
     --image="${image}" \
     --overrides="$(kube_overrides "s3.scf-config/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
-    "${TEST_NAME}"
+    "${TEST_NAME}" ||:
+
+while [[ -z $(container_status ${TEST_NAME}) ]]; do
+  kubectl attach --namespace=scf ${TEST_NAME} ||:
+done
+
+exit $(container_status ${TEST_NAME})
