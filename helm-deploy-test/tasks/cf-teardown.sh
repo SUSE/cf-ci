@@ -11,9 +11,9 @@ UAA_NAMESPACE=uaa
 set +o allexport
 
 for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
-    kubectl delete namespace "${namespace}" || true
+    kubectl delete namespace "${namespace}"
     while [[ -n $(helm list --short --all ${namespace}) ]]; do
         sleep 10
-        helm delete --purge ${namespace};
+        helm delete --purge ${namespace} ||:
     done
 done
