@@ -36,7 +36,7 @@ resources:
     pool: ((kube-pool-pool))
 
 jobs:
-- name: helm-deploy-test-openSUSE
+- name: helm-deploy-sa-test-openSUSE
   plan:
   - aggregate:
     - get: ci
@@ -51,6 +51,7 @@ jobs:
     file: ci/helm-deploy-test/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
+      HA: false
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
@@ -82,7 +83,7 @@ jobs:
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: helm-deploy-test-SLES
+- name: helm-deploy-sa-test-SLES
   plan:
   - aggregate:
     - get: ci
@@ -101,6 +102,105 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
+      HA: false
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-smoke-tests
+    file: ci/helm-deploy-test/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: ""
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests-brain
+    file: ci/helm-deploy-test/tasks/run-test.yml
+    params:
+      TEST_NAME: acceptance-tests-brain
+      CAP_CHART: ""
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests
+    file: ci/helm-deploy-test/tasks/run-test.yml
+    params:
+      TEST_NAME: acceptance-tests
+      CAP_CHART: ""
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  # We intentionally don't put the teardown and pool release steps in an ensure
+  # block, so that when tests fail we have a chance of examining why things are
+  # failing.
+  - task: cf-teardown
+    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}
+
+- name: helm-deploy-ha-test-openSUSE
+  plan:
+  - aggregate:
+    - get: ci
+    - get: s3.scf-config-opensuse
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+    on_failure:
+      put: pool.kube-hosts
+      params: {release: pool.kube-hosts}
+  - task: cf-deploy
+    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+    params:
+      CAP_CHART: -opensuse
+      HA: true
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: cf-smoke-tests
+    file: ci/helm-deploy-test/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: -opensuse
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: acceptance-tests-brain
+    file: ci/helm-deploy-test/tasks/run-test.yml
+    params:
+      TEST_NAME: acceptance-tests-brain
+      CAP_CHART: -opensuse
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: acceptance-tests
+    file: ci/helm-deploy-test/tasks/run-test.yml
+    params:
+      TEST_NAME: acceptance-tests
+      CAP_CHART: -opensuse
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  # We intentionally don't put the teardown and pool release steps in an ensure
+  # block, so that when tests fail we have a chance of examining why things are
+  # failing.
+  - task: cf-teardown
+    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}
+
+- name: helm-deploy-ha-test-SLES
+  plan:
+  - aggregate:
+    - get: ci
+    - get: s3.scf-config-sles
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+    on_failure:
+      put: pool.kube-hosts
+      params: {release: pool.kube-hosts}
+  - task: cf-deploy
+    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: true
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
