@@ -47,10 +47,10 @@ fi
 # Wait until CF namespaces are ready
 is_namespace_ready() {
     local namespace="$1"
-    $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
+    [[ true == $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
         | sed '/^$/d' \
         | sort \
-        | uniq)
+        | uniq) ]]
 }
 
 wait_for_namespace() {
