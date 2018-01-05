@@ -100,6 +100,12 @@ kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
+
+if [[ ${HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_access,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
+  HELM_PARAMS+=(--set=sizing.{consul,diego_api,diego_cell,etcd,mysql}.count=3)
+fi
+
 helm install s3.scf-config/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
