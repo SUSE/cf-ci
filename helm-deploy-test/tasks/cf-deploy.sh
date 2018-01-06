@@ -82,6 +82,7 @@ fi
 helm install s3.scf-config/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --name uaa \
+    --timeout 600 \
     "${HELM_PARAMS[@]}"
 
 # Wait for UAA namespace
@@ -109,6 +110,7 @@ fi
 helm install s3.scf-config/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
+    --timeout 600 \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
