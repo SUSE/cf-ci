@@ -35,3 +35,7 @@ RUN true \
 RUN true \
     && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O /usr/local/bin/jq \
     && chmod +x /usr/local/bin/jq
+
+RUN true \
+    && wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.34.0" -O - | tar xz -C /usr/local/bin cf \
+    && chmod a+x /usr/local/bin/cf
