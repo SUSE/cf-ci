@@ -52,6 +52,7 @@ jobs:
     params:
       CAP_CHART: -opensuse
       HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
@@ -103,6 +104,7 @@ jobs:
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
       HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
@@ -150,6 +152,7 @@ jobs:
     params:
       CAP_CHART: -opensuse
       HA: true
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
@@ -201,6 +204,7 @@ jobs:
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
       HA: true
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests

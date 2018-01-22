@@ -11,11 +11,11 @@ external_ip=$(kubectl get nodes -o json | jq -r '.items[] | select(.spec.unsched
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
 # cert-generator.sh script.
-DOMAIN=${external_ip}.nip.io
+DOMAIN=${external_ip}.${MAGIC_DNS_SERVICE}
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 # UAA host/port that SCF will talk to.
-UAA_HOST=uaa.${external_ip}.nip.io
+UAA_HOST=uaa.${external_ip}.${MAGIC_DNS_SERVICE}
 UAA_PORT=2793
 
 CF_NAMESPACE=scf
