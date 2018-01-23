@@ -21,3 +21,5 @@ registry-hostname: *docker-internal-registry
 registry-username: *docker-internal-username
 registry-password: *docker-internal-password
 organization: splatform
+
+magic-dns-service: omg.howdoi.website
