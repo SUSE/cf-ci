@@ -47,8 +47,13 @@ fi
 # Wait until CF namespaces are ready
 is_namespace_ready() {
     local namespace="$1"
-    [[ true == $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
-        | sed '/^$/d' \
+    active_passive_pods=$(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' | awk '$1 ~ "^diego-api$|^diego-brain$|^routing-api$"')
+    if [[ -n $active_passive_pods ]] && [[ $(echo "$active_passive_pods" | grep true | wc -l) -ne 3 ]]; then
+        return 1
+    fi
+    [[ true == $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+        | awk '$1 !~ "^diego-api$|^diego-brain$|^routing-api$" { print $2 }' \
+        | sed '/^ *$/d' \
         | sort \
         | uniq) ]]
 }
@@ -90,7 +95,7 @@ wait_for_namespace "${UAA_NAMESPACE}"
 
 get_uaa_secret () {
     kubectl get secret secret \
-    --namespace uaa \
+    --namespace "${UAA_NAMESPACE}" \
     -o jsonpath="{.data['$1']}"
 }
 
@@ -103,8 +108,9 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
 fi
 
 if [[ ${HA} == true ]]; then
-  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_access,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell,mysql}.count=3)
+  HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
+  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
+  HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
 fi
 
 helm install s3.scf-config/helm/cf${CAP_CHART}/ \
