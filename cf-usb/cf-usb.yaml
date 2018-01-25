@@ -20,7 +20,7 @@ resources:
     initial_version: 0.0.0
     driver: s3
     bucket: ((s3-bucket))
-    key: ((s3-prefix))cf-usb.version
+    key: ((s3-prefix))cf-usb-sidecar-mysql.version
     access_key_id: ((s3-access-key))
     secret_access_key: ((s3-secret-key))
     endpoint: ((s3-endpoint))
@@ -42,14 +42,14 @@ resources:
 - name: docker.mysql
   type: docker-image
   source:
-    repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-mysql
     tag: ((docker-tag))
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.mysql-setup
   type: docker-image
   source:
-    repository: ((docker-server))((docker-org))/cf-usb-sidecar-dev-mysql-setup
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-mysql-setup
     tag: ((docker-tag))
     username: ((docker-username))
     password: ((docker-password))
@@ -88,7 +88,7 @@ jobs:
         tag_as_latest: true
         build: src
         dockerfile: src/scripts/docker/Dockerfile-build
-- name: dev-mysql
+- name: sidecar-mysql
   plan:
   - aggregate:
     - get: src
