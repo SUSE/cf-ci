@@ -14,7 +14,7 @@ cd "${SIDECAR_ROOT}"
 if ! test -d vendor ; then
     # Symlinks don't work here because go(.exe) expands the symlink then falls over
     cp -r Godeps/_workspace/src vendor
-    cp -r go-swagger/src/* vendor/
 fi
+cp -r go-swagger/src/* vendor/
 mkdir -p "${GOBIN}"
 go install ./cmd/catalog-service-manager
