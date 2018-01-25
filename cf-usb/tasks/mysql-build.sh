@@ -2,8 +2,9 @@
 set -o nounset -o errexit -o xtrace
 export GOPATH="${PWD}"
 export START_DIR="${PWD}"
+service=mysql
 usbroot=src/github.com/SUSE/cf-usb-sidecar
-svcroot="${usbroot}/csm-extensions/services/dev-mysql"
+svcroot="${usbroot}/csm-extensions/services/dev-${service}"
 make -C "${svcroot}" build helm
 
 # Note that this moves the whole SIDECAR_HOME directory as a _subdirectory_ of out/
@@ -16,4 +17,4 @@ if test -z "${APP_VERSION_TAG:-}" ; then
     APP_VERSION_TAG="$(cd "${usbroot}" && scripts/build_version.sh "APP_VERSION_TAG")"
 fi
 echo "${APP_VERSION_TAG}" > docker-out/tag
-tar -czf helm-out/cf-usb-${APP_VERSION_TAG}.tgz -C "${svcroot}/output/helm/" .
+tar -czf helm-out/cf-usb-sidecar-${service}-${APP_VERSION_TAG}.tgz -C "${svcroot}/output/helm/" .
