@@ -14,7 +14,7 @@ resources:
     branch: ((ci-branch))
     paths:
     - cf-usb/tasks
-- name: semver.cf-usb
+- name: semver.cf-usb-sidecar-mysql
   type: semver
   source:
     initial_version: 0.0.0
@@ -96,7 +96,7 @@ jobs:
       trigger: true
     - get: ci
       passed: [catalog-service-manager]
-    - get: semver.cf-usb
+    - get: semver.cf-usb-sidecar-mysql
       params:
         pre: pre
     - get: docker.base
@@ -116,7 +116,7 @@ jobs:
       - task: build
         file: ci/cf-usb/tasks/mysql-build.yml
         input_mapping:
-          version: semver.cf-usb
+          version: semver.cf-usb-sidecar-mysql
         output_mapping:
           docker-out: mysql-binary
           helm-out: mysql-helm
@@ -149,6 +149,6 @@ jobs:
     - put: s3.mysql
       params:
         file: mysql-helm/cf-usb-*.tgz
-  - put: semver.cf-usb
+  - put: semver.cf-usb-sidecar-mysql
     params:
       pre: pre
