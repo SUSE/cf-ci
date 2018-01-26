@@ -1,4 +1,12 @@
 ---
+resource_types:
+- name: docker-image-resource
+  type: docker-image
+  privileged: true
+  source:
+    repository: concourse/docker-image-resource
+    tag: latest
+
 resources:
 - name: src
   type: git
@@ -26,28 +34,28 @@ resources:
     endpoint: ((s3-endpoint))
     disable_ssl: ((s3-disable-ssl))
 - name: docker.base
-  type: docker-image
+  type: docker-image-resource
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar
     tag: ((docker-tag))
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.buildbase
-  type: docker-image
+  type: docker-image-resource
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-buildbase
     tag: ((docker-tag))
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.mysql
-  type: docker-image
+  type: docker-image-resource
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-mysql
     tag: ((docker-tag))
     username: ((docker-username))
     password: ((docker-password))
 - name: docker.mysql-setup
-  type: docker-image
+  type: docker-image-resource
   source:
     repository: ((docker-server))((docker-org))/cf-usb-sidecar-mysql-setup
     tag: ((docker-tag))
@@ -142,7 +150,7 @@ jobs:
     - put: docker.mysql
       params:
         build: mysql-binary
-        load_base: docker.base-fixed
+        load_bases: [ docker.base-fixed, docker.buildbase-fixed ]
         tag_as_latest: true
         tag: mysql-binary/tag
     - put: docker.mysql-setup
