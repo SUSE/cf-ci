@@ -2,7 +2,7 @@
 set -o nounset -o errexit -o xtrace
 export GOPATH="${PWD}"
 export START_DIR="${PWD}"
-service=mysql
+service=$1
 usbroot=src/github.com/SUSE/cf-usb-sidecar
 svcroot="${usbroot}/csm-extensions/services/dev-${service}"
 make -C "${svcroot}" build helm
