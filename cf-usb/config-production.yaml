@@ -4,8 +4,10 @@ src-branch: develop
 ci-repo: https://github.com/SUSE/cf-ci.git
 ci-branch: master
 
-docker-server: ""
 docker-tag: latest
+docker-server: "staging.registry.howdoi.website/"
+docker-username: *docker-internal-username
+docker-password: *docker-internal-password
 
 s3-endpoint: ~
 s3-access-key: *aws-access-key
