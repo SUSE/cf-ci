@@ -5,6 +5,10 @@ export START_DIR="${PWD}"
 service=$1
 usbroot=src/github.com/SUSE/cf-usb-sidecar
 svcroot="${usbroot}/csm-extensions/services/dev-${service}"
+
+# Trigger generation of proper APP_VERSION_TAG
+export CONCOURSE_BUILD=1
+
 make -C "${svcroot}" build helm
 
 # Default destination, and strip a trailing slash.
@@ -13,9 +17,6 @@ DESTINATION=${DESTINATION%/}
 
 # Place chosen destination into the chart.
 sed -i "s|docker.io|$DESTINATION|" "${svcroot}/output/helm/values.yaml"
-
-# Trigger generation of proper APP_VERSION_TAG
-export CONCOURSE_BUILD=1
 
 # Note that this moves the whole SIDECAR_HOME directory as a _subdirectory_ of out/
 mv "${svcroot}/SIDECAR_HOME" docker-out/
