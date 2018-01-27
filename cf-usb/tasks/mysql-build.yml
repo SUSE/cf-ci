@@ -5,8 +5,6 @@ image_resource:
   source:
     repository: golang
     tag: latest
-args:
-- mysql
 inputs:
 - name: src
   path: src/github.com/SUSE/cf-usb-sidecar
@@ -17,4 +15,6 @@ outputs:
 - name: helm-out
 - name: docker-out
 run:
+  args:
+  - mysql
   path: ci/cf-usb/tasks/service-build.sh
