@@ -50,12 +50,12 @@ is_namespace_ready() {
 
     # Create regular expression to match active_passive_pods
     # These are scaled services which are expected to only have one pod listed as ready
-    active_passive_pod_regex='^diego-api$|^diego-brain$|^routing-api$'
-    active_passive_role_count=$(awk -F '|' '{ print NF }' <<< "${active_passive_pod_regex}")
+    local active_passive_pod_regex='^diego-api$|^diego-brain$|^routing-api$'
+    local active_passive_role_count=$(awk -F '|' '{ print NF }' <<< "${active_passive_pod_regex}")
 
     # Get the container name and status for each pod in two columns
     # The name here will be the role name, not the pod name, e.g. 'diego-brain' not 'diego-brain-1'
-    active_passive_pod_status=$(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+    local active_passive_pod_status=$(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
         | awk '$1 ~ '"/${active_passive_pod_regex}/")
 
     # Check that the number of containers which are ready is equal to the number of active passive roles 
