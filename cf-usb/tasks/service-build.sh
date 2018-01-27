@@ -15,7 +15,7 @@ DESTINATION=${DESTINATION%/}
 sed -i "s|docker.io|$DESTINATION|" "${svcroot}/output/helm/values.yaml"
 
 # Trigger generation of proper APP_VERSION_TAG
-CONCOURSEBUILD=1
+export CONCOURSE_BUILD=1
 
 # Note that this moves the whole SIDECAR_HOME directory as a _subdirectory_ of out/
 mv "${svcroot}/SIDECAR_HOME" docker-out/
