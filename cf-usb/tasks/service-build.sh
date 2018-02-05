@@ -19,10 +19,11 @@ DESTINATION=${DESTINATION%/}
 sed -i "s|docker.io|$DESTINATION|" "${svcroot}/output/helm/values.yaml"
 
 # Note that this moves the whole SIDECAR_HOME directory as a _subdirectory_ of out/
-mv "${svcroot}/SIDECAR_HOME" docker-out/
-cp "${svcroot}/Dockerfile" docker-out/
+mv "${svcroot}/SIDECAR_HOME"     docker-out/
+cp "${svcroot}/Dockerfile"       docker-out/
 cp "${svcroot}/Dockerfile-setup" docker-out/
-cp -r "${svcroot}/chart" docker-out/
+cp "${svcroot}/Dockerfile-db"    docker-out/
+cp -r "${svcroot}/chart"         docker-out/
 
 if test -z "${APP_VERSION_TAG:-}" ; then
     APP_VERSION_TAG="$(cd "${usbroot}" && scripts/build_version.sh "APP_VERSION_TAG")"
