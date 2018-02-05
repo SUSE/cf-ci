@@ -47,8 +47,26 @@ fi
 # Wait until CF namespaces are ready
 is_namespace_ready() {
     local namespace="$1"
-    [[ true == $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
-        | sed '/^$/d' \
+
+    # Create regular expression to match active_passive_pods
+    # These are scaled services which are expected to only have one pod listed as ready
+    local active_passive_pod_regex='^diego-api$|^diego-brain$|^routing-api$'
+    local active_passive_role_count=$(awk -F '|' '{ print NF }' <<< "${active_passive_pod_regex}")
+
+    # Get the container name and status for each pod in two columns
+    # The name here will be the role name, not the pod name, e.g. 'diego-brain' not 'diego-brain-1'
+    local active_passive_pod_status=$(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+        | awk '$1 ~ '"/${active_passive_pod_regex}/")
+
+    # Check that the number of containers which are ready is equal to the number of active passive roles 
+    if [[ -n $active_passive_pod_status ]] && [[ $(echo "$active_passive_pod_status" | grep true | wc -l) -ne ${active_passive_role_count} ]]; then
+        return 1
+    fi
+
+    # Finally, check that all pods which do not match the active_passive_pod_regex are ready
+    [[ true == $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+        | awk '$1 !~ '"/${active_passive_pod_regex}/ { print \$2 }" \
+        | sed '/^ *$/d' \
         | sort \
         | uniq) ]]
 }
@@ -90,7 +108,7 @@ wait_for_namespace "${UAA_NAMESPACE}"
 
 get_uaa_secret () {
     kubectl get secret secret \
-    --namespace uaa \
+    --namespace "${UAA_NAMESPACE}" \
     -o jsonpath="{.data['$1']}"
 }
 
@@ -103,8 +121,9 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
 fi
 
 if [[ ${HA} == true ]]; then
-  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_access,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell,mysql}.count=3)
+  HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
+  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
+  HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
 fi
 
 helm install s3.scf-config/helm/cf${CAP_CHART}/ \
