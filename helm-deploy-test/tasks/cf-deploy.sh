@@ -55,7 +55,7 @@ is_namespace_ready() {
 
     # Get the container name and status for each pod in two columns
     # The name here will be the role name, not the pod name, e.g. 'diego-brain' not 'diego-brain-1'
-    local active_passive_pod_status=$(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+    local active_passive_pod_status=$(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
         | awk '$1 ~ '"/${active_passive_pod_regex}/")
 
     # Check that the number of containers which are ready is equal to the number of active passive roles 
@@ -64,7 +64,7 @@ is_namespace_ready() {
     fi
 
     # Finally, check that all pods which do not match the active_passive_pod_regex are ready
-    [[ true == $(kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+    [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
         | awk '$1 !~ '"/${active_passive_pod_regex}/ { print \$2 }" \
         | sed '/^ *$/d' \
         | sort \
