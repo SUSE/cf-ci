@@ -67,6 +67,13 @@ resources:
     tag: ((docker-tag))
     username: ((docker-username))
     password: ((docker-password))
+- name: docker.mysql-db
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-mysql-db
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
 - name: s3.mysql
   type: s3
   source:
@@ -168,6 +175,12 @@ jobs:
         build: mysql-binary
         dockerfile: mysql-binary/Dockerfile-setup
         load_base: docker.buildbase-fixed
+        tag_as_latest: true
+        tag: mysql-binary/tag
+    - put: docker.mysql-db
+      params:
+        build: mysql-binary
+        dockerfile: mysql-binary/Dockerfile-db
         tag_as_latest: true
         tag: mysql-binary/tag
     - put: s3.mysql
