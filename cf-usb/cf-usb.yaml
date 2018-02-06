@@ -211,6 +211,8 @@ jobs:
         - docker.buildbase-fixed
         tag_as_latest: true
         tag: mysql-binary/tag
+      get_params:
+        skip_download: true
     - put: docker.mysql-setup
       params:
         build: mysql-binary
@@ -218,12 +220,16 @@ jobs:
         load_base: docker.buildbase-fixed
         tag_as_latest: true
         tag: mysql-binary/tag
+      get_params:
+        skip_download: true
     - put: docker.mysql-db
       params:
         build: mysql-binary
         dockerfile: mysql-binary/Dockerfile-db
         tag_as_latest: true
         tag: mysql-binary/tag
+      get_params:
+        skip_download: true
     - put: s3.mysql
       params:
         file: mysql-helm/cf-usb-sidecar-mysql*.tgz
@@ -281,6 +287,8 @@ jobs:
         load_bases: [ docker.base-fixed, docker.buildbase-fixed ]
         tag_as_latest: true
         tag: postgres-binary/tag
+      get_params:
+        skip_download: true
     - put: docker.postgres-setup
       params:
         build: postgres-binary
@@ -288,12 +296,16 @@ jobs:
         load_base: docker.buildbase-fixed
         tag_as_latest: true
         tag: postgres-binary/tag
+      get_params:
+        skip_download: true
     - put: docker.postgres-db
       params:
         build: postgres-binary
         dockerfile: postgres-binary/Dockerfile-db
         tag_as_latest: true
         tag: postgres-binary/tag
+      get_params:
+        skip_download: true
     - put: s3.postgres
       params:
         file: postgres-helm/cf-usb-sidecar-postgres*.tgz
