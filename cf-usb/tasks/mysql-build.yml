@@ -15,4 +15,6 @@ outputs:
 - name: helm-out
 - name: docker-out
 run:
-  path: ci/cf-usb/tasks/mysql-build.sh
+  args:
+  - mysql
+  path: ci/cf-usb/tasks/service-build.sh

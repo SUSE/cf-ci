@@ -4,12 +4,14 @@ src-branch: develop
 ci-repo: https://github.com/SUSE/cf-ci.git
 ci-branch: master
 
-docker-server: ""
 docker-tag: latest
+docker-server: "staging.registry.howdoi.website/"
+docker-username: *docker-internal-username
+docker-password: *docker-internal-password
 
 s3-endpoint: ~
 s3-access-key: *aws-access-key
 s3-secret-key: *aws-secret-key
-s3-bucket: cf-opensusefs2
-s3-prefix: helm/ci/
+s3-bucket: cap-release-archives
+s3-prefix: brokers/
 s3-disable-ssl: false
