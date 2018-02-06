@@ -101,6 +101,13 @@ resources:
     tag: ((docker-tag))
     username: ((docker-username))
     password: ((docker-password))
+- name: docker.postgres-db
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-postgres-db
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
 - name: docker.postgres-setup
   type: docker-image
   source:
@@ -279,6 +286,12 @@ jobs:
         build: postgres-binary
         dockerfile: postgres-binary/Dockerfile-setup
         load_base: docker.buildbase-fixed
+        tag_as_latest: true
+        tag: postgres-binary/tag
+    - put: docker.postgres-db
+      params:
+        build: postgres-binary
+        dockerfile: postgres-binary/Dockerfile-db
         tag_as_latest: true
         tag: postgres-binary/tag
     - put: s3.postgres
