@@ -182,9 +182,10 @@ jobs:
       - task: generate
         file: ci/cf-usb/tasks/csm-generate.yml
       - task: build
-        file: ci/cf-usb/tasks/mysql-build.yml
+        file: ci/cf-usb/tasks/service-build.yml
         params:
           DESTINATION: ((docker-server))
+          SERVICE: mysql
         input_mapping:
           version: semver.cf-usb-sidecar-mysql
         output_mapping:
@@ -262,7 +263,10 @@ jobs:
       - task: generate
         file: ci/cf-usb/tasks/csm-generate.yml
       - task: build
-        file: ci/cf-usb/tasks/postgres-build.yml
+        file: ci/cf-usb/tasks/service-build.yml
+        params:
+          DESTINATION: ((docker-server))
+          SERVICE: postgres
         input_mapping:
           version: semver.cf-usb-sidecar-postgres
         output_mapping:
