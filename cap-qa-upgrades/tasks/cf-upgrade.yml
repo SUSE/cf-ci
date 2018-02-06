@@ -1,0 +1,13 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/cf-ci-orchestration
+
+inputs:
+- name: ci
+- name: s3.scf-config
+- name: pool.kube-hosts
+run:
+  path: ci/cap-qa-upgrades/tasks/cf-upgrade.sh

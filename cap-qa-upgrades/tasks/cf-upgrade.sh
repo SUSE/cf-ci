@@ -23,11 +23,9 @@ UAA_NAMESPACE=uaa
 CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
-# For upgrades tests
-if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
-    curl ${CAP_INSTALL_VERSION} -o cap-install-version.zip
-    export CAP_DIRECTORY=cap-install-version
-fi
+# Delete old test pods
+kubectl delete pod -n scf smoke-tests
+kubectl delete pod -n scf acceptance-tests-brain
 
 unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 
@@ -104,7 +102,7 @@ kubectl create namespace "${UAA_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
 fi
-helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
+helm upgrade ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --name uaa \
     --timeout 600 \
@@ -133,7 +131,7 @@ if [[ ${HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
 fi
 
-helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
+helm upgrade ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
     --timeout 600 \
