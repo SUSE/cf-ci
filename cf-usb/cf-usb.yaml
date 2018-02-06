@@ -39,6 +39,17 @@ resources:
     secret_access_key: ((s3-secret-key))
     endpoint: ((s3-endpoint))
     disable_ssl: ((s3-disable-ssl))
+- name: semver.cf-usb-sidecar-postgres
+  type: semver
+  source:
+    initial_version: 0.0.0
+    driver: s3
+    bucket: ((s3-bucket))
+    key: ((s3-prefix))cf-usb-sidecar-postgres.version
+    access_key_id: ((s3-access-key))
+    secret_access_key: ((s3-secret-key))
+    endpoint: ((s3-endpoint))
+    disable_ssl: ((s3-disable-ssl))
 - name: docker.base
   type: docker-image
   source:
@@ -82,7 +93,37 @@ resources:
     secret_access_key: ((s3-secret-key))
     endpoint: ((s3-endpoint))
     disable_ssl: ((s3-disable-ssl))
-    regexp: ((s3-prefix))cf-usb-(.*).tgz
+    regexp: ((s3-prefix))cf-usb-sidecar-mysql-(.*).tgz
+- name: docker.postgres
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-postgres
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
+- name: docker.postgres-db
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-postgres-db
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
+- name: docker.postgres-setup
+  type: docker-image
+  source:
+    repository: ((docker-server))((docker-org))/cf-usb-sidecar-postgres-setup
+    tag: ((docker-tag))
+    username: ((docker-username))
+    password: ((docker-password))
+- name: s3.postgres
+  type: s3
+  source:
+    bucket: ((s3-bucket))
+    access_key_id: ((s3-access-key))
+    secret_access_key: ((s3-secret-key))
+    endpoint: ((s3-endpoint))
+    disable_ssl: ((s3-disable-ssl))
+    regexp: ((s3-prefix))cf-usb-sidecar-postgres-(.*).tgz
 
 jobs:
 - name: catalog-service-manager
@@ -187,5 +228,75 @@ jobs:
       params:
         file: mysql-helm/cf-usb-sidecar-mysql*.tgz
   - put: semver.cf-usb-sidecar-mysql
+    params:
+      pre: pre
+- name: sidecar-postgres
+  plan:
+  - aggregate:
+    - get: src
+      passed: [catalog-service-manager]
+      trigger: true
+    - get: ci
+      passed: [catalog-service-manager]
+    - get: semver.cf-usb-sidecar-postgres
+      params:
+        pre: pre
+    - get: docker.base
+      passed: [catalog-service-manager]
+      params:
+        save: true
+      trigger: true
+    - get: docker.buildbase
+      passed: [catalog-service-manager]
+      params:
+        save: true
+      trigger: true
+  - aggregate:
+    - do:
+      - task: generate
+        file: ci/cf-usb/tasks/csm-generate.yml
+      - task: build
+        file: ci/cf-usb/tasks/postgres-build.yml
+        input_mapping:
+          version: semver.cf-usb-sidecar-postgres
+        output_mapping:
+          docker-out: postgres-binary
+          helm-out: postgres-helm
+    - task: fix-base
+      file: ci/cf-usb/tasks/fix-base.yml
+      input_mapping:
+        in: docker.base
+      output_mapping:
+        out: docker.base-fixed
+    - task: fix-buildbase
+      file: ci/cf-usb/tasks/fix-base.yml
+      input_mapping:
+        in: docker.buildbase
+      output_mapping:
+        out: docker.buildbase-fixed
+  - aggregate:
+    - put: docker.postgres
+      params:
+        build: postgres-binary
+        load_bases: [ docker.base-fixed, docker.buildbase-fixed ]
+        tag_as_latest: true
+        tag: postgres-binary/tag
+    - put: docker.postgres-setup
+      params:
+        build: postgres-binary
+        dockerfile: postgres-binary/Dockerfile-setup
+        load_base: docker.buildbase-fixed
+        tag_as_latest: true
+        tag: postgres-binary/tag
+    - put: docker.postgres-db
+      params:
+        build: postgres-binary
+        dockerfile: postgres-binary/Dockerfile-db
+        tag_as_latest: true
+        tag: postgres-binary/tag
+    - put: s3.postgres
+      params:
+        file: postgres-helm/cf-usb-sidecar-postgres*.tgz
+  - put: semver.cf-usb-sidecar-postgres
     params:
       pre: pre
