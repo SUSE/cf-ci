@@ -133,24 +133,27 @@ jobs:
       trigger: true
     - get: ci
       trigger: true
-  - task: generate
-    file: ci/cf-usb/tasks/csm-generate.yml
-  - task: build
-    file: ci/cf-usb/tasks/csm-build.yml
-    output_mapping:
-      out: csm-binary
-  - put: docker.buildbase
-    get_params: {save: true}
-    params:
-      tag_as_latest: true
-      build: src
-      dockerfile: src/scripts/docker/Dockerfile-build
-  - task: fix-buildbase
-    file: ci/cf-usb/tasks/fix-base.yml
-    input_mapping:
-      in: docker.buildbase
-    output_mapping:
-      out: docker.buildbase-fixed
+  - aggregate:
+    - do:
+      - task: generate
+        file: ci/cf-usb/tasks/csm-generate.yml
+      - task: build
+        file: ci/cf-usb/tasks/csm-build.yml
+        output_mapping:
+          out: csm-binary
+    - do:
+      - put: docker.buildbase
+        get_params: {save: true}
+        params:
+          tag_as_latest: true
+          build: src
+          dockerfile: src/scripts/docker/Dockerfile-build
+      - task: fix-buildbase
+        file: ci/cf-usb/tasks/fix-base.yml
+        input_mapping:
+          in: docker.buildbase
+        output_mapping:
+          out: docker.buildbase-fixed
   - put: docker.base
     params:
       load_base: docker.buildbase-fixed
