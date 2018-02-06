@@ -15,6 +15,6 @@ outputs:
 - name: helm-out
 - name: docker-out
 run:
-  args:
-  - postgres
   path: ci/cf-usb/tasks/service-build.sh
+params:
+  SERVICE: ~
