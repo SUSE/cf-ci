@@ -27,9 +27,10 @@ set +o allexport
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
     curl ${CAP_INSTALL_VERSION} -o cap-install-version.zip
     export CAP_DIRECTORY=cap-install-version
+    unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
+else
+    unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 fi
-
-unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
