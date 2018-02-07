@@ -8,6 +8,7 @@ resources:
     branch: ((src-ci-branch))
     paths:
     - helm-deploy-test/*
+    - cap-qa-upgrades/*
 
 - name: s3.scf-config-opensuse
   type: s3
