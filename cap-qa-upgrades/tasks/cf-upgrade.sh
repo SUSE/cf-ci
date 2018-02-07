@@ -97,8 +97,8 @@ wait_for_namespace() {
 }
 
 PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+
 # Deploy UAA
-kubectl create namespace "${UAA_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
 fi
@@ -120,7 +120,6 @@ get_uaa_secret () {
 CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
 # Deploy CF
-kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
