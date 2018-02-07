@@ -102,9 +102,8 @@ PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
 fi
-helm upgrade ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
+helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
-    --name uaa \
     --timeout 600 \
     "${HELM_PARAMS[@]}"
 
@@ -130,9 +129,8 @@ if [[ ${HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
 fi
 
-helm upgrade ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
+helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
-    --name scf \
     --timeout 600 \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
