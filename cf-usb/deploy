@@ -9,13 +9,13 @@ if test -z "${1:-}" -o ! -r "config-${1:-}.yaml" ; then
     exit 1
 fi
 
-alt_secrets_file="CONCOURSE_SECRETS_FILE_${1}"
+alt_secrets_file="CONCOURSE_SECRETS_FILE_${1//-/_}"
 if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
     CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
 fi
 
 fly set-pipeline \
-    --pipeline="cf-usb" \
+    --pipeline="cf-usb${2:+-${2:-}}" \
     --config="cf-usb.yaml" \
     --load-vars-from=<(
         gpg --decrypt --batch --quiet "${CONCOURSE_SECRETS_FILE}"
