@@ -9,6 +9,14 @@ docker-server: "staging.registry.howdoi.website/"
 docker-username: *docker-internal-username
 docker-password: *docker-internal-password
 
+docker-cert-domain: unused.invalid
+docker-cert-ca: ~
+
+buildbase-base-image: opensuse:latest
+buildbase-repo-cloud-tools: obs://Cloud:Tools
+buildbase-repo-devel-languages-go: obs://devel:languages:go
+buildbase-repo-extra: ""
+
 s3-endpoint: ~
 s3-access-key: *aws-access-key
 s3-secret-key: *aws-secret-key
