@@ -64,6 +64,14 @@ jobs:
       CAP_CHART: -opensuse
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
+  - task: acceptance-tests-brain
+    file: ci/helm-deploy-test/tasks/run-test.yml
+    params:
+      TEST_NAME: acceptance-tests-brain
+      CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
   # Do not run CATs. They are destructive
   - task: cf-upgrade
     file: ci/cap-qa-upgrades/tasks/cf-upgrade.yml
