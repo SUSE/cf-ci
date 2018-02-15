@@ -6,8 +6,10 @@ if ! type helm &>/dev/null ; then
   curl -sL "https://storage.googleapis.com/kubernetes-helm/helm-v2.6.1-linux-amd64.tar.gz" | tar xz -C /root/bin --strip-components=1 linux-amd64/helm
   chmod +x /root/bin/helm
   if kubectl get pods --all-namespaces 2>/dev/null | grep -qi tiller; then
+    echo "Installing helm client"
     helm init --client-only
   else
+    echo "Installing helm client and tiller"
     helm init
     kubectl create -f - << EOF
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -27,14 +29,24 @@ EOF
 fi
 
 if ! type k &>/dev/null ; then
+  echo "Installing k"
   curl -sLo /root/bin/k "https://github.com/aarondl/kctl/releases/download/v0.0.12/kctl-linux-amd64"
   chmod +x /root/bin/k
 fi
 
  
 if ! type klog.sh &>/dev/null ; then
+  echo "Installing klog"
   curl -sLo /root/bin/klog.sh "https://raw.githubusercontent.com/SUSE/scf/develop/container-host-files/opt/scf/bin/klog.sh"
   chmod +x /root/bin/klog.sh
+fi
+
+if ! type cf; then
+  echo "Installing cf and cf usb"
+  docker run --name cf-usb harts/cf-usb /bin/true
+  docker cp cf-usb:/usr/local/bin/cf /root/bin
+  docker cp cf-usb:/root/.cf $HOME
+  docker rm cf-usb
 fi
 
 echo "Ensure the following config contents are in the lockfile for your concourse pool kube resource:"
