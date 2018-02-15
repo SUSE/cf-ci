@@ -99,9 +99,6 @@ wait_for_namespace() {
 PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
 # Deploy UAA
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
-fi
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --timeout 600 \
@@ -119,10 +116,6 @@ get_uaa_secret () {
 CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
 # Deploy CF
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
-fi
-
 if [[ ${HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
   HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
