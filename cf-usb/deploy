@@ -5,7 +5,7 @@ set -o nounset -o errexit
 if test -z "${1:-}" -o ! -r "config-${1:-}.yaml" ; then
     exec >&2
     echo "Failed to find configuration file config-${1:-}.yaml"
-    echo "Usage: ${0} <config-variant>"
+    echo "Usage: ${0} <config-variant> [pipeline-suffix]"
     exit 1
 fi
 
