@@ -257,6 +257,37 @@ jobs:
   - put: semver.cf-usb-sidecar-mysql
     params:
       pre: pre
+- name: sidecar-publish-mysql
+  plan:
+  - aggregate:
+    # NOTE: none of this have trigger: because this *must* be a manual step
+    - get: src
+      passed: [sidecar-mysql]
+    - get: ci
+      passed: [sidecar-mysql]
+    - get: s3.mysql
+      passed: [sidecar-mysql]
+    - get: docker.buildbase
+      passed: [sidecar-mysql]
+  - aggregate:
+    - task: image-link
+      image: docker.buildbase
+      file: ci/cf-usb/tasks/service-image-link.yml
+      params:
+        RELEASE_TOOL_URL: ((charts-release-tool-url))
+      input_mapping:
+        bundle: s3.mysql
+    - task: publish
+      image: docker.buildbase
+      file: ci/cf-usb/tasks/service-publish.yml
+      params:
+        SERVICE: mysql
+        GITHUB_USER: ((charts-github-username))
+        GITHUB_PASSWORD: ((charts-github-password))
+        GITHUB_KEY: ((charts-github-private-key))
+        GITHUB_ORGANIZATION: ((charts-github-org))
+      input_mapping:
+        bundle: s3.mysql
 - name: sidecar-postgres
   plan:
   - aggregate:
@@ -340,3 +371,34 @@ jobs:
   - put: semver.cf-usb-sidecar-postgres
     params:
       pre: pre
+- name: sidecar-publish-postgres
+  plan:
+  - aggregate:
+    # NOTE: none of this have trigger: because this *must* be a manual step
+    - get: src
+      passed: [sidecar-postgres]
+    - get: ci
+      passed: [sidecar-postgres]
+    - get: s3.postgres
+      passed: [sidecar-postgres]
+    - get: docker.buildbase
+      passed: [sidecar-postgres]
+  - aggregate:
+    - task: image-link
+      image: docker.buildbase
+      file: ci/cf-usb/tasks/service-image-link.yml
+      params:
+        RELEASE_TOOL_URL: ((charts-release-tool-url))
+      input_mapping:
+        bundle: s3.postgres
+    - task: publish
+      image: docker.buildbase
+      file: ci/cf-usb/tasks/service-publish.yml
+      params:
+        SERVICE: postgres
+        GITHUB_USER: ((charts-github-username))
+        GITHUB_PASSWORD: ((charts-github-password))
+        GITHUB_KEY: ((charts-github-private-key))
+        GITHUB_ORGANIZATION: ((charts-github-org))
+      input_mapping:
+        bundle: s3.postgres

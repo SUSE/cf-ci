@@ -5,9 +5,6 @@ export START_DIR="${PWD}"
 usbroot=src/github.com/SUSE/cf-usb-sidecar
 svcroot="${usbroot}/csm-extensions/services/dev-${SERVICE}"
 
-# Trigger generation of proper APP_VERSION_TAG
-export CONCOURSE_BUILD=1
-
 make -C "${svcroot}" build helm
 
 # Default destination, and strip a trailing slash.
