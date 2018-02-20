@@ -1,0 +1,31 @@
+src-repo: https://github.com/SUSE/cf-usb-sidecar.git
+src-branch: master
+
+ci-repo: https://github.com/SUSE/cf-ci.git
+ci-branch: master
+
+docker-tag: latest
+docker-server: *docker-internal-registry
+docker-username: *docker-internal-username
+docker-password: *docker-internal-password
+
+docker-cert-domain: *docker-public-registry
+docker-cert-ca: *ca-cert-suse
+
+buildbase-base-image:              *docker-image-sles
+buildbase-repo-cloud-tools:        *zypper-repo-sle-server
+buildbase-repo-devel-languages-go: *zypper-repo-sle-sdk
+buildbase-repo-extra:              *zypper-repo-ibs-ga
+
+charts-release-tool-url: *cap-release-tool-url
+charts-github-username: *github-username
+charts-github-password: *github-password
+charts-github-private-key: *github-private-key
+charts-github-org: SUSE
+
+s3-endpoint: ~
+s3-access-key: *aws-access-key
+s3-secret-key: *aws-secret-key
+s3-bucket: cap-release-archives
+s3-prefix: brokers/
+s3-disable-ssl: false
