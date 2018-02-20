@@ -41,12 +41,24 @@ if ! type klog.sh &>/dev/null ; then
   chmod +x /root/bin/klog.sh
 fi
 
-if ! type cf; then
+if ! type cf &>/dev/null; then
   echo "Installing cf and cf usb"
   docker run --name cf-usb harts/cf-usb /bin/true
   docker cp cf-usb:/usr/local/bin/cf /root/bin
   docker cp cf-usb:/root/.cf $HOME
   docker rm cf-usb
+fi
+
+if ! type jq &>/dev/null; then
+  echo "Installing jq"
+  curl -sLo /root/bin/jq "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64"
+  chmod +x /root/bin/jq
+fi
+
+if ! kubectl get storageclass persistent &> /dev/null; then
+  cd $(mktemp -d)
+  git clone https://gist.github.com/HartS/ec698dc04d1a55dec473607684e8dad9 nfs-provisioner
+  kubectl create -f nfs-provisioner
 fi
 
 echo "Ensure the following config contents are in the lockfile for your concourse pool kube resource:"
