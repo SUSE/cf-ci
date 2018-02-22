@@ -10,4 +10,4 @@ inputs:
 - name: s3.scf-config
 - name: pool.kube-hosts
 run:
-  path: ci/cap-qa-upgrades/tasks/cf-upgrade.sh
+  path: ci/qa-pipelines/tasks/cf-upgrade.sh

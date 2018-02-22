@@ -6,6 +6,7 @@ image_resource:
     repository: splatform/cf-ci-orchestration
 inputs:
 - name: ci
+- name: s3.scf-config
 - name: pool.kube-hosts
 run:
-  path: ci/helm-deploy-test/tasks/cf-teardown.sh
+  path: ci/qa-pipelines/tasks/run-test.sh

@@ -7,8 +7,7 @@ resources:
     uri: ((src-ci-repo))
     branch: ((src-ci-branch))
     paths:
-    - helm-deploy-test/*
-    - cap-qa-upgrades/*
+    - qa-pipelines/*
 
 - name: s3.scf-config-opensuse
   type: s3
@@ -49,7 +48,7 @@ jobs:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
   - task: cf-deploy
-    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
       HA: false
@@ -58,14 +57,14 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
@@ -74,7 +73,7 @@ jobs:
       s3.scf-config: s3.scf-config-opensuse
   # Do not run CATs. They are destructive
   - task: cf-upgrade
-    file: ci/cap-qa-upgrades/tasks/cf-upgrade.yml
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       CAP_CHART: -opensuse
       HA: false
@@ -82,7 +81,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
@@ -90,7 +89,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
@@ -98,7 +97,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
@@ -109,7 +108,7 @@ jobs:
   # block, so that when tests fail we have a chance of examining why things are
   # failing.
   - task: cf-teardown
-    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
@@ -125,7 +124,7 @@ jobs:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
   - task: cf-deploy
-    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
       KUBE_REGISTRY_USERNAME: ((registry-username))
@@ -138,7 +137,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
@@ -146,7 +145,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
@@ -155,7 +154,7 @@ jobs:
       s3.scf-config: s3.scf-config-sles
   # Do not run CATs. They are destructive
   - task: cf-upgrade
-    file: ci/cap-qa-upgrades/tasks/cf-upgrade.yml
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
       KUBE_REGISTRY_USERNAME: ((registry-username))
@@ -167,7 +166,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
@@ -175,7 +174,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
@@ -183,7 +182,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: ""
@@ -194,7 +193,7 @@ jobs:
   # block, so that when tests fail we have a chance of examining why things are
   # failing.
   - task: cf-teardown
-    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
@@ -210,7 +209,7 @@ jobs:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
   - task: cf-deploy
-    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
       HA: true
@@ -219,7 +218,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
@@ -227,7 +226,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
@@ -236,7 +235,7 @@ jobs:
       s3.scf-config: s3.scf-config-opensuse
   # Do not run CATs. They are destructive
   - task: cf-upgrade
-    file: ci/cap-qa-upgrades/tasks/cf-upgrade.yml
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       CAP_CHART: -opensuse
       HA: true
@@ -244,7 +243,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
@@ -252,7 +251,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
@@ -260,7 +259,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
@@ -271,7 +270,7 @@ jobs:
   # block, so that when tests fail we have a chance of examining why things are
   # failing.
   - task: cf-teardown
-    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
@@ -287,7 +286,7 @@ jobs:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
   - task: cf-deploy
-    file: ci/helm-deploy-test/tasks/cf-deploy.yml
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
       KUBE_REGISTRY_USERNAME: ((registry-username))
@@ -300,7 +299,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
@@ -308,7 +307,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
@@ -317,7 +316,7 @@ jobs:
       s3.scf-config: s3.scf-config-sles
   # Do not run CATs. They are destructive
   - task: cf-upgrade
-    file: ci/cap-qa-upgrades/tasks/cf-upgrade.yml
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
       KUBE_REGISTRY_USERNAME: ((registry-username))
@@ -329,7 +328,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
@@ -337,7 +336,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
@@ -345,7 +344,7 @@ jobs:
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
-    file: ci/helm-deploy-test/tasks/run-test.yml
+    file: ci/qa-pipelines/tasks/run-test.yml
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: ""
@@ -356,6 +355,6 @@ jobs:
   # block, so that when tests fail we have a chance of examining why things are
   # failing.
   - task: cf-teardown
-    file: ci/helm-deploy-test/tasks/cf-teardown.yml
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
