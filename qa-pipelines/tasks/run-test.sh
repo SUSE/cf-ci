@@ -8,9 +8,17 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 set -o allexport
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 CF_NAMESPACE=scf
+CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
-unzip s3.scf-config/scf-*.zip -d s3.scf-config/
+# For upgrade tests
+if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
+    curl ${CAP_INSTALL_VERSION} -o cap-install-version.zip
+    export CAP_DIRECTORY=cap-install-version
+    unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
+else
+    unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
+fi
 
 kube_overrides() {
     ruby <<EOF
@@ -32,13 +40,13 @@ container_status() {
     | jq '.status.containerStatuses[0].state.terminated.exitCode | tonumber' 2>/dev/null
 }
 
-image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "s3.scf-config/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
+image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
     --restart=Never \
     --image="${image}" \
-    --overrides="$(kube_overrides "s3.scf-config/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+    --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
     "${TEST_NAME}" ||:
 
 while [[ -z $(container_status ${TEST_NAME}) ]]; do

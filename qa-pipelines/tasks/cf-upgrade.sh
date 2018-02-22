@@ -20,12 +20,17 @@ UAA_PORT=2793
 
 CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
+CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
-unzip s3.scf-config/scf-*.zip -d s3.scf-config/
+# Delete old test pods
+kubectl delete pod -n scf smoke-tests
+kubectl delete pod -n scf acceptance-tests-brain
+
+unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 
 # Check that the kube of the cluster is reasonable
-bash s3.scf-config/kube-ready-state-check.sh kube
+bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
@@ -92,14 +97,10 @@ wait_for_namespace() {
 }
 
 PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+
 # Deploy UAA
-kubectl create namespace "${UAA_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
-fi
-helm install s3.scf-config/helm/uaa${CAP_CHART}/ \
+helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
-    --name uaa \
     --timeout 600 \
     "${HELM_PARAMS[@]}"
 
@@ -115,20 +116,14 @@ get_uaa_secret () {
 CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
 # Deploy CF
-kubectl create namespace "${CF_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
-fi
-
 if [[ ${HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
   HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
   HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
 fi
 
-helm install s3.scf-config/helm/cf${CAP_CHART}/ \
+helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
-    --name scf \
     --timeout 600 \
     --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
