@@ -1,4 +1,4 @@
-# Concourse pipeline to build deploy and teardown cf against a kube cluster
+# Concourse pipeline to build deploy and teardown CAP against a kube cluster
 
 resources:
 - name: ci
@@ -36,7 +36,7 @@ resources:
     pool: ((kube-pool-pool))
 
 jobs:
-- name: helm-deploy-sa-test-openSUSE
+- name: cap-qa-deployment-SA-openSUSE
   plan:
   - aggregate:
     - get: ci
@@ -84,7 +84,7 @@ jobs:
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: helm-deploy-sa-test-SLES
+- name: cap-qa-deployment-SA-SLES
   plan:
   - aggregate:
     - get: ci
@@ -136,7 +136,7 @@ jobs:
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: helm-deploy-ha-test-openSUSE
+- name: cap-qa-deployement-HA-openSUSE
   plan:
   - aggregate:
     - get: ci
@@ -184,7 +184,7 @@ jobs:
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: helm-deploy-ha-test-SLES
+- name: cap-qa-deployment-HA-SLES
   plan:
   - aggregate:
     - get: ci
