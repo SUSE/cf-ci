@@ -56,9 +56,7 @@ if ! type jq &>/dev/null; then
 fi
 
 if ! kubectl get storageclass persistent &> /dev/null; then
-  cd $(mktemp -d)
-  git clone https://gist.github.com/HartS/ec698dc04d1a55dec473607684e8dad9 nfs-provisioner
-  kubectl create -f nfs-provisioner
+  kubectl create -f "$(dirname $0)/nfs-provisioner"
 fi
 
 echo "Ensure the following config contents are in the lockfile for your concourse pool kube resource:"
