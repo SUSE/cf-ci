@@ -40,7 +40,7 @@ HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "kube.external_ip=${external_ip}"
              --set "kube.auth=rbac")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
-    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
+    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
 fi
 if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
