@@ -5,6 +5,10 @@ export START_DIR="${PWD}"
 usbroot=src/github.com/SUSE/cf-usb-sidecar
 svcroot="${usbroot}/csm-extensions/services/dev-${SERVICE}"
 
+if test -z "${APP_VERSION_TAG:-}" ; then
+    export APP_VERSION_TAG="$(cd "${usbroot}" && scripts/build_version.sh "APP_VERSION_TAG")"
+fi
+
 make -C "${svcroot}" build helm
 
 # Default destination, and strip a trailing slash.
@@ -21,8 +25,5 @@ cp "${svcroot}/Dockerfile-setup" docker-out/
 cp "${svcroot}/Dockerfile-db"    docker-out/
 cp -r "${svcroot}/chart"         docker-out/
 
-if test -z "${APP_VERSION_TAG:-}" ; then
-    APP_VERSION_TAG="$(cd "${usbroot}" && scripts/build_version.sh "APP_VERSION_TAG")"
-fi
 echo "${APP_VERSION_TAG}" > docker-out/tag
 tar -czf helm-out/cf-usb-sidecar-${SERVICE}-${APP_VERSION_TAG}.tgz -C "${svcroot}/output/helm/" .
