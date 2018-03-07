@@ -107,11 +107,15 @@ helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA namespace
 wait_for_namespace "${UAA_NAMESPACE}"
 
+# Determine the Helm revision of the chart controlling the specified namespace.
+helm_revision() { helm list --date --reverse --max 1 --namespace "$1" | awk '{ print $2 }' | tail -n 1 ; }
 get_uaa_secret () {
-    kubectl get secret secret \
+    kubectl get secret secret-$(helm_revision "${UAA_NAMESPACE}") \
     --namespace "${UAA_NAMESPACE}" \
     -o jsonpath="{.data['$1']}"
 }
+
+CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
 CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
