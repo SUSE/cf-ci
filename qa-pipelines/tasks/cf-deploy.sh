@@ -115,7 +115,7 @@ helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 wait_for_namespace "${UAA_NAMESPACE}"
 
 get_uaa_secret () {
-    kubectl get secret secret \
+    kubectl get secret secret-1 \
     --namespace "${UAA_NAMESPACE}" \
     -o jsonpath="{.data['$1']}"
 }

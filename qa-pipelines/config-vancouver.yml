@@ -23,5 +23,6 @@ registry-password: *docker-internal-password
 organization: splatform
 
 magic-dns-service: omg.howdoi.website
+
 cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.6.11%2Bcf278.0.g351f040f.linux-amd64.zip
 cap-opensuse-url: https://s3.amazonaws.com/cap-release-archives/master/scf-opensuse-2.6.11%2Bcf278.0.g351f040f.linux-amd64.zip
