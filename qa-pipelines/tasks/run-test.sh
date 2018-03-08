@@ -20,6 +20,15 @@ else
     unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 fi
 
+# Replace the fixed secret in the relevant task definition with the
+# actual name as pulled from the cluster under test.
+cap_secret="$(kubectl get pod api-0 --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
+kube_yaml=$(mktemp)
+sed < "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml" \
+    > "${kube_yaml}" \
+    "s|name: \"secret\"|name: \"${cap_secret}\"|"
+
+
 kube_overrides() {
     ruby <<EOF
         require 'yaml'
@@ -41,12 +50,16 @@ container_status() {
 }
 
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
+
+remove_test_config () { rm "${kube_yaml}" ; }
+trap remove_test_config EXIT
+
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
     --restart=Never \
     --image="${image}" \
-    --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+    --overrides="$(kube_overrides "${kube_yaml}")" \
     "${TEST_NAME}" ||:
 
 while [[ -z $(container_status ${TEST_NAME}) ]]; do
