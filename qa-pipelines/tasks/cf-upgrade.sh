@@ -117,8 +117,6 @@ get_uaa_secret () {
 
 CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
 
-CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
-
 # Deploy CF
 if [[ ${HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
