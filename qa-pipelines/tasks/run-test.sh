@@ -51,9 +51,6 @@ container_status() {
 
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
 
-remove_test_config () { rm "${kube_yaml}" ; }
-trap remove_test_config EXIT
-
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
