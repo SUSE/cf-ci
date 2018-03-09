@@ -8,6 +8,7 @@ resources:
     branch: ((src-ci-branch))
     paths:
     - qa-pipelines/*
+    - sample-apps/*
 
 - name: s3.scf-config-opensuse
   type: s3
