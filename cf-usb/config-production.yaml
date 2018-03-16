@@ -23,3 +23,10 @@ s3-secret-key: *aws-secret-key
 s3-bucket: cap-release-archives
 s3-prefix: brokers/
 s3-disable-ssl: false
+
+# For publishing
+charts-release-tool-url: *cap-release-tool-url
+charts-github-org: SUSE
+charts-github-username: *github-username
+charts-github-password: *github-password
+charts-github-private-key: *github-private-key
