@@ -77,7 +77,7 @@ jobs:
       path: src
       state: pending
   - task: vet
-    file: src-ci/tasks/vet.yaml
+    file: src-ci/cf-usb-plugin/tasks/vet.yaml
     on_failure:
       put: status
       params:
@@ -106,10 +106,10 @@ jobs:
       path: src
       state: pending
   - task: tools
-    file: src-ci/tasks/tools.yaml
+    file: src-ci/cf-usb-plugin/tasks/tools.yaml
   - task: test
     privileged: true
-    file: src-ci/tasks/test.yaml
+    file: src-ci/cf-usb-plugin/tasks/test.yaml
     on_failure:
       put: status
       params:
@@ -138,9 +138,9 @@ jobs:
       path: src
       state: pending
   - task: tools
-    file: src-ci/tasks/tools.yaml
+    file: src-ci/cf-usb-plugin/tasks/tools.yaml
   - task: lint
-    file: src-ci/tasks/lint.yaml
+    file: src-ci/cf-usb-plugin/tasks/lint.yaml
     on_failure:
       put: status
       params:
@@ -169,9 +169,9 @@ jobs:
       path: src
       state: pending
   - task: tools
-    file: src-ci/tasks/tools.yaml
+    file: src-ci/cf-usb-plugin/tasks/tools.yaml
   - task: format
-    file: src-ci/tasks/format.yaml
+    file: src-ci/cf-usb-plugin/tasks/format.yaml
     on_failure:
       put: status
       params:
@@ -200,9 +200,9 @@ jobs:
       path: src
       state: pending
   - task: tools
-    file: src-ci/tasks/tools.yaml
+    file: src-ci/cf-usb-plugin/tasks/tools.yaml
   - task: build
-    file: src-ci/tasks/build.yaml
+    file: src-ci/cf-usb-plugin/tasks/build.yaml
     on_failure:
       put: status
       params:
@@ -233,9 +233,9 @@ jobs:
       path: src
       state: pending
   - task: tools
-    file: src-ci/tasks/tools.yaml
+    file: src-ci/cf-usb-plugin/tasks/tools.yaml
   - task: dist
-    file: src-ci/tasks/dist.yaml
+    file: src-ci/cf-usb-plugin/tasks/dist.yaml
   - aggregate:
     - put: s3.cf-usb-plugin-check.linux-amd64
       params:

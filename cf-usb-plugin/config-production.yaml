@@ -7,7 +7,7 @@ src-name:                    SUSE/cf-usb-plugin
 src-repo-ref: git@github.com:SUSE/cf-usb-plugin.git
 src-branch: develop
 
-ci-repo: https://github.com/SUSE/cf-usb-plugin-ci.git
+ci-repo: https://github.com/SUSE/cf-ci.git
 ci-branch: alexh/add-cf-usb-plugin-ci
 
 s3-endpoint: ~
