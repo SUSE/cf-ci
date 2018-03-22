@@ -13,4 +13,4 @@ outputs:
   - name: tools
     path: bin
 run:
-  path: src-ci/scripts/tools.sh
+  path: src-ci/cf-usb-plugin/scripts/tools.sh

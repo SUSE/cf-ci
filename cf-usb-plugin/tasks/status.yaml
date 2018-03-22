@@ -10,4 +10,4 @@ inputs:
   - name: src  # Referenced in the script below
   - name: src-ci
 run:
-  path: src-ci/scripts/status.sh
+  path: src-ci/cf-usb-plugin/scripts/status.sh

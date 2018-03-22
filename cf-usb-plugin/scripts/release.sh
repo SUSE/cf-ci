@@ -14,6 +14,7 @@ echo TAG_: ${TAG}
 echo LAST: ${LAST_TAG}
 
 # Assemble configuration data for `out` to git-release resource.
+echo > release/commitish "${TAG}"
 echo > release/name "${TAG}"
 echo > release/tag  "${TAG}"
 echo > release/body "${NAME}: Release ${TAG}"
@@ -36,13 +37,13 @@ done
 mkdir release/assets
 for path in ${SRC}/*.tgz
 do
-    echo Processing ${path} ...
+    echo "Processing ${path} ..."
 
     tar xfz "${path}" \
 	-C release/assets/ \
 	--strip-components=1 \
 	--overwrite \
-	--transform="s@/cf-usb-plugin@/$(basename "${path%%.tgz}")@"
+	--transform="s@/cf-usb-plugin@/$(basename "${path}" .tgz)@"
 done
 
 # And calculate the checksums for all the executables

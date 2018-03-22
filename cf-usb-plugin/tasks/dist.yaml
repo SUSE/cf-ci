@@ -14,4 +14,4 @@ inputs:
 outputs:
   - name: cf-usb-plugin
 run:
-  path: src-ci/scripts/dist.sh
+  path: src-ci/cf-usb-plugin/scripts/dist.sh

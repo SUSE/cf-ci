@@ -15,4 +15,4 @@ outputs:
   - name: release
   - name: cf-usb-plugin
 run:
-  path: src-ci/scripts/release.sh
+  path: src-ci/cf-usb-plugin/scripts/release.sh

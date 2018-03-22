@@ -10,4 +10,4 @@ inputs:
     path: src/github.com/SUSE/cf-usb-plugin
   - name: src-ci
 run:
-  path: src-ci/scripts/vet.sh
+  path: src-ci/cf-usb-plugin/scripts/vet.sh

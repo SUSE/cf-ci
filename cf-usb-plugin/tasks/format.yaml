@@ -12,4 +12,4 @@ inputs:
   - name: tools
     path: bin
 run:
-  path: src-ci/scripts/format.sh
+  path: src-ci/cf-usb-plugin/scripts/format.sh
