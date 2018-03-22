@@ -1,0 +1,124 @@
+---
+shared:
+  s3-configs: &s3-configs
+    endpoint: ((s3-endpoint))
+    access_key_id: ((s3-access-key))
+    secret_access_key: ((s3-secret-key))
+    bucket: ((s3-bucket))
+    disable_ssl: ((s3-disable-ssl))
+    regexp: ((s3-prefix))cf-usb-plugin-(.*linux-.*)\.tgz
+    private: true
+
+groups: []
+resources:
+- name: src
+  type: git
+  source:
+    uri: ((src-repo-ref))
+    branch: ((src-branch))
+    private_key: ((github-private-key))
+
+- name: src-ci
+  type: git
+  source:
+    uri: ((ci-repo))
+    branch: ((ci-branch))
+    private_key: ((github-private-key))
+
+- name: s3.cf-usb-plugin.linux-amd64
+  type: s3
+  source:
+    <<: *s3-configs
+    regexp: ((s3-prefix))cf-usb-plugin-(.*linux-amd64.*)\.tgz
+
+- name: s3.cf-usb-plugin.darwin-amd64
+  type: s3
+  source:
+    <<: *s3-configs
+    regexp: ((s3-prefix))cf-usb-plugin-(.*darwin-amd64.*)\.tgz
+
+- name: s3.cf-usb-plugin.windows-amd64
+  type: s3
+  source:
+    <<: *s3-configs
+    regexp: ((s3-prefix))cf-usb-plugin-(.*windows-amd64.*)\.tgz
+
+jobs:
+- name: vet
+  plan:
+  - aggregate:
+    - get: src-ci
+      trigger: true
+    - get: src
+      trigger: true
+  - task: vet
+    file: src-ci/tasks/vet.yaml
+- name: test
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: test
+    file: src-ci/tasks/test.yaml
+- name: lint
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: lint
+    file: src-ci/tasks/lint.yaml
+- name: format
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: format
+    file: src-ci/tasks/format.yaml
+- name: build
+  plan:
+  - aggregate:
+    - get: src
+      passed: [vet, test, lint, format]
+      trigger: true
+    - get: src-ci
+      passed: [vet, test, lint, format]
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: build
+    file: src-ci/tasks/build.yaml
+- name: dist
+  plan:
+  - aggregate:
+    - get: src
+      passed: [build]
+      trigger: true
+    - get: src-ci
+      passed: [build]
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: dist
+    file: src-ci/tasks/dist.yaml
+  - aggregate:
+    - put: s3.cf-usb-plugin.linux-amd64
+      params:
+        file: 'cf-usb-plugin/cf-usb-plugin-*linux-amd64*.tgz'
+    - put: s3.cf-usb-plugin.darwin-amd64
+      params:
+        file: 'cf-usb-plugin/cf-usb-plugin-*darwin-amd64*.tgz'
+    - put: s3.cf-usb-plugin.windows-amd64
+      params:
+        file: 'cf-usb-plugin/cf-usb-plugin-*windows-amd64*.tgz'

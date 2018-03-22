@@ -1,0 +1,116 @@
+groups: []
+resources:
+- name: src
+  type: git
+  source:
+    uri: ((src-repo-ref))
+    branch: ((src-branch))
+    private_key: ((github-private-key))
+    tag_filter: '[[:digit:]]*[.][[:digit:]]*[.][[:digit:]]*'
+
+- name: src-ci
+  type: git
+  source:
+    uri: ((ci-repo))
+    branch: ((ci-branch))
+    private_key: ((github-private-key))
+
+- name: s3.cf-plugin-backup.release
+  type: s3
+  source:
+    access_key_id: ((s3-access-key))
+    bucket: ((s3-bucket))
+    disable_ssl: ((s3-disable-ssl))
+    endpoint: ((s3-endpoint))
+    private: true
+    regexp: ((s3-prefix))cf-plugin-backup-(.*release.*)\.tgz
+    secret_access_key: ((s3-secret-key))
+
+- name: src-release
+  type: github-release
+  source:
+    owner: ((src-owner))
+    repository: ((src-repo))
+    access_token: ((github-access-token))
+    drafts: true
+
+jobs:
+- name: vet
+  plan:
+  - aggregate:
+    - get: src-ci
+      trigger: true
+    - get: src
+      trigger: true
+  - task: vet
+    file: src-ci/tasks/vet.yaml
+- name: test
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: test
+    file: src-ci/tasks/test.yaml
+- name: lint
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: lint
+    file: src-ci/tasks/lint.yaml
+- name: format
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: format
+    file: src-ci/tasks/format.yaml
+- name: build
+  plan:
+  - aggregate:
+    - get: src
+      passed: [vet, test, lint, format]
+      trigger: true
+    - get: src-ci
+      passed: [vet, test, lint, format]
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: build
+    file: src-ci/tasks/build.yaml
+- name: release
+  plan:
+  - aggregate:
+    - get: src
+      passed: [build]
+      trigger: true
+    - get: src-ci
+      passed: [build]
+      trigger: true
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: release
+    file: src-ci/tasks/release.yaml
+  - aggregate:
+    - put: src-release
+      params:
+        name: release/name
+        tag:  release/tag
+        body: release/body
+        globs:
+        - release/assets/*
+    - put: s3.cf-plugin-backup.release
+      params:
+        file: 'cf-plugin-backup/cf-plugin-backup-*release*.tgz'

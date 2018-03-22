@@ -1,0 +1,262 @@
+---
+shared:
+  s3-configs: &s3-configs
+    endpoint: ((s3-endpoint))
+    access_key_id: ((s3-access-key))
+    secret_access_key: ((s3-secret-key))
+    bucket: ((s3-bucket))
+    disable_ssl: ((s3-disable-ssl))
+    regexp: ((s3-prefix))cf-usb-plugin-(.*linux-.*)\.tgz
+    private: true
+
+groups: []
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: splatform/concourse-github-pull-request
+
+- name: status
+  type: docker-image
+  source:
+    repository: splatform/concourse-github-status
+
+resources:
+- name: src
+  type: pull-request
+  source:
+    uri: ((src-repo-ref))
+    branch: ((src-branch))
+    access_token: ((github-access-token))
+    private_key: ((github-private-key))
+    repo: ((src-name))
+
+- name: src-ci
+  type: git
+  source:
+    uri: ((ci-repo))
+    branch: ((ci-branch))
+    private_key: ((github-private-key))
+
+- name: status
+  type: status
+  source:
+    access_token: ((github-access-token))
+    repo: ((src-name))
+
+- name: s3.cf-usb-plugin-check.linux-amd64
+  type: s3
+  source:
+    <<: *s3-configs
+    regexp: ((s3-prefix))checks/cf-usb-plugin-(.*linux-amd64.*)\.tgz
+
+- name: s3.cf-usb-plugin-check.darwin-amd64
+  type: s3
+  source:
+    <<: *s3-configs
+    regexp: ((s3-prefix))checks/cf-usb-plugin-(.*darwin-amd64.*)\.tgz
+
+- name: s3.cf-usb-plugin-check.windows-amd64
+  type: s3
+  source:
+    <<: *s3-configs
+    regexp: ((s3-prefix))checks/cf-usb-plugin-(.*windows-amd64.*)\.tgz
+
+jobs:
+- name: vet
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - put: status
+    params:
+      context: vet
+      description: vet
+      path: src
+      state: pending
+  - task: vet
+    file: src-ci/tasks/vet.yaml
+    on_failure:
+      put: status
+      params:
+        context: vet
+        description: make vet
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: vet
+        description: make vet
+        path: src
+        state: success
+- name: test
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - put: status
+    params:
+      context: test
+      description: test
+      path: src
+      state: pending
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: test
+    privileged: true
+    file: src-ci/tasks/test.yaml
+    on_failure:
+      put: status
+      params:
+        context: test
+        description: make test
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: test
+        description: make test
+        path: src
+        state: success
+- name: lint
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - put: status
+    params:
+      context: lint
+      description: lint
+      path: src
+      state: pending
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: lint
+    file: src-ci/tasks/lint.yaml
+    on_failure:
+      put: status
+      params:
+        context: lint
+        description: make lint
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: lint
+        description: make lint
+        path: src
+        state: success
+- name: format
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - put: status
+    params:
+      context: format
+      description: format
+      path: src
+      state: pending
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: format
+    file: src-ci/tasks/format.yaml
+    on_failure:
+      put: status
+      params:
+        context: format
+        description: make format
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: format
+        description: make format
+        path: src
+        state: success
+- name: build
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+      trigger: true
+  - put: status
+    params:
+      context: build
+      description: build
+      path: src
+      state: pending
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: build
+    file: src-ci/tasks/build.yaml
+    on_failure:
+      put: status
+      params:
+        context: build
+        description: build
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: build
+        description: build
+        path: src
+        state: success
+- name: dist
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+      passed: [build, test]
+    - get: src-ci
+      trigger: true
+      passed: [build, test]
+  - put: status
+    params:
+      context: dist
+      description: packaging
+      path: src
+      state: pending
+  - task: tools
+    file: src-ci/tasks/tools.yaml
+  - task: dist
+    file: src-ci/tasks/dist.yaml
+  - aggregate:
+    - put: s3.cf-usb-plugin-check.linux-amd64
+      params:
+        file: 'cf-usb-plugin/cf-usb-plugin-*linux-amd64*.tgz'
+    - put: s3.cf-usb-plugin-check.darwin-amd64
+      params:
+        file: 'cf-usb-plugin/cf-usb-plugin-*darwin-amd64*.tgz'
+    - put: s3.cf-usb-plugin-check.windows-amd64
+      params:
+        file: 'cf-usb-plugin/cf-usb-plugin-*windows-amd64*.tgz'
+    on_failure:
+      put: status
+      params:
+        context: dist
+        description: packaging
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: dist
+        description: packaging
+        path: src
+        state: success

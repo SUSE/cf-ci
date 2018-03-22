@@ -1,0 +1,18 @@
+# Production configuration for the cf-usb-plugin pipelines
+# Note that the secrets are not here; they are in $CONCOURSE_SECRETS_FILE
+
+src-owner:                   SUSE
+src-repo:                         cf-plugin-backup
+src-name:                    SUSE/cf-usb-plugin
+src-repo-ref: git@github.com:SUSE/cf-usb-plugin.git
+src-branch: develop
+
+ci-repo: https://github.com/SUSE/cf-usb-plugin-ci.git
+ci-branch: alexh/add-cf-usb-plugin-ci
+
+s3-endpoint: ~
+s3-access-key: *aws-access-key
+s3-secret-key: *aws-secret-key
+s3-bucket: cf-usb-plugin-release
+s3-prefix: /
+s3-disable-ssl: false

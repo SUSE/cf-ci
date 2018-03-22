@@ -1,0 +1,15 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: golang
+    tag: '1'
+inputs:
+  - name: src
+    path: src/github.com/SUSE/cf-usb-plugin
+  - name: src-ci
+  - name: tools
+    path: bin
+run:
+  path: src-ci/scripts/test.sh

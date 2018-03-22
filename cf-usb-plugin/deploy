@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -o nounset -o errexit
+PROJ_NAME="cf-usb-plugin"
+
+usage() {
+    cat <<EOF
+Usage: $0 <master|check|release> [config]
+
+Config is production by default.  If it is given, the pipeline will be named
+cf-usb-plugin-master-<thing> instead.
+EOF
+}
+
+variant="${1:-}"
+config="${2:-production}"
+suffix="${2:+-${2:-}}"
+
+if test -z "${config}" -o ! -r "config-${config}.yaml" ; then
+    exec >&2
+    echo "Failed to find configuration file config-${config}.yaml"
+    usage
+    exit 1
+fi
+
+alt_secrets_file="CONCOURSE_SECRETS_FILE_${config//-/_}"
+if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
+    CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
+fi
+
+echo cat "config-${config}.yaml"
+
+fly set-pipeline \
+    --pipeline="${PROJ_NAME}-${variant}${suffix}" \
+    --config="${PROJ_NAME}-${variant}.yaml" \
+    --load-vars-from=<(
+        gpg --decrypt --batch --quiet "${CONCOURSE_SECRETS_FILE}"
+        cat "config-${config}.yaml"
+    )

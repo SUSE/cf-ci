@@ -1,0 +1,13 @@
+---
+platform: linux
+image: 'docker:///colstrom/octokitty#with-git'
+image_resource:
+  type: docker-image
+  source:
+    repository: colstrom/octokitty
+    tag: 'with-git'
+inputs:
+  - name: src  # Referenced in the script below
+  - name: src-ci
+run:
+  path: src-ci/scripts/status.sh
