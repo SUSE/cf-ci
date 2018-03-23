@@ -114,15 +114,31 @@ helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA namespace
 wait_for_namespace "${UAA_NAMESPACE}"
 
-# Determine the Helm revision of the chart controlling the specified namespace.
-helm_revision() { helm list --date --reverse --max 1 --namespace "$1" | awk '{ print $2 }' | tail -n 1 ; }
-get_uaa_secret () {
-    kubectl get secret secret-$(helm_revision "${UAA_NAMESPACE}") \
-    --namespace "${UAA_NAMESPACE}" \
-    -o jsonpath="{.data['$1']}"
+function semver_is_gte() {
+  # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
+  [[ "$(echo -e "$1\n$2" |
+        sort -t '.' -k 1,1 -k 2,2 -k 3,3 -g |
+        tail -n 1
+    )" == $1 ]]
 }
 
-CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
+# Get the version of the helm chart for uaa
+helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
+generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
+get_internal_ca_cert() {
+    local uaa_secret_name
+    if semver_is_gte ${helm_chart_version} 2.7.3; then
+        uaa_secret_name=$(generated_secrets_secret)
+    else
+        uaa_secret_name=secret
+    fi
+    kubectl get secret ${uaa_secret_name} \
+      --namespace "${UAA_NAMESPACE}" \
+      -o jsonpath="{.data['internal-ca-cert']}" \
+      | base64 -d 
+}
+
+CA_CERT="$(get_internal_ca_cert)"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"

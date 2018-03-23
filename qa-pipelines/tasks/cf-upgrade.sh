@@ -148,15 +148,18 @@ helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA namespace
 wait_for_namespace "${UAA_NAMESPACE}"
 
-# Determine the Helm revision of the chart controlling the specified namespace.
-helm_revision() { helm list --date --reverse --max 1 --namespace "$1" | awk '{ print $2 }' | tail -n 1 ; }
-get_uaa_secret () {
-    kubectl get secret secret-$(helm_revision "${UAA_NAMESPACE}") \
-    --namespace "${UAA_NAMESPACE}" \
-    -o jsonpath="{.data['$1']}"
+# Get the version of the helm chart for uaa
+helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
+generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
+get_internal_ca_cert() {
+    local uaa_secret_name=$(generated_secrets_secret)
+    kubectl get secret ${uaa_secret_name} \
+      --namespace "${UAA_NAMESPACE}" \
+      -o jsonpath="{.data['internal-ca-cert']}" \
+      | base64 -d
 }
 
-CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
+CA_CERT="$(get_internal_ca_cert)"
 
 # Upgrade CF
 if [[ ${HA} == true ]]; then
