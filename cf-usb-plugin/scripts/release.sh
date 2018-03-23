@@ -41,7 +41,7 @@ do
 
     tar xfz "${path}" \
 	-C release/assets/ \
-	--strip-components=1 \
+	--strip-components=2 \
 	--overwrite \
 	--transform="s@/cf-usb-plugin@/$(basename "${path}" .tgz)@"
 done
