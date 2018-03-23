@@ -15,7 +15,7 @@ resources:
     branch: ((ci-branch))
     private_key: ((github-private-key))
 
-- name: s3.cf-plugin-backup.release
+- name: s3.cf-usb-plugin.release
   type: s3
   source:
     access_key_id: ((s3-access-key))
@@ -23,7 +23,7 @@ resources:
     disable_ssl: ((s3-disable-ssl))
     endpoint: ((s3-endpoint))
     private: true
-    regexp: ((s3-prefix))cf-plugin-backup-(.*release.*)\.tgz
+    regexp: ((s3-prefix))cf-usb-plugin-(.*release.*)\.tgz
     secret_access_key: ((s3-secret-key))
 
 - name: src-release
@@ -111,6 +111,6 @@ jobs:
         body: release/body
         globs:
         - release/assets/*
-    - put: s3.cf-plugin-backup.release
+    - put: s3.cf-usb-plugin.release
       params:
-        file: 'cf-plugin-backup/cf-plugin-backup-*release*.tgz'
+        file: 'cf-usb-plugin/cf-usb-plugin-*release*.tgz'

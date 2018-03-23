@@ -2,7 +2,7 @@
 # Note that the secrets are not here; they are in $CONCOURSE_SECRETS_FILE
 
 src-owner:                   SUSE
-src-repo:                         cf-plugin-backup
+src-repo:                         cf-usb-plugin
 src-name:                    SUSE/cf-usb-plugin
 src-repo-ref: git@github.com:SUSE/cf-usb-plugin.git
 src-branch: develop
