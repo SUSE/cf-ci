@@ -1,5 +1,12 @@
 #!/bin/bash -x
 
+#####################################################
+#
+# TODO: check all resources and services for existence befor creating
+#
+#####################################################
+
+
 AZ_CLI=/usr/bin/az
 
 
@@ -8,6 +15,7 @@ MASTERCOUNT=1
 AGENTCOUNT=3
 SSHKEY="~/.ssh/id_rsa.pub"
 VMSIZE="Standard_D2_v2"
+DEBUG=1
 
 function help_message {
     echo "Usage:"
@@ -78,23 +86,24 @@ if [ -z "$SUBID" ] || [ -z "$PREFIX" ] || [ -z "$DNSPREFIX" ]; then
     exit 1
 fi
 
-
-echo "Prefix: $PREFIX"
-echo
-echo "Subscription id $SUBID"
-echo
-echo "Location: $LOCATION"
-echo 
-echo "Dnsprefix: $DNSPREFIX"
-echo
-echo "Mastercount: $MASTERCOUNT"
-echo
-echo "Agentcount: $AGENTCOUNT"
-echo
-echo "ssh key: $SSHKEY"
-echo
-echo "vm size: $VMSIZE"
-echo
+if [ $DEBUG ]; then
+    echo "Prefix: $PREFIX"
+    echo
+    echo "Subscription id $SUBID"
+    echo
+    echo "Location: $LOCATION"
+    echo 
+    echo "Dnsprefix: $DNSPREFIX"
+    echo
+    echo "Mastercount: $MASTERCOUNT"
+    echo
+    echo "Agentcount: $AGENTCOUNT"
+    echo
+    echo "ssh key: $SSHKEY"
+    echo
+    echo "vm size: $VMSIZE"
+    echo
+fi
 
 # Creating resource group and service principal
 ${AZ_CLI} account set --subscription "${SUBID}"
@@ -106,13 +115,22 @@ SP=$($AZ_CLI ad sp create-for-rbac \
 APPID=$(echo "${SP}" | grep appId | awk '{print $2}' | sed -n 's/^.*"\(.*\)".*$/\1/p')
 PASSWORD=$(echo "${SP}" | grep password | awk '{print $2}' | sed -n 's/^.*"\(.*\)".*$/\1/p')
 
-echo "Password: ${PASSWORD}"
-echo
-echo "AppID: ${APPID}"
-echo
+if [ $DEBUG ]; then
+    echo "Password: ${PASSWORD}"
+    echo
+    echo "AppID: ${APPID}"
+    echo
+fi
+
+########################################################################
+#
+# TODO: capture `az acs create` output and use to get network interface of one agent
+#
+########################################################################
+
+
 
 # Creating container service
-
 ${AZ_CLI} acs create \
                --name "${PREFIX}-container-service" \
                --resource-group "${PREFIX}-resource-group" \
@@ -125,7 +143,6 @@ ${AZ_CLI} acs create \
                --ssh-key-value "${SSHKEY}" \
                --service-principal "${APPID}" \
                --master-vm-size "${VMSIZE}"
-exit 0
 
 # Update kernel command line
 ${AZ_CLI} vm list -g "${PREFIX}-resource-group" | jq '.[] | select (.tags.poolName | contains("agent")) | .name' | \
@@ -148,3 +165,22 @@ ${AZ_CLI} vm list -g "${PREFIX}-resource-group" | jq '.[] | select (.tags.poolNa
     --name {}
 
 
+# Create Public IP
+${AZ_CLI} network public-ip create -g "${PREFIX}-resource-group" \
+                                   -n "${PREFIX}-access" \
+                                   --version "IPv4" \
+                                   --allocation-method "static"
+
+########################################################################
+#
+# TODO: Assign IP address to interface of one kubernetes agent, see previous todo
+#
+########################################################################
+
+# Create Inbound Rule for k8s-master NSG
+${AZ_CLI} network nsg rule create --resource-group "${PREFIX}-resource-group" \
+                                  --nsg-name "k8s-master" \
+                                  --name "${PREFIX}-cap-ports" \
+                                  --direction "Inbound" \
+                                  --destination-port-ranges "80 443 4443 2222 2793" \
+                                  --access "Allow"
