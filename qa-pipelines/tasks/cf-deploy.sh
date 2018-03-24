@@ -25,7 +25,7 @@ set +o allexport
 
 # For upgrades tests
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
-    curl ${CAP_INSTALL_VERSION} -o cap-install-version.zip
+    curl ${CAP_INSTALL_VERSION} -Lo cap-install-version.zip
     export CAP_DIRECTORY=cap-install-version
     unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
 else
@@ -127,7 +127,7 @@ helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/C
 generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
 get_internal_ca_cert() {
     local uaa_secret_name
-    if semver_is_gte ${helm_chart_version} 2.7.3; then
+    if semver_is_gte $(helm_chart_version) 2.7.3; then
         uaa_secret_name=$(generated_secrets_secret)
     else
         uaa_secret_name=secret
