@@ -33,7 +33,7 @@ unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
-             --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
+             --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
              --set "kube.external_ip=${external_ip}"
              --set "kube.auth=rbac")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
@@ -171,10 +171,10 @@ fi
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --timeout 600 \
-    --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+    --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "env.UAA_CA_CERT=${CA_CERT}" \
+    --set "secrets.UAA_CA_CERT=${CA_CERT}" \
     "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace
