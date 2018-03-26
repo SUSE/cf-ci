@@ -62,6 +62,7 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
@@ -86,7 +87,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
@@ -94,7 +94,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
@@ -102,7 +101,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -171,7 +169,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
@@ -179,7 +176,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
@@ -187,7 +183,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -248,7 +243,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
@@ -256,7 +250,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
@@ -264,7 +257,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -333,7 +325,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
@@ -341,7 +332,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
@@ -349,7 +339,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   # We intentionally don't put the teardown and pool release steps in an ensure
