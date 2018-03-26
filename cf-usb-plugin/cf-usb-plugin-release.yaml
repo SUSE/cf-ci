@@ -26,6 +26,14 @@ resources:
     regexp: ((s3-prefix))cf-usb-plugin-(.*release.*)\.tgz
     secret_access_key: ((s3-secret-key))
 
+- name: hub-release
+  type: github-release
+  source:
+    owner: github
+    repository: hub
+    access_token: ((github-access-token))
+    pre_release: true
+
 - name: src-release
   type: github-release
   source:
@@ -95,10 +103,8 @@ jobs:
   - aggregate:
     - get: src
       passed: [build]
-      trigger: true
     - get: src-ci
       passed: [build]
-      trigger: true
   - task: tools
     file: src-ci/cf-usb-plugin/tasks/tools.yaml
   - task: release
@@ -114,3 +120,27 @@ jobs:
     - put: s3.cf-usb-plugin.release
       params:
         file: 'cf-usb-plugin/cf-usb-plugin-*release*.tgz'
+- name: publish
+  plan:
+  - aggregate:
+    # NOTE: None of the input have trigger
+    #       Because this *must* be a manual step
+    - get: hub-release
+      params:
+        version: v2.3.0-pre10
+        globs:
+        - hub-linux-amd64-*
+    - get: src-release
+      passed: [release]
+    - get: src-ci
+  - task: publish
+    file: src-ci/cf-usb-plugin/tasks/publish.yaml
+    params:
+      CONTACT: placeholder
+      NAME: SUSE LLC
+      HOMEURL: https://www.suse.com/
+      COMPANY: SUSE LLC
+      UPSTREAM: ((upstream))
+      GITHUB_USER: ((github-username))
+      GITHUB_TOKEN: ((github-access-token))
+      GITHUB_KEY: ((github-private-key))
