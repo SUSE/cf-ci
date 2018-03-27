@@ -15,6 +15,6 @@ ci-branch: master
 s3-endpoint: ~
 s3-access-key: *aws-access-key
 s3-secret-key: *aws-secret-key
-s3-bucket: cf-usb-plugin-release
+s3-bucket: suse-cf-usb-plugin
 s3-prefix: /
 s3-disable-ssl: false
