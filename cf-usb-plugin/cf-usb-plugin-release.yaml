@@ -136,11 +136,11 @@ jobs:
   - task: publish
     file: src-ci/cf-usb-plugin/tasks/publish.yaml
     params:
-      CONTACT: placeholder
-      NAME: SUSE LLC
-      HOMEURL: https://www.suse.com/
-      COMPANY: SUSE LLC
-      UPSTREAM: ((upstream))
-      GITHUB_USER: ((github-username))
-      GITHUB_TOKEN: ((github-access-token))
+      COMPANY: SUSE Platform Engineering
+      CONTACT: suse-cap-maintainers@suse.de
       GITHUB_KEY: ((github-private-key))
+      GITHUB_TOKEN: ((github-access-token))
+      GITHUB_USER: ((github-username))
+      HOMEURL: https://www.suse.com/
+      NAME: SUSE Platform Engineering
+      UPSTREAM: ((upstream))
