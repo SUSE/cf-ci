@@ -194,5 +194,6 @@ fi
 echo "Results of app monitoring:"
 echo "SECONDS|STATUS"
 uniq -c "${monitor_file}"
+cf login -u admin -p changeme
 cf delete -f go-env
 cf delete-org -f testorg
