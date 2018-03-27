@@ -1,8 +1,7 @@
 # Production configuration for the cf-usb-plugin pipelines
 # Note that the secrets are not here; they are in $CONCOURSE_SECRETS_FILE
 
-# should be upstream: cloudfoundry/cli-plugin-repo
-upstream: SUSE/cli-plugin-repo
+upstream: cloudfoundry/cli-plugin-repo
 
 src-owner:                   SUSE
 src-repo:                         cf-usb-plugin
