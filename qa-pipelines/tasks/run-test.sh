@@ -53,7 +53,7 @@ kubectl run \
     --attach \
     --restart=Never \
     --image="${image}" \
-    --overrides="$(kube_overrides "${kube_yaml}")" \
+    --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
     "${TEST_NAME}" ||:
 
 while [[ -z $(container_status ${TEST_NAME}) ]]; do
