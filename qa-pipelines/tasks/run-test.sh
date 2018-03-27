@@ -23,11 +23,6 @@ fi
 # Replace the fixed secret in the relevant task definition with the
 # actual name as pulled from the cluster under test.
 cap_secret="$(kubectl get pod api-0 --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
-kube_yaml=$(mktemp)
-sed < "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml" \
-    > "${kube_yaml}" \
-    "s|name: \"secret\"|name: \"${cap_secret}\"|"
-
 
 kube_overrides() {
     ruby <<EOF
@@ -38,6 +33,11 @@ kube_overrides() {
             container['env'].each do |env|
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
+                unless %w(CLUSTER_ADMIN_PASSWORD UAA_ADMIN_CLIENT_SECRET UAA_CA_CERT).include? env['name']
+                    if env['valueFrom'] && env['valueFrom']['secretKeyRef']
+                        env['valueFrom']['secretKeyRef']['name'] = '$cap_secret'
+                    end
+                end
             end
         end
         puts obj.to_json
