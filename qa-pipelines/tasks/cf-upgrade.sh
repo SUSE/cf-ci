@@ -163,10 +163,14 @@ CA_CERT="$(get_internal_ca_cert)"
 
 # Upgrade CF
 if [[ ${HA} == true ]]; then
-  HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
-  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
+  HELM_PARAMS+=(--set=sizing.HA=true)
 fi
+
+# if [[ ${SCALED_HA} == true ]]; then
+#   HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
+#   HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
+#   HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
+# fi
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
