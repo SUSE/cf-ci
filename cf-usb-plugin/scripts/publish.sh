@@ -194,12 +194,13 @@ ${HUB} commit -m "Submitting ${PR_BRANCH}"
 echo ; echo = Push
 ${HUB} push FORK ${PR_BRANCH}
 
-echo ; echo = PR
-# At last, open the Pull Request, head: current branch, base: master
-${HUB} pull-request \
-    -m "$(printf "${PR_TITLE}\n\n${PR_DESC}\n")" \
-    -b ${UPSTREAM}:master \
-    -h ${FORK}:${PR_BRANCH}
+# PR disabled for now as our bot hasn't signed the CLA, and isn't part of the SUSE org
+# echo ; echo = PR
+# # At last, open the Pull Request, head: current branch, base: master
+# ${HUB} pull-request \
+#     -m "$(printf "${PR_TITLE}\n\n${PR_DESC}\n")" \
+#     -b ${UPSTREAM}:master \
+#     -h ${FORK}:${PR_BRANCH}
 
 echo ... Goodbye and godspeed
 exit
