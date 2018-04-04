@@ -26,7 +26,7 @@ resources:
     access_key_id: ((s3-config-access-key))
     secret_access_key: ((s3-config-secret-key))
     bucket: ((s3-config-bucket-sles))
-    regexp: ((s3-config-prefix-sles))scf-sle-(.*).linux-amd64\.zip$
+    regexp: ((s3-config-prefix-sles))scf-sle-(.*)-amd64\.zip$
 
 - name: pool.kube-hosts
   type: pool
