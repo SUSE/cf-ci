@@ -17,7 +17,7 @@ resources:
     access_key_id: ((s3-config-access-key))
     secret_access_key: ((s3-config-secret-key))
     bucket: ((s3-config-bucket-opensuse))
-    regexp: ((s3-config-prefix-opensuse))scf-opensuse-(.*).linux-amd64\.zip$
+    regexp: ((s3-config-prefix-opensuse))scf-opensuse-(.*)-amd64\.zip$
 
 - name: s3.scf-config-sles
   type: s3
