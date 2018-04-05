@@ -53,6 +53,7 @@ jobs:
     params:
       CAP_CHART: -opensuse
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
@@ -79,6 +80,7 @@ jobs:
     params:
       CAP_CHART: -opensuse
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
@@ -131,6 +133,7 @@ jobs:
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
@@ -161,6 +164,7 @@ jobs:
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
@@ -208,7 +212,8 @@ jobs:
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
@@ -234,7 +239,8 @@ jobs:
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       CAP_CHART: -opensuse
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
@@ -286,7 +292,8 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
@@ -316,7 +323,8 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-sles

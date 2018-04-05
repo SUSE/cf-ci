@@ -55,7 +55,7 @@ bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ip=${external_ip}"
+             --set "kube.external_ips[0]=${external_ip}"
              --set "kube.auth=rbac")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
@@ -159,11 +159,12 @@ if [[ ${HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.HA=true)
 fi
 
-# if [[ ${SCALED_HA} == true ]]; then
-#   HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
-#   HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
-#   HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
-# fi
+if [[ ${SCALED_HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.routing_api.count=1)
+  HELM_PARAMS+=(--set=sizing.{api,cc-uploader,cc-worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog-adapter,	
+syslog-rlp,tcp-router,mysql-proxy}.count=2)
+  HELM_PARAMS+=(--set=sizing.{diego_api,diego-locket,diego_cell}.count=3)
+fi
 
 helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
