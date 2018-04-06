@@ -168,8 +168,7 @@ fi
 
 if [[ ${SCALED_HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.routing_api.count=1)
-  HELM_PARAMS+=(--set=sizing.{api,cc-uploader,cc-worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog-adapter,   
-syslog-rlp,tcp-router,mysql-proxy}.count=2)
+  HELM_PARAMS+=(--set=sizing.{api,cc-uploader,cc-worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog-adapter, syslog-rlp,tcp-router,mysql-proxy}.count=2)
   HELM_PARAMS+=(--set=sizing.{diego_api,diego-locket,diego_cell}.count=3)
 fi
 
