@@ -33,8 +33,8 @@ unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
-             --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ip=${external_ip}"
+             --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
+             --set "kube.external_ips[0]=${external_ip}"
              --set "kube.auth=rbac")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
@@ -148,30 +148,37 @@ helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA namespace
 wait_for_namespace "${UAA_NAMESPACE}"
 
-# Determine the Helm revision of the chart controlling the specified namespace.
-helm_revision() { helm list --date --reverse --max 1 --namespace "$1" | awk '{ print $2 }' | tail -n 1 ; }
-get_uaa_secret () {
-    kubectl get secret secret-$(helm_revision "${UAA_NAMESPACE}") \
-    --namespace "${UAA_NAMESPACE}" \
-    -o jsonpath="{.data['$1']}"
+# Get the version of the helm chart for uaa
+helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
+generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
+get_internal_ca_cert() {
+    local uaa_secret_name=$(generated_secrets_secret)
+    kubectl get secret ${uaa_secret_name} \
+      --namespace "${UAA_NAMESPACE}" \
+      -o jsonpath="{.data['internal-ca-cert']}" \
+      | base64 -d
 }
 
-CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
+CA_CERT="$(get_internal_ca_cert)"
 
 # Upgrade CF
 if [[ ${HA} == true ]]; then
-  HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
-  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
+  HELM_PARAMS+=(--set=sizing.HA=true)
+fi
+
+if [[ ${SCALED_HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.routing_api.count=1)
+  HELM_PARAMS+=(--set=sizing.{api,cc-uploader,cc-worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog-adapter,syslog-rlp,tcp-router,mysql-proxy}.count=2)
+  HELM_PARAMS+=(--set=sizing.{diego_api,diego-locket,diego_cell}.count=3)
 fi
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --timeout 600 \
-    --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+    --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "env.UAA_CA_CERT=${CA_CERT}" \
+    --set "secrets.UAA_CA_CERT=${CA_CERT}" \
     "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace
@@ -191,5 +198,6 @@ fi
 echo "Results of app monitoring:"
 echo "SECONDS|STATUS"
 uniq -c "${monitor_file}"
+cf login -u admin -p changeme -o testorg -s testspace
 cf delete -f go-env
 cf delete-org -f testorg

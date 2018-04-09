@@ -17,7 +17,7 @@ resources:
     access_key_id: ((s3-config-access-key))
     secret_access_key: ((s3-config-secret-key))
     bucket: ((s3-config-bucket-opensuse))
-    regexp: ((s3-config-prefix-opensuse))scf-opensuse-(.*).linux-amd64\.zip$
+    regexp: ((s3-config-prefix-opensuse))scf-opensuse-(.*)-amd64\.zip$
 
 - name: s3.scf-config-sles
   type: s3
@@ -26,7 +26,7 @@ resources:
     access_key_id: ((s3-config-access-key))
     secret_access_key: ((s3-config-secret-key))
     bucket: ((s3-config-bucket-sles))
-    regexp: ((s3-config-prefix-sles))scf-sle-(.*).linux-amd64\.zip$
+    regexp: ((s3-config-prefix-sles))scf-sle-(.*)-amd64\.zip$
 
 - name: pool.kube-hosts
   type: pool
@@ -53,6 +53,7 @@ jobs:
     params:
       CAP_CHART: -opensuse
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
@@ -62,6 +63,7 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
@@ -78,6 +80,7 @@ jobs:
     params:
       CAP_CHART: -opensuse
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
@@ -86,7 +89,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
@@ -94,7 +96,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
@@ -102,7 +103,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -133,6 +133,7 @@ jobs:
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
@@ -163,6 +164,7 @@ jobs:
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
       HA: false
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
@@ -171,7 +173,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
@@ -179,7 +180,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
@@ -187,7 +187,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -213,7 +212,8 @@ jobs:
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
@@ -239,7 +239,8 @@ jobs:
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       CAP_CHART: -opensuse
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
@@ -248,7 +249,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
@@ -256,7 +256,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
@@ -264,7 +263,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -294,7 +292,8 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
@@ -324,7 +323,8 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: true
+      HA: false
+      SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
@@ -333,7 +333,6 @@ jobs:
     params:
       TEST_NAME: smoke-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
@@ -341,7 +340,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
@@ -349,7 +347,6 @@ jobs:
     params:
       TEST_NAME: acceptance-tests
       CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   # We intentionally don't put the teardown and pool release steps in an ensure
