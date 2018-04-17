@@ -24,6 +24,7 @@ cp "${svcroot}/Dockerfile"       docker-out/
 cp "${svcroot}/Dockerfile-setup" docker-out/
 cp "${svcroot}/Dockerfile-db"    docker-out/
 cp -r "${svcroot}/chart"         docker-out/
+sed -i "s@^\(version: \).*@\1${APP_VERSION_TAG}@" "${svcroot}/output/helm/Chart.yaml"
 
 echo "${APP_VERSION_TAG}" > docker-out/tag
 tar -czf helm-out/cf-usb-sidecar-${SERVICE}-${APP_VERSION_TAG}.tgz -C "${svcroot}/output/helm/" .
