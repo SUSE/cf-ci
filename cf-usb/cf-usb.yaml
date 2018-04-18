@@ -402,3 +402,21 @@ jobs:
         GITHUB_ORGANIZATION: ((charts-github-org))
       input_mapping:
         bundle: s3.postgres
+- name: commit-sources-to-obs
+  plan:
+  - aggregate:
+    - get: src
+      passed:
+      - sidecar-mysql
+      - sidecar-postgres
+      trigger: true
+    - get: ci
+      passed:
+      - sidecar-mysql
+      - sidecar-postgres
+  - task: commit-sources-to-obs
+    file: ci/cf-usb/tasks/service-commit-sources.yml
+    params:
+      OBS_USERNAME: ((obs-username))
+      OBS_PASSWORD: ((obs-password))
+      COMMIT_SOURCES: ((commit-sources))
