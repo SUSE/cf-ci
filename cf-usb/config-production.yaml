@@ -30,3 +30,6 @@ charts-github-org: SUSE
 charts-github-username: *github-username
 charts-github-password: *github-password
 charts-github-private-key: *github-private-key
+
+# Commit sources to obs
+commit-sources: false
