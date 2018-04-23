@@ -14,7 +14,7 @@ resource_types:
 - name: pull-request
   type: docker-image
   source:
-    repository: splatform/concourse-github-pull-request
+    repository: jtarchie/pr
 
 - name: status
   type: docker-image
@@ -26,9 +26,10 @@ resources:
   type: pull-request
   source:
     uri: ((src-repo-ref))
-    branch: ((src-branch))
+    base: ((src-branch))
     access_token: ((github-access-token))
     private_key: ((github-private-key))
+    disable_forks: true
     repo: ((src-name))
 
 - name: src-ci
