@@ -2,7 +2,7 @@
 set -o nounset -o errexit -o xtrace
 export GOPATH="${PWD}"
 export START_DIR="${PWD}"
-usbroot=src/github.com/SUSE/cf-usb-sidecar
+usbroot=src/github.com/jimmykarily/cf-usb-sidecar
 svcroot="${usbroot}/csm-extensions/services/dev-${SERVICE}"
 
 if test -z "${APP_VERSION_TAG:-}" ; then
