@@ -28,28 +28,6 @@ resources:
     branch: ((ci-branch))
     paths:
     - cf-usb/tasks
-- name: semver.cf-usb-sidecar-mysql
-  type: semver
-  source:
-    initial_version: 0.0.0
-    driver: s3
-    bucket: ((s3-bucket))
-    key: ((s3-prefix))cf-usb-sidecar-mysql.version
-    access_key_id: ((s3-access-key))
-    secret_access_key: ((s3-secret-key))
-    endpoint: ((s3-endpoint))
-    disable_ssl: ((s3-disable-ssl))
-- name: semver.cf-usb-sidecar-postgres
-  type: semver
-  source:
-    initial_version: 0.0.0
-    driver: s3
-    bucket: ((s3-bucket))
-    key: ((s3-prefix))cf-usb-sidecar-postgres.version
-    access_key_id: ((s3-access-key))
-    secret_access_key: ((s3-secret-key))
-    endpoint: ((s3-endpoint))
-    disable_ssl: ((s3-disable-ssl))
 - name: docker.base
   type: docker-image
   source:
@@ -180,9 +158,6 @@ jobs:
       trigger: true
     - get: ci
       passed: [catalog-service-manager]
-    - get: semver.cf-usb-sidecar-mysql
-      params:
-        pre: pre
     - get: docker.base
       passed: [catalog-service-manager]
       params:
@@ -204,8 +179,6 @@ jobs:
         params:
           DESTINATION: ((docker-server))
           SERVICE: mysql
-        input_mapping:
-          version: semver.cf-usb-sidecar-mysql
         output_mapping:
           docker-out: mysql-binary
           helm-out: mysql-helm
@@ -254,9 +227,6 @@ jobs:
     - put: s3.mysql
       params:
         file: mysql-helm/cf-usb-sidecar-mysql*.tgz
-  - put: semver.cf-usb-sidecar-mysql
-    params:
-      pre: pre
 - name: sidecar-publish-mysql
   plan:
   - aggregate:
@@ -296,9 +266,6 @@ jobs:
       trigger: true
     - get: ci
       passed: [catalog-service-manager]
-    - get: semver.cf-usb-sidecar-postgres
-      params:
-        pre: pre
     - get: docker.base
       passed: [catalog-service-manager]
       params:
@@ -320,8 +287,6 @@ jobs:
         params:
           DESTINATION: ((docker-server))
           SERVICE: postgres
-        input_mapping:
-          version: semver.cf-usb-sidecar-postgres
         output_mapping:
           docker-out: postgres-binary
           helm-out: postgres-helm
@@ -368,9 +333,6 @@ jobs:
     - put: s3.postgres
       params:
         file: postgres-helm/cf-usb-sidecar-postgres*.tgz
-  - put: semver.cf-usb-sidecar-postgres
-    params:
-      pre: pre
 - name: sidecar-publish-postgres
   plan:
   - aggregate:
