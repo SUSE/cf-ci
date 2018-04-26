@@ -27,7 +27,7 @@ s3-disable-ssl: false
 # For publishing
 charts-release-tool-url: *cap-release-tool-url
 charts-github-username: *github-username
-charts-github-access-token: *github-acces-token
+charts-github-access-token: *github-access-token
 charts-github-private-key: *github-private-key
 charts-github-org: SUSE
 
