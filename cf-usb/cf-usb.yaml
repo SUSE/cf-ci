@@ -253,7 +253,7 @@ jobs:
       params:
         SERVICE: mysql
         GITHUB_USER: ((charts-github-username))
-        GITHUB_PASSWORD: ((charts-github-password))
+        GITHUB_TOKEN: ((charts-github-access-token))
         GITHUB_KEY: ((charts-github-private-key))
         GITHUB_ORGANIZATION: ((charts-github-org))
       input_mapping:
@@ -359,7 +359,7 @@ jobs:
       params:
         SERVICE: postgres
         GITHUB_USER: ((charts-github-username))
-        GITHUB_PASSWORD: ((charts-github-password))
+        GITHUB_TOKEN: ((charts-github-access-token))
         GITHUB_KEY: ((charts-github-private-key))
         GITHUB_ORGANIZATION: ((charts-github-org))
       input_mapping:
