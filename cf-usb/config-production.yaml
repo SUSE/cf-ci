@@ -30,6 +30,8 @@ charts-github-org: SUSE
 charts-github-username: *github-username
 charts-github-access-token: *github-access-token
 charts-github-private-key: *github-private-key
+charts-docker-registry: ""
+charts-docker-organization: ""
 
 # Commit sources to obs
 commit-sources: false

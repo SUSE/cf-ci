@@ -256,6 +256,8 @@ jobs:
         GITHUB_TOKEN: ((charts-github-access-token))
         GITHUB_KEY: ((charts-github-private-key))
         GITHUB_ORGANIZATION: ((charts-github-org))
+        OVERRIDE_DOCKER_REGISTRY: ((charts-docker-registry))
+        OVERRIDE_DOCKER_ORGANIZATION: ((charts-docker-organization))
       input_mapping:
         bundle: s3.mysql
 - name: sidecar-postgres
@@ -362,6 +364,8 @@ jobs:
         GITHUB_TOKEN: ((charts-github-access-token))
         GITHUB_KEY: ((charts-github-private-key))
         GITHUB_ORGANIZATION: ((charts-github-org))
+        OVERRIDE_DOCKER_REGISTRY: ((charts-docker-registry))
+        OVERRIDE_DOCKER_ORGANIZATION: ((charts-docker-organization))
       input_mapping:
         bundle: s3.postgres
 - name: commit-sources-to-obs
