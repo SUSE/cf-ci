@@ -25,7 +25,7 @@ set +o allexport
 
 # Delete old test pods
 kubectl delete pod -n scf smoke-tests
-kubectl delete pod -n scf acceptance-tests-brain
+#kubectl delete pod -n scf acceptance-tests-brain
 
 unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 
@@ -37,7 +37,7 @@ HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "kube.external_ips[0]=${external_ip}"
              --set "kube.auth=rbac")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
-    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
+    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
 fi
 if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
@@ -179,6 +179,7 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
+    --set "kube.secrets_generation_counter=$(date +%s)"\
     "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace
