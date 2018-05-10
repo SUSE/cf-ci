@@ -179,7 +179,7 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
-    --set "kube.secrets_generation_counter=$(date +%s)"\
+    --set "kube.secrets_generation_counter=2"\
     "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace
