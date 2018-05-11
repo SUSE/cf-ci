@@ -43,10 +43,9 @@ fi
 
 if ! type cf &>/dev/null; then
   echo "Installing cf and cf usb"
-  docker run --name cf-usb harts/cf-usb /bin/true
-  docker cp cf-usb:/usr/local/bin/cf /root/bin
-  docker cp cf-usb:/root/.cf $HOME
-  docker rm cf-usb
+  curl -sL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.36.1&source=github-rel" | tar xz -C /root/bin cf
+  chmod +x /root/bin/cf
+  cf install-plugin -f "https://github.com/SUSE/cf-usb-plugin/releases/download/1.0.0/cf-usb-plugin-1.0.0.0.g47b49cd-linux-amd64 "
 fi
 
 if ! type jq &>/dev/null; then
