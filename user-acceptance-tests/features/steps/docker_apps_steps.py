@@ -18,6 +18,7 @@ def enabled_diego_docker(context):
     context.CLI.execute_cmd(
         "enable-feature-flag diego_docker")
 
+
 @given("I have the docker image '{docker_image}' deployed as '{appname}'")
 def docker_image_deployed(context, docker_image, appname):
     context.execute_steps(u'''
@@ -34,13 +35,14 @@ def docker_image_deployed(context, docker_image, appname):
 def docker_push_check(context, docker_image, appname):
     command = 'push {0} -o {1}'.format(
         appname, docker_image)
-    context.return_code, context.stdout, context.stderr = context.CLI.execute_cmd(
-        command)
+    context.return_code, context.stdout, context.stderr = \
+        context.CLI.execute_cmd(command)
+
 
 # "Try" means failure is allowed
 @when("I try to push a docker app '{docker_image}' as '{appname}'")
 def try_docker_push_check(context, docker_image, appname):
     command = 'push {1} -o {0}'.format(
         appname, docker_image)
-    context.return_code, context.stdout, context.stderr = context.CLI.execute_cmd(
-        command, no_exception=True)
+    context.return_code, context.stdout, context.stderr = \
+        context.CLI.execute_cmd(command, no_exception=True)

@@ -18,6 +18,7 @@ GLOBAL_DEFAULT_SPACE = os.getenv("CF_TEST_GLOBAL_ADMIN_SPACE", "QA")
 GLOBAL_DEFAULT_PASS = os.getenv(
     "CF_TEST_GLOBAL_DEFAULT_PASS", "changeme")
 
+
 def before_feature(context, feature):
     """Per-feature behave environment setup"""
     context.target = TARGET_HOST
