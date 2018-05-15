@@ -1,21 +1,21 @@
 src-repo: https://github.com/SUSE/cf-usb-sidecar.git
-src-branch: develop
+src-branch: master
 
 ci-repo: https://github.com/SUSE/cf-ci.git
 ci-branch: master
 
 docker-tag: latest
-docker-server: "staging.registry.howdoi.website/"
+docker-server: *docker-internal-registry
 docker-username: *docker-internal-username
 docker-password: *docker-internal-password
 
-docker-cert-domain: unused.invalid
-docker-cert-ca: ~
+docker-cert-domain: *docker-public-registry
+docker-cert-ca: *ca-cert-suse
 
-buildbase-base-image: opensuse:latest
-buildbase-repo-cloud-tools: obs://Cloud:Tools
-buildbase-repo-devel-languages-go: obs://devel:languages:go
-buildbase-repo-extra: ""
+buildbase-base-image:              *docker-image-sles
+buildbase-repo-cloud-tools:        *zypper-repo-sle-server
+buildbase-repo-devel-languages-go: *zypper-repo-sle-sdk
+buildbase-repo-extra:              *zypper-repo-ibs-ga
 
 s3-endpoint: ~
 s3-access-key: *aws-access-key
@@ -26,12 +26,12 @@ s3-disable-ssl: false
 
 # For publishing
 charts-release-tool-url: *cap-release-tool-url
-charts-github-org: SUSE
 charts-github-username: *github-username
 charts-github-access-token: *github-access-token
 charts-github-private-key: *github-private-key
-charts-docker-registry: ""
-charts-docker-organization: ""
+charts-github-org: SUSE
+charts-docker-registry: *docker-public-registry
+charts-docker-organization: cap
 
 # Commit sources to obs
-commit-sources: false
+commit-sources: true

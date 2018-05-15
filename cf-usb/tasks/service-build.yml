@@ -10,9 +10,10 @@ inputs:
   path: src/github.com/SUSE/cf-usb-sidecar
 - name: generated
 - name: ci
-- name: version
 outputs:
 - name: helm-out
 - name: docker-out
 run:
-  path: ci/cf-usb/tasks/mysql-build.sh
+  path: ci/cf-usb/tasks/service-build.sh
+params:
+  SERVICE: ~

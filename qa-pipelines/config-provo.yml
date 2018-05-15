@@ -6,8 +6,8 @@ src-ci-branch: master
 
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
 kube-pool-key: *github-private-key
-kube-pool-branch: van-kube-hosts
-kube-pool-pool: van-kube-hosts
+kube-pool-branch: provo-kube-hosts
+kube-pool-pool: provo-kube-hosts
 
 s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
@@ -21,3 +21,8 @@ registry-hostname: *docker-internal-registry
 registry-username: *docker-internal-username
 registry-password: *docker-internal-password
 organization: splatform
+
+magic-dns-service: omg.howdoi.website
+
+cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.8.0%2Bcf1.15.0.0.g5aa8b036-amd64.zip
+cap-opensuse-url: https://github.com/SUSE/scf/releases/download/2.8.0/scf-opensuse-2.8.0.cf1.15.0.0.g5aa8b036-amd64.zip

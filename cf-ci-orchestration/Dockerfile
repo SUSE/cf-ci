@@ -19,7 +19,7 @@ RUN true \
     tar \
     direnv \
     bash-completion docker-bash-completion systemd-bash-completion \
-    && helm_version=v2.4.2 \
+    && helm_version=v2.6.1 \
     && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
     && chmod a+x /usr/local/bin/helm \
     && echo "eval \"\$(direnv hook bash)\"" >> ~/.bashrc \
@@ -31,3 +31,11 @@ RUN true \
     && echo "source <(kubectl completion bash)" >> ~/.bashrc \
     && zypper clean -a \
     && true
+
+RUN true \
+    && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O /usr/local/bin/jq \
+    && chmod +x /usr/local/bin/jq
+
+RUN true \
+    && wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.34.0" -O - | tar xz -C /usr/local/bin cf \
+    && chmod a+x /usr/local/bin/cf
