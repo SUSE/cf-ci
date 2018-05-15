@@ -13,11 +13,10 @@ def docker_hub_check(context, docker_image):
     assert req.status_code is 200
 
 
-@given("I have enabled diego_docker feature-flag")
+@given("Admin have enabled diego_docker feature-flag")
 def enabled_diego_docker(context):
     context.CLI.execute_cmd(
         "enable-feature-flag diego_docker")
-
 
 @given("I have the docker image '{docker_image}' deployed as '{appname}'")
 def docker_image_deployed(context, docker_image, appname):

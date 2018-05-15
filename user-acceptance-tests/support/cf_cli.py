@@ -82,8 +82,8 @@ class CLI(object):
         target_space = kwargs.get("space", self.default_space)
 
         self.execute_cmd(
-            "login -o %s -s %s -p %s -u %s" %
-            (target_org, target_space, password, username))
+            "login  -u %s -p %s -o %s -s %s" %
+            (username, password, target_org, target_space))
         return self
 
     def logout(self):
@@ -109,6 +109,16 @@ class CLI(object):
         if not self.app_is_deployed(appname):
             test_app_path = os.path.join(self.test_app_basedir, appname)
             self.execute_cmd(
-                "push --no-prompt --no-tail --path %s --as %s" %
+                "push --no-tail --path %s --as %s" %
                 (test_app_path, appname))
-
+    def setup_namespace(self, namespace):
+        """Sets up a namespace"""
+        new_org = namespace + "-org"
+        new_space = namespace + "-space"
+        self.execute_cmd("create-org %s" % new_org)
+        self.execute_cmd(
+            "create-space %s -o %s" %
+            (new_space, new_org))
+        self.default_org = new_org
+        self.default_space = new_space
+        return self
