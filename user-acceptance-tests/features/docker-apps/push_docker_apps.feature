@@ -1,7 +1,6 @@
 
 Feature: Push Docker apps from the CLI
-  In order to deploy Docker images to CAP
-  As a Developer or Admin
+  As an Admin
   I want to be able to to deploy a Docker images
 
   Scenario: Deploy image from Docker Hub
