@@ -66,14 +66,14 @@ jobs:
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
-  - task: acceptance-tests-brain
-    file: ci/qa-pipelines/tasks/run-test.yml
-    params:
-      TEST_NAME: acceptance-tests-brain
-      CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
-    input_mapping:
-      s3.scf-config: s3.scf-config-opensuse
+  # - task: acceptance-tests-brain
+  #   file: ci/qa-pipelines/tasks/run-test.yml
+  #   params:
+  #     TEST_NAME: acceptance-tests-brain
+  #     CAP_CHART: -opensuse
+  #     CAP_INSTALL_VERSION: ((cap-opensuse-url))
+  #   input_mapping:
+  #     s3.scf-config: s3.scf-config-opensuse
   # Do not run CATs. They are destructive
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
@@ -146,14 +146,14 @@ jobs:
       CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
-  - task: acceptance-tests-brain
-    file: ci/qa-pipelines/tasks/run-test.yml
-    params:
-      TEST_NAME: acceptance-tests-brain
-      CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
-    input_mapping:
-      s3.scf-config: s3.scf-config-sles
+  # - task: acceptance-tests-brain
+  #   file: ci/qa-pipelines/tasks/run-test.yml
+  #   params:
+  #     TEST_NAME: acceptance-tests-brain
+  #     CAP_CHART: ""
+  #     CAP_INSTALL_VERSION: ((cap-sle-url))
+  #   input_mapping:
+  #     s3.scf-config: s3.scf-config-sles
   # Do not run CATs. They are destructive
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
@@ -226,14 +226,14 @@ jobs:
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
-  - task: acceptance-tests-brain
-    file: ci/qa-pipelines/tasks/run-test.yml
-    params:
-      TEST_NAME: acceptance-tests-brain
-      CAP_CHART: -opensuse
-      CAP_INSTALL_VERSION: ((cap-opensuse-url))
-    input_mapping:
-      s3.scf-config: s3.scf-config-opensuse
+  # - task: acceptance-tests-brain
+  #   file: ci/qa-pipelines/tasks/run-test.yml
+  #   params:
+  #     TEST_NAME: acceptance-tests-brain
+  #     CAP_CHART: -opensuse
+  #     CAP_INSTALL_VERSION: ((cap-opensuse-url))
+  #   input_mapping:
+  #     s3.scf-config: s3.scf-config-opensuse
   # Do not run CATs. They are destructive
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
@@ -306,14 +306,14 @@ jobs:
       CAP_INSTALL_VERSION: ((cap-sle-url))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
-  - task: acceptance-tests-brain
-    file: ci/qa-pipelines/tasks/run-test.yml
-    params:
-      TEST_NAME: acceptance-tests-brain
-      CAP_CHART: ""
-      CAP_INSTALL_VERSION: ((cap-sle-url))
-    input_mapping:
-      s3.scf-config: s3.scf-config-sles
+  # - task: acceptance-tests-brain
+  #   file: ci/qa-pipelines/tasks/run-test.yml
+  #   params:
+  #     TEST_NAME: acceptance-tests-brain
+  #     CAP_CHART: ""
+  #     CAP_INSTALL_VERSION: ((cap-sle-url))
+  #   input_mapping:
+  #     s3.scf-config: s3.scf-config-sles
   # Do not run CATs. They are destructive
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
