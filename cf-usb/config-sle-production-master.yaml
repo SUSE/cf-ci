@@ -9,7 +9,7 @@ docker-server: *docker-internal-registry
 docker-username: *docker-internal-username
 docker-password: *docker-internal-password
 
-docker-cert-domain: *docker-public-registry
+docker-cert-domain: *docker-private-registry
 docker-cert-ca: *ca-cert-suse
 
 buildbase-base-image:              *docker-image-sles
