@@ -18,6 +18,7 @@ def enabled_diego_docker(context):
     context.CLI.execute_cmd(
         "enable-feature-flag diego_docker")
 
+
 @given("I push a docker app '{docker_image}' as '{appname}'")
 @when("I push a docker app '{docker_image}' as '{appname}'")
 def docker_push_check(context, docker_image, appname):

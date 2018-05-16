@@ -33,6 +33,7 @@ def generate_random_namespace(context, name):
     # CLI defaults
     context.CLI.setup_namespace(context.namespace)
 
+
 def create_developer_user(context):
     """Create an developer user in the context's namespace"""
     # creates an developer user with the prefix and stores it in the context
@@ -45,13 +46,15 @@ def create_developer_user(context):
         ("developer@" + context.namespace, context.namespace + "-org"))
     context.CLI.execute_cmd(
         "set-space-role %s %s %s SpaceDeveloper" %
-        ("developer@" + context.namespace, context.namespace + "-org", context.namespace + "-space"))
+        ("developer@" + context.namespace, context.namespace
+            + "-org", context.namespace + "-space"))
 
-    #TODO: quotas implementation
+    # TODO: quotas implementation
     # context.CLI.execute_cmd("create-quota %s-quota" % context.namespace)
     # context.CLI.execute_cmd(
     #     "quota-org %s-org %s-quota" %
     #     (context.namespace, context.namespace))
+
 
 def before_feature(context, feature):
     """Per-feature behave environment setup"""
@@ -73,4 +76,4 @@ def before_feature(context, feature):
         generate_random_namespace(context, feature.name)
         create_developer_user(context)
 
-#TODO: def after_feature(context, feature)
+# TODO: def after_feature(context, feature)

@@ -62,7 +62,7 @@ class CLI(object):
             else:
                 return returncode, stdout, stderr
 
-        except:
+        except Exception:
             raise
 
     def target(self, target_host, skip_ssl=True):
@@ -99,7 +99,7 @@ class CLI(object):
             logging.debug("cf app appname output: %s", output)
             if "running" in output:
                 return True
-        except:
+        except Exception:
             raise
 
         return False
@@ -111,6 +111,7 @@ class CLI(object):
             self.execute_cmd(
                 "push --no-tail --path %s --as %s" %
                 (test_app_path, appname))
+
     def setup_namespace(self, namespace):
         """Sets up a namespace"""
         new_org = namespace + "-org"
