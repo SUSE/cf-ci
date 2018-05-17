@@ -10,7 +10,6 @@ inputs:
   path: src/github.com/SUSE/cf-usb-sidecar
 - name: generated
 - name: ci
-- name: version
 outputs:
 - name: helm-out
 - name: docker-out

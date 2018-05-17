@@ -3,7 +3,7 @@ set -o errexit -o nounset
 
 # Set kube config from pool
 mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
+cp pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
 CF_NAMESPACE=scf
@@ -11,9 +11,15 @@ UAA_NAMESPACE=uaa
 set +o allexport
 
 for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
-    kubectl delete namespace "${namespace}"
+    while [[ $(kubectl get statefulsets --output json --namespace "${namespace}" | jq '.items | length == 0') != "true" ]]; do
+      kubectl delete statefulsets --all --namespace "${namespace}" ||:
+    done
+    while kubectl get namespace "${namespace}" 2>/dev/null; do
+      kubectl delete namespace "${namespace}" ||:
+      sleep 30
+    done
     while [[ -n $(helm list --short --all ${namespace}) ]]; do
-        sleep 10
         helm delete --purge ${namespace} ||:
+        sleep 10
     done
 done

@@ -1,0 +1,3 @@
+[submodule "sample-apps/go-env"]
+	path = sample-apps/go-env
+	url = https://github.com/HartS/go-env.git

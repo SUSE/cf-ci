@@ -25,22 +25,47 @@ set +o allexport
 
 # For upgrades tests
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
-    curl ${CAP_INSTALL_VERSION} -o cap-install-version.zip
+    curl ${CAP_INSTALL_VERSION} -Lo cap-install-version.zip
     export CAP_DIRECTORY=cap-install-version
     unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
 else
     unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 fi
 
+# Get the version of the helm chart for uaa
+helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
+
+function semver_is_gte() {
+  # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
+  # lexical comparison doesn't work on semvers, e.g. 10.0.0 > 2.0.0
+  [[ "$(echo -e "$1\n$2" |
+        sort -t '.' -k 1,1 -k 2,2 -k 3,3 -g |
+        tail -n 1
+    )" == $1 ]]
+}
+
+if semver_is_gte $(helm_chart_version) 2.7.3; then
+  USER_PROVIDED_VALUES_KEY=secrets
+else
+  USER_PROVIDED_VALUES_KEY=env
+fi
+
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
-HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
-             --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ip=${external_ip}"
-             --set "kube.auth=rbac")
+if semver_is_gte $(helm_chart_version) 2.8.0; then
+    HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
+                 --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
+                 --set "kube.external_ips[0]=${external_ip}"
+                 --set "kube.auth=rbac")
+else
+    HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
+                 --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
+                 --set "kube.external_ip=${external_ip}"
+                 --set "kube.auth=rbac")
+fi
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
-    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
+    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
 fi
 if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
@@ -114,13 +139,22 @@ helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA namespace
 wait_for_namespace "${UAA_NAMESPACE}"
 
-get_uaa_secret () {
-    kubectl get secret secret \
-    --namespace "${UAA_NAMESPACE}" \
-    -o jsonpath="{.data['$1']}"
+
+generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
+get_internal_ca_cert() {
+    local uaa_secret_name
+    if semver_is_gte $(helm_chart_version) 2.7.3; then
+        uaa_secret_name=$(generated_secrets_secret)
+    else
+        uaa_secret_name=secret
+    fi
+    kubectl get secret ${uaa_secret_name} \
+      --namespace "${UAA_NAMESPACE}" \
+      -o jsonpath="{.data['internal-ca-cert']}" \
+      | base64 -d 
 }
 
-CA_CERT="$(get_uaa_secret internal-ca-cert | base64 -d -)"
+CA_CERT="$(get_internal_ca_cert)"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
@@ -129,19 +163,23 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
 fi
 
 if [[ ${HA} == true ]]; then
-  HELM_PARAMS+=(--set=sizing.{diego_access,mysql}.count=1)
-  HELM_PARAMS+=(--set=sizing.{api,cf_usb,diego_brain,doppler,loggregator,nats,router,routing_api}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego_cell}.count=3)
+  HELM_PARAMS+=(--set=sizing.HA=true)
+fi
+
+if [[ ${SCALED_HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.routing_api.count=1)
+  HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
+  HELM_PARAMS+=(--set=sizing.{diego_api,diego-locket,diego_cell}.count=3)
 fi
 
 helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
     --timeout 600 \
-    --set "env.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+    --set "${USER_PROVIDED_VALUES_KEY}.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "env.UAA_CA_CERT=${CA_CERT}" \
+    --set "${USER_PROVIDED_VALUES_KEY}.UAA_CA_CERT=${CA_CERT}" \
     "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace

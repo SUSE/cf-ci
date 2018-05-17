@@ -19,7 +19,7 @@ RUN true \
     tar \
     direnv \
     bash-completion docker-bash-completion systemd-bash-completion \
-    && helm_version=v2.4.2 \
+    && helm_version=v2.6.1 \
     && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
     && chmod a+x /usr/local/bin/helm \
     && echo "eval \"\$(direnv hook bash)\"" >> ~/.bashrc \
@@ -39,3 +39,8 @@ RUN true \
 RUN true \
     && wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.34.0" -O - | tar xz -C /usr/local/bin cf \
     && chmod a+x /usr/local/bin/cf
+
+RUN true \
+    && curl -L https://github.com/SUSE/stampy/releases/download/0.0.0/stampy-0.0.0.22.gbb93bf3.linux-amd64.tgz | tar xz stampy \
+    && mv stampy /usr/local/bin/stampy \
+    && chmod +x /usr/local/bin/stampy

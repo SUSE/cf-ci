@@ -13,12 +13,15 @@ set +o allexport
 
 # For upgrade tests
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
-    curl ${CAP_INSTALL_VERSION} -o cap-install-version.zip
+    curl ${CAP_INSTALL_VERSION} -Lo cap-install-version.zip
     export CAP_DIRECTORY=cap-install-version
     unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
 else
     unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
 fi
+
+# Replace the generated monit password with the name of the generated secrets secret
+generated_secrets_secret="$(kubectl get pod api-0 --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
 
 kube_overrides() {
     ruby <<EOF
@@ -29,6 +32,9 @@ kube_overrides() {
             container['env'].each do |env|
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
+                if env['name'] == "MONIT_PASSWORD"
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
+                end
             end
         end
         puts obj.to_json
@@ -41,6 +47,7 @@ container_status() {
 }
 
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
+
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
