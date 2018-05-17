@@ -7,7 +7,7 @@ usage() {
 
 ${0} [options] <config variant>
 
-The pipeline configuration file "helm-deploy-test.yml" must exist.
+The pipeline configuration file "cap-qa-deployments.yml" must exist.
 The configuration file "config-<config variant>.yml" must exist.
 
 Available options:
@@ -38,8 +38,8 @@ if test -z "${1:-}" ; then
     usage
     exit 1
 fi
-pipeline_name="${prefix}helm-deploy"
-pipeline_file="helm-deploy-test.yml"
+pipeline_name="${prefix}cap-qa-deployments"
+pipeline_file="cap-qa-deployments.yml"
 vars_file="config-${1}.yml"
 
 if ! test -r "${pipeline_file}" ; then
