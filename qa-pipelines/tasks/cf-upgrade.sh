@@ -127,7 +127,7 @@ monitor_url() {
 (
   cd ci/sample-apps/go-env
   cf api --skip-ssl-validation "https://api.${DOMAIN}"
-  cf login -u admin -p changeme
+  cf login -u admin -p changeme -o system
   cf create-org testorg
   cf target -o testorg
   cf create-space testspace
