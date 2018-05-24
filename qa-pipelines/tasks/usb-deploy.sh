@@ -78,10 +78,9 @@ helm install s3.pg-sidecar \
 
 is_namespace_ready() {
   # This is simpler than is_namespace_ready in cf_deploy, because there's no HA
+  # and only one pod should be ready after the setup job finishes
   [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
-    | sed '/^ *$/d' \
-    | sort \
-    | uniq) ]]
+    | sed '/^ *$/d') ]]
 }
 
 wait_for_namespace() {
