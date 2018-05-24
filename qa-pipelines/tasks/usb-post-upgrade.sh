@@ -12,9 +12,14 @@ CF_NAMESPACE=scf
 SECRET=$(kubectl get --namespace $CF_NAMESPACE deploy -o json | jq -r '[.items[].spec.template.spec.containers[].env[] | select(.name == "INTERNAL_CA_CERT").valueFrom.secretKeyRef.name] | unique[]')
 USB_PASSWORD=$(kubectl get -n scf secret $SECRET -o jsonpath='{@.data.cf-usb-password}' | base64 -d)
 USB_ENDPOINT=$(cf curl /v2/service_brokers | jq -r '.resources[] | select(.entity.name=="usb").entity.broker_url')
+echo "Update broker password after rotation:"
 cf update-service-broker usb broker-admin "$USB_PASSWORD" "$USB_ENDPOINT"
 
-curl https://scf-rails-example.$DOMAIN
+echo "Verify that app bound to postgres service instance is reachable:"
+curl -Ikf https://scf-rails-example.$DOMAIN
+echo "Verify that data created before upgrade can be retrieved:"
+curl -kf https://scf-rails-example.$DOMAIN/todos/1 | jq .
+
 cd rails-example
 cf target -o usb-test-org -s usb-test-space
 cf delete scf-rails-example
