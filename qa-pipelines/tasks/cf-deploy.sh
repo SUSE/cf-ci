@@ -137,6 +137,15 @@ kubectl create namespace "${UAA_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
 fi
+
+if [[ ${HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.HA=true)
+fi
+
+if [[ ${SCALED_HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
+fi
+
 helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --name uaa \
@@ -176,7 +185,7 @@ fi
 if [[ ${SCALED_HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.routing_api.count=1)
   HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego-locket,diego_cell}.count=3)
+  HELM_PARAMS+=(--set=sizing.{diego_api,diego_locket,diego_cell}.count=3)
 fi
 
 helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
