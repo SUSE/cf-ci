@@ -140,6 +140,14 @@ monitor_file=$(mktemp -d)/downtime.log
 monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
 
 # Upgrade UAA
+if [[ ${HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.HA=true)
+fi
+
+if [[ ${SCALED_HA} == true ]]; then
+  HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
+fi
+
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --timeout 600 \
@@ -169,7 +177,7 @@ fi
 if [[ ${SCALED_HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.routing_api.count=1)
   HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego-locket,diego_cell}.count=3)
+  HELM_PARAMS+=(--set=sizing.{diego_api,diego_locket,diego_cell}.count=3)
 fi
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
