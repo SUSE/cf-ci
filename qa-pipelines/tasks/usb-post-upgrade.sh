@@ -1,6 +1,10 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+# Set kube config from pool
+mkdir -p /root/.kube/
+cp  pool.kube-hosts/metadata /root/.kube/config
+
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 
 # Temporary workaround for usb breakage after secret rotation

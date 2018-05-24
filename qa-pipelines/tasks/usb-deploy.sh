@@ -1,6 +1,10 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+# Set kube config from pool
+mkdir -p /root/.kube/
+cp  pool.kube-hosts/metadata /root/.kube/config
+
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
@@ -59,15 +63,49 @@ HELM_PARAMS=(
   --set "env.CF_DOMAIN=${DOMAIN}"
   --set "env.CF_CA_CERT=${CF_CERT}"
   --set "env.UAA_CA_CERT=${UAA_CERT}"
+  --set "kube.registry.hostname=registry.suse.com"
+  --set "kube.organization=cap"
 )
 # Maybe set credentials for docker registry?
 
-tar xf s3.pg-sidecar/* -C s3.pg-sidecar/
+tar xf s3.pg-sidecar/*.tgz -C s3.pg-sidecar/
 
 helm install s3.pg-sidecar \
   --name pg-sidecar        \
   --namespace pg-sidecar   \
   "${HELM_PARAMS[@]}"
+
+
+is_namespace_ready() {
+  # This is simpler than is_namespace_ready in cf_deploy, because there's no HA
+  [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
+    | sed '/^ *$/d' \
+    | sort \
+    | uniq) ]]
+}
+
+wait_for_namespace() {
+  # This should be the same as wait_for_namespace in cf_deploy, other than a shorter timeout
+  local namespace="$1"
+  start=$(date +%s)
+  for (( i = 0  ; i < 120 ; i ++ )) ; do
+    if is_namespace_ready "${namespace}" ; then
+      break
+    fi
+    now=$(date +%s)
+    printf "\rWaiting for %s at %s (%ss)..." "${namespace}" "$(date --rfc-2822)" $((${now} - ${start}))
+    sleep 10
+  done
+  now=$(date +%s)
+  printf "\rDone waiting for %s at %s (%ss)\n" "${namespace}" "$(date --rfc-2822)" $((${now} - ${start}))
+  kubectl get pods --namespace="${namespace}"
+  if ! is_namespace_ready "${namespace}" ; then
+    printf "Namespace %s is still pending\n" "${namespace}"
+    exit 1
+  fi
+}
+
+wait_for_namespace pg-sidecar
 
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme
