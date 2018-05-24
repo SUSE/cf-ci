@@ -10,7 +10,7 @@ if [[ ${PROVISIONER} != "nfs" ]]; then
 fi
 
 # Ensure persistent is the only default storageclass
-for sc in $(k get storageclass | tail -n+2 | cut -f1 -d ' '); do
+for sc in $(kubectl get storageclass | tail -n+2 | cut -f1 -d ' '); do
   kubectl patch storageclass ${sc} -p '
     {
       "metadata": {
@@ -42,12 +42,13 @@ CF_CERT=$(get_internal_ca_cert scf)
 # Get external IP from first node of sorted list
 DB_EXTERNAL_IP=$(kubectl get nodes -o json | jq -r '[.items[] | .status.addresses[] | select(.type=="InternalIP").address] | sort | first')
 
-helm install stable/postgres --namespace postgres --name postgres --set "service.externalIPs={${DB_EXTERNAL_IP}}"
+helm init --client-only
+helm install stable/postgresql --namespace postgres --name postgres --set "service.externalIPs={${DB_EXTERNAL_IP}}"
 DB_USER=postgres
 DB_PASS=$(kubectl get secret --namespace postgres postgres-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode)
 HELM_PARAMS=(
   --set "env.SERVICE_TYPE=postgres"
-  --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-mysql.mysql-sidecar:8081"
+  --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-postgres.pg-sidecar:8081"
   --set "env.SERVICE_POSTGRESQL_HOST=${DB_EXTERNAL_IP}"
   --set "env.SERVICE_POSTGRESQL_PORT=5432"
   --set "env.SERVICE_POSTGRESQL_USER=${DB_USER}"
@@ -61,16 +62,27 @@ HELM_PARAMS=(
 )
 # Maybe set credentials for docker registry?
 
+tar xf s3.pg-sidecar/* -C s3.pg-sidecar/
+
 helm install s3.pg-sidecar \
   --name pg-sidecar        \
   --namespace pg-sidecar   \
   "${HELM_PARAMS[@]}"
 
-cf create-service postgres default testpostgres
-cd rails-example
-sed 's/scf-rails-example-db/testpostgres/g' manifest.yml
+cf api --skip-ssl-validation "https://api.${DOMAIN}"
+cf login -u admin -p changeme
 cf create-org usb-test-org
 cf create-space -o usb-test-org usb-test-space
 cf target -o usb-test-org -s usb-test-space
+cf create-service postgres default testpostgres
+
+echo > "pg-net-workaround.json" "[{ \"destination\": \"${DB_EXTERNAL_IP}/32\", \"protocol\": \"tcp\", \"ports\": \"5432\" }]"
+cf create-security-group       pg-net-workaround pg-net-workaround.json
+cf bind-running-security-group pg-net-workaround
+cf bind-staging-security-group pg-net-workaround
+
+cd rails-example
+sed -i 's/scf-rails-example-db/testpostgres/g' manifest.yml
+
 cf push scf-rails-example
 cf ssh scf-rails-example -c "export PATH=/home/vcap/deps/0/bin:/usr/local/bin:/usr/bin:/bin && export BUNDLE_PATH=/home/vcap/deps/0/vendor_bundle/ruby/2.5.0 && export BUNDLE_GEMFILE=/home/vcap/app/Gemfile && cd app && bundle exec rake db:seed"

@@ -8,3 +8,7 @@ cf target -o usb-test-org -s usb-test-space
 cf delete scf-rails-example
 cf delete-service testpostgres
 cf delete-org usb-test-org
+
+cf unbind-staging-security-group pg-net-workaround
+cf unbind-running-security-group pg-net-workaround
+cf delete-security-group -f pg-net-workaround
