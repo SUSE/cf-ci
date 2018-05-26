@@ -24,6 +24,8 @@ curl -kf https://scf-rails-example.$DOMAIN/todos/1 | jq .
 
 cd rails-example
 cf target -o usb-test-org -s usb-test-space
+cf stop scf-rails-example
+sleep 15
 cf delete -f scf-rails-example
 cf delete-service -f testpostgres
 cf delete-org -f usb-test-org
