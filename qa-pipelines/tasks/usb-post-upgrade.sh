@@ -18,18 +18,26 @@ USB_ENDPOINT=$(cf curl /v2/service_brokers | jq -r '.resources[] | select(.entit
 cf update-service-broker usb broker-admin "$USB_PASSWORD" "$USB_ENDPOINT"
 
 echo "Verify that app bound to postgres service instance is reachable:"
-curl -Ikf https://scf-rails-example.$DOMAIN
+curl -Ikf https://scf-rails-example-postgres.$DOMAIN
 echo "Verify that data created before upgrade can be retrieved:"
-curl -kf https://scf-rails-example.$DOMAIN/todos/1 | jq .
+curl -kf https://scf-rails-example-postgres.$DOMAIN/todos/1 | jq .
+
+echo "Verify that app bound to mysql service instance is reachable:"
+curl -Ikf https://scf-rails-example-mysql.$DOMAIN
+echo "Verify that data created before upgrade can be retrieved:"
+curl -kf https://scf-rails-example-mysql.$DOMAIN/todos/1 | jq .
 
 cd rails-example
 cf target -o usb-test-org -s usb-test-space
-cf stop scf-rails-example
+cf stop scf-rails-example-postgres
+cf stop scf-rails-example-mysql
 sleep 15
-cf delete -f scf-rails-example
+cf delete -f scf-rails-example-postgres
+cf delete -f scf-rails-example-mysql
 cf delete-service -f testpostgres
+cf delete-service -f testmysql
 cf delete-org -f usb-test-org
 
-cf unbind-staging-security-group pg-net-workaround
-cf unbind-running-security-group pg-net-workaround
-cf delete-security-group -f pg-net-workaround
+cf unbind-staging-security-group sidecar-net-workaround
+cf unbind-running-security-group sidecar-net-workaround
+cf delete-security-group -f sidecar-net-workaround
