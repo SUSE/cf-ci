@@ -58,7 +58,8 @@ if semver_is_gte $(helm_chart_version) 2.8.0; then
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "kube.external_ips[0]=${external_ip}"
-                 --set "kube.auth=")
+                 --set "kube.auth="
+                 --set "kube.storage_class.persistent=default")
 else
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"

@@ -36,7 +36,8 @@ bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
              --set "kube.external_ips[0]=${external_ip}"
-             --set "kube.auth=")
+             --set "kube.auth="
+             --set "kube.storage_class.persistent=default")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
 fi
