@@ -99,7 +99,7 @@ wait_for_namespace() {
     fi 
 }
 
-PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+# PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
 # monitor_url takes a URL argument and a path to a log file
 # This will time out after 3 hours. Until then, repeatedly curl the URL with a 1-second wait period, and log the response

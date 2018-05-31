@@ -127,12 +127,12 @@ wait_for_namespace() {
     fi 
 }
 
-PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+# PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 # Deploy UAA
 kubectl create namespace "${UAA_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
-fi
+# if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
+#     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
+# fi
 helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --name uaa \
@@ -161,9 +161,9 @@ CA_CERT="$(get_internal_ca_cert)"
 
 # Deploy CF
 kubectl create namespace "${CF_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
-fi
+# if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
+#     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
+# fi
 
 if [[ ${HA} == true ]]; then
   HELM_PARAMS+=(--set=sizing.HA=true)
