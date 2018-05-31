@@ -8,6 +8,7 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 set -o allexport
 # The IP address assigned to the first kubelet node.
 #external_ip=$(kubectl get nodes -o json | jq -r '.items[] | select(.spec.unschedulable == true | not) | .metadata.annotations["alpha.kubernetes.io/provided-node-ip"]' | head -n1)
+private_ip=10.240.0.4
 external_ip=104.42.44.151
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
@@ -35,7 +36,7 @@ bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ips[0]=${external_ip}"
+             --set "kube.external_ips[0]=${private_ip}"
              --set "kube.auth="
              --set "kube.storage_class.persistent=default")
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
