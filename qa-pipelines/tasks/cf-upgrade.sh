@@ -9,7 +9,7 @@ set -o allexport
 # The IP address assigned to the first kubelet node.
 #external_ip=$(kubectl get nodes -o json | jq -r '.items[] | select(.spec.unschedulable == true | not) | .metadata.annotations["alpha.kubernetes.io/provided-node-ip"]' | head -n1)
 private_ip=10.240.0.4
-external_ip=104.42.44.151
+external_ip=104.42.58.130
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
 # cert-generator.sh script.
