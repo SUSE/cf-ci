@@ -43,8 +43,8 @@ cf unbind-running-security-group sidecar-net-workaround
 cf delete-security-group -f sidecar-net-workaround
 
 cf install-plugin -f "https://github.com/SUSE/cf-usb-plugin/releases/download/1.0.0/cf-usb-plugin-1.0.0.0.g47b49cd-linux-amd64"
-cf usb-delete-driver-endpoint postgres
-cf usb-delete-driver-endpoint mysql
+yes | cf usb-delete-driver-endpoint postgres
+yes | cf usb-delete-driver-endpoint mysql
 
 for namespace in mysql-sidecar pg-sidecar postgres mysql; do
     while [[ $(kubectl get statefulsets --output json --namespace "${namespace}" | jq '.items | length == 0') != "true" ]]; do
