@@ -41,3 +41,24 @@ cf delete-org -f usb-test-org
 cf unbind-staging-security-group sidecar-net-workaround
 cf unbind-running-security-group sidecar-net-workaround
 cf delete-security-group -f sidecar-net-workaround
+
+cf install-plugin -f "https://github.com/SUSE/cf-usb-plugin/releases/download/1.0.0/cf-usb-plugin-1.0.0.0.g47b49cd-linux-amd64"
+cf usb-delete-driver-endpoint postgres
+cf usb-delete-driver-endpoint mysql
+
+for namespace in mysql-sidecar pg-sidecar postgres mysql; do
+    while [[ $(kubectl get statefulsets --output json --namespace "${namespace}" | jq '.items | length == 0') != "true" ]]; do
+      kubectl delete statefulsets --all --namespace "${namespace}" ||:
+    done
+    while [[ $(kubectl get deploy --output json --namespace "${namespace}" | jq '.items | length == 0') != "true" ]]; do
+      kubectl delete deploy --all --namespace "${namespace}" ||:
+    done
+    while kubectl get namespace "${namespace}" 2>/dev/null; do
+      kubectl delete namespace "${namespace}" ||:
+      sleep 30
+    done
+    while [[ -n $(helm list --short --all ${namespace}) ]]; do
+        helm delete --purge ${namespace} ||:
+        sleep 10
+    done
+done
