@@ -18,8 +18,6 @@ UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 UAA_HOST=uaa.${DOMAIN}
 UAA_PORT=2793
 
-CF_NAMESPACE=scf
-UAA_NAMESPACE=uaa
 CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
