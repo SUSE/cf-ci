@@ -60,7 +60,8 @@ if semver_is_gte $(helm_chart_version) 2.8.0; then
                  --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "kube.external_ips[0]=${private_ip}"
                  --set "kube.auth="
-                 --set "kube.storage_class.persistent=default")
+                 --set "kube.storage_class.persistent=default"
+                 --set "env.GARDEN_ROOTFS_DRIVER=overlay-xfs")
 else
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
