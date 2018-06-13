@@ -12,7 +12,7 @@ cf login -u admin -p changeme -o system
 # Temporary workaround for usb breakage after secret rotation
 echo "Update broker password after rotation:"
 CF_NAMESPACE=scf
-SECRET=$(kubectl get --namespace $CF_NAMESPACE deploy -o json | jq -r '[.items[].spec.template.spec.containers[].env[] | select(.name == "INTERNAL_CA_CERT").valueFrom.secretKeyRef.name] | unique[]')
+SECRET=$(kubectl get --namespace $CF_NAMESPACE statefulset,deploy -o json | jq -r '[.items[].spec.template.spec.containers[].env[] | select(.name == "INTERNAL_CA_CERT").valueFrom.secretKeyRef.name] | unique[]')
 USB_PASSWORD=$(kubectl get -n scf secret $SECRET -o jsonpath='{@.data.cf-usb-password}' | base64 -d)
 USB_ENDPOINT=$(cf curl /v2/service_brokers | jq -r '.resources[] | select(.entity.name=="usb").entity.broker_url')
 cf update-service-broker usb broker-admin "$USB_PASSWORD" "$USB_ENDPOINT"
