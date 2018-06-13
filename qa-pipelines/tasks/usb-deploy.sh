@@ -29,7 +29,7 @@ done
 
 
 get_internal_ca_cert() {
-  local generated_secrets_secret=$(kubectl get --namespace ${1} deploy -o json | jq -r '[.items[].spec.template.spec.containers[].env[] | select(.name == "INTERNAL_CA_CERT").valueFrom.secretKeyRef.name] | unique[]')
+  local generated_secrets_secret=$(kubectl get --namespace ${1} statefulset,deploy -o json | jq -r '[.items[].spec.template.spec.containers[].env[] | select(.name == "INTERNAL_CA_CERT").valueFrom.secretKeyRef.name] | unique[]')
   if [[ $(echo $generated_secrets_secret | wc -w) -ne 1 ]]; then
     echo "Internal cert or secret problem in ${1} namespace"
     return 1
