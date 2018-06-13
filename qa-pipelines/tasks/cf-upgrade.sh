@@ -7,15 +7,15 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
 # The IP address assigned to the first kubelet node.
-external_ip=$(kubectl get nodes -o json | jq -r '.items[] | select(.spec.unschedulable == true | not) | .metadata.annotations["alpha.kubernetes.io/provided-node-ip"]' | head -n1)
+DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
+external_ip=$(getent hosts $DOMAIN | awk '{ print $1 }')
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
 # cert-generator.sh script.
-DOMAIN=${external_ip}.${MAGIC_DNS_SERVICE}
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 # UAA host/port that SCF will talk to.
-UAA_HOST=uaa.${external_ip}.${MAGIC_DNS_SERVICE}
+UAA_HOST=uaa.${DOMAIN}
 UAA_PORT=2793
 
 CF_NAMESPACE=scf
@@ -127,7 +127,7 @@ monitor_url() {
 (
   cd ci/sample-apps/go-env
   cf api --skip-ssl-validation "https://api.${DOMAIN}"
-  cf login -u admin -p changeme
+  cf login -u admin -p changeme -o system
   cf create-org testorg
   cf target -o testorg
   cf create-space testspace

@@ -1,0 +1,14 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/cf-ci-orchestration
+inputs:
+- name: ci
+- name: rails-example
+- name: s3.mysql-sidecar
+- name: s3.pg-sidecar
+- name: pool.kube-hosts
+run:
+  path: ci/qa-pipelines/tasks/usb-post-upgrade.sh
