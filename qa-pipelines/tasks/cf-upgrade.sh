@@ -6,6 +6,7 @@ mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
+
 CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 # Domain for SCF, taken from the api pod
@@ -14,7 +15,7 @@ external_ip=${DOMAIN%.${MAGIC_DNS_SERVICE}}
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 # UAA host/port that SCF will talk to.
-UAA_HOST=uaa.${external_ip}.${MAGIC_DNS_SERVICE}
+UAA_HOST=uaa.${DOMAIN}
 UAA_PORT=2793
 
 CAP_DIRECTORY=s3.scf-config
@@ -124,7 +125,7 @@ monitor_url() {
 (
   cd ci/sample-apps/go-env
   cf api --skip-ssl-validation "https://api.${DOMAIN}"
-  cf login -u admin -p changeme
+  cf login -u admin -p changeme -o system
   cf create-org testorg
   cf target -o testorg
   cf create-space testspace

@@ -15,6 +15,7 @@ trap "{ rm -rf ${TEMPDIR} ; exit 255; }" EXIT
 kubectl apply -f - << EOF
 ---
 kind: Namespace
+apiVersion: v1
 metadata:
   name: ${QA_ADMIN_NS}
 ---
