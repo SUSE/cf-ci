@@ -32,7 +32,7 @@ curl -Ikf https://scf-rails-example-mysql.$DOMAIN
 echo "Verify that data created before upgrade can be retrieved:"
 curl -kf https://scf-rails-example-mysql.$DOMAIN/todos/1 | jq .
 
-cd rails-example
+cd ci/sample-apps/rails-example
 cf target -o usb-test-org -s usb-test-space
 cf stop scf-rails-example-postgres
 cf stop scf-rails-example-mysql

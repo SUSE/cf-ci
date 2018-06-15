@@ -1,6 +1,24 @@
 # Concourse pipeline to deploy and upgrade CAP
 
 resources:
+- name: s3.pg-sidecar
+  type: s3
+  source:
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket-opensuse))
+    regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-postgres-(.*)\.tgz$
+
+- name: s3.mysql-sidecar
+  type: s3
+  source:
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket-opensuse))
+    regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
+
 - name: ci
   type: git
   source:
@@ -41,6 +59,10 @@ jobs:
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-opensuse
       trigger: true
     - put: pool.kube-hosts
@@ -135,6 +157,10 @@ jobs:
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-sles
       trigger: true
     - put: pool.kube-hosts
@@ -241,6 +267,10 @@ jobs:
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-opensuse
       trigger: true
     - put: pool.kube-hosts
@@ -335,6 +365,10 @@ jobs:
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-sles
       trigger: true
     - put: pool.kube-hosts
