@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o errexit -o nounset
+set -o errexit
 
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
@@ -13,6 +13,8 @@ else
   echo "run-tests.sh: No test flag set. Skipping tests"
   exit 0
 fi
+
+set -o nounset
 
 # Set kube config from pool
 mkdir -p /root/.kube/

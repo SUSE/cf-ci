@@ -1,10 +1,12 @@
 #!/bin/bash
-set -o errexit -o nounset
+set -o errexit
 
 if [[ $ENABLE_CF_DEPLOY != true ]] && [[ $ENABLE_CF_DEPLOY_PRE_UPGRADE != true ]]; then
   echo "cf-deploy.sh: Flag not set. Skipping deploy"
   exit 0
 fi
+
+set -o nounset
 
 # Set kube config from pool
 mkdir -p /root/.kube/
