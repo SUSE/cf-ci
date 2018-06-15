@@ -5,22 +5,25 @@ set -o errexit -o nounset
 usage() {
     cat <<EOF
 
-${0} [options] <config variant>
+${0} [options] <feature-flags preset file>
 
-The pipeline configuration file "cap-qa-deployments.yml" must exist.
+The pipeline configuration file "qa-pipeline.yml" must exist.
 The configuration file "config-<config variant>.yml" must exist.
 
 Available options:
+    -c, --config=       Config file that 
     -h, --help          Print this help and exit
     -p, --prefix=       Set additional pipeline prefix
+    --pool=provo        Pool to take pool config and kube config from. Default is 'provo' 
     -t, --target=       Set fly target concourse
 
 EOF
 }
 
-OPTS=$(getopt -o hp:t: --long help,prefix:,target: -- "$@")
+OPTS=$(getopt -o hp:t: --long help,pool:,prefix:,target: -- "$@")
 eval set -- "${OPTS}"
 
+pool=provo
 prefix=""
 target=""
 secrets_file=""
@@ -29,6 +32,7 @@ while true ; do
         -h|--help)   usage ; exit 0 ;;
         -p|--prefix) prefix="${2%-}-" ; shift 2 ;;
         -t|--target) target="${2}" ; shift 2 ;;
+        --pool)      pool="${2}" ; shift 2 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
     esac
@@ -38,9 +42,12 @@ if test -z "${1:-}" ; then
     usage
     exit 1
 fi
-pipeline_name="${prefix}cap-qa-deployments"
-pipeline_file="cap-qa-deployments.yml"
-vars_file="config-${1}.yml"
+pipeline_file="qa-pipeline.yml"
+vars_file="config-${pool}.yml"
+flags_file=${1}
+pipeline_name=$(basename ${flags_file})
+pipeline_name="${prefix}${pipeline_name%.yml}"
+
 
 if ! test -r "${pipeline_file}" ; then
     usage >&2
@@ -53,6 +60,12 @@ if ! test -r "${vars_file}" ; then
     if test -n "${1:-}" ; then
         printf "Variables file %s is not readable\n" "${vars_file}" >&2
     fi
+    exit 1
+fi
+
+if ! test -r "${flags_file}" ; then
+    usage >&2
+    printf "Failed to read flags file %s\n" "${flags_file}" >&2
     exit 1
 fi
 
@@ -75,12 +88,13 @@ fly \
         # refer to secret vars correctly
         ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
         sed '/^---$/d' < "${vars_file}"                        # Config vars
+        sed '/^---$/d' < "${flags_file}"
     )
 fly \
     ${target:+"--target=$target"} \
     expose-pipeline \
     --pipeline="${pipeline_name}"
-fly \
-    ${target:+"--target=$target"} \
-    unpause-pipeline \
-    --pipeline="${pipeline_name}"
+# fly \
+#     ${target:+"--target=$target"} \
+#     unpause-pipeline \
+#     --pipeline="${pipeline_name}"

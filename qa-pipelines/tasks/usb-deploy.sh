@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+if [[ $ENABLE_CF_USB_DEPLOY != true ]]; then
+  echo "usb-deploy.sh: Flag not set. Skipping USB deploy"
+  exit 0
+fi
+
 # Set kube config from pool
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config

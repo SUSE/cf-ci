@@ -1,6 +1,19 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
+     [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
+  TEST_NAME=smoke-tests
+elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
+     [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
+  TEST_NAME=acceptance-tests-brain
+elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]]; then
+  TEST_NAME=acceptance-tests
+else
+  echo "run-tests.sh: No test flag set. Skipping tests"
+  exit 0
+fi
+
 # Set kube config from pool
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config

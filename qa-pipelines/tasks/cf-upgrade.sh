@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+if [[ $ENABLE_CF_UPGRADE != true ]]; then
+  echo "cf-upgrade.sh: Flag not set. Skipping upgrade"
+  exit 0
+fi
+
 # Set kube config from pool
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config

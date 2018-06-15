@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+if [[ $ENABLE_CF_TEARDOWN != true ]]; then
+  echo "cf-teardown.sh: Flag not set. Skipping teardown"
+  exit 0
+fi
+
 # Set kube config from pool
 mkdir -p /root/.kube/
 cp pool.kube-hosts/metadata /root/.kube/config
