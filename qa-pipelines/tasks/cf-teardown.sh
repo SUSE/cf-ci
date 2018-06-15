@@ -2,8 +2,8 @@
 set -o errexit -o nounset
 
 if [[ $ENABLE_CF_TEARDOWN != true ]]; then
-  echo "cf-teardown.sh: Flag not set. Skipping teardown"
-  exit 0
+  echo "cf-teardown.sh: Flag not set. Cluster will not be torn down or released."
+  exit 1
 fi
 
 # Set kube config from pool
