@@ -6,20 +6,18 @@ mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
-# The IP address assigned to the first kubelet node.
-DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
-external_ip=$(getent hosts $DOMAIN | awk '{ print $1 }')
-# Domain for SCF. DNS for *.DOMAIN must point to the kube node's
-# external ip. This must match the value passed to the
-# cert-generator.sh script.
+
+CF_NAMESPACE=scf
+UAA_NAMESPACE=uaa
+# Domain for SCF, taken from the api pod
+DOMAIN=$(kubectl get pods -o json --namespace ${CF_NAMESPACE} api-0 | jq -r  '.spec.containers[0].env[] |  select(.name == "DOMAIN").value')
+external_ip=${DOMAIN%.${MAGIC_DNS_SERVICE}}
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 # UAA host/port that SCF will talk to.
 UAA_HOST=uaa.${DOMAIN}
 UAA_PORT=2793
 
-CF_NAMESPACE=scf
-UAA_NAMESPACE=uaa
 CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
