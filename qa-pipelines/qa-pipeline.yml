@@ -108,6 +108,7 @@ jobs:
       HA: false
       SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: usb-post-upgrade
@@ -214,6 +215,7 @@ jobs:
       HA: false
       SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: usb-post-upgrade
@@ -316,6 +318,7 @@ jobs:
       HA: false
       SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: usb-post-upgrade
@@ -422,6 +425,7 @@ jobs:
       HA: false
       SCALED_HA: true
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: usb-post-upgrade
