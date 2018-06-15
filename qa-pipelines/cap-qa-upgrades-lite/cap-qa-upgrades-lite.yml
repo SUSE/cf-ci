@@ -1,0 +1,266 @@
+# Concourse pipeline to deploy and upgrade CAP
+
+resources:
+- name: ci
+  type: git
+  source:
+    uri: ((src-ci-repo))
+    branch: ((src-ci-branch))
+    paths:
+    - qa-pipelines/*
+    - sample-apps/*
+
+- name: s3.scf-config-opensuse
+  type: s3
+  source:
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket-opensuse))
+    regexp: ((s3-config-prefix-opensuse))scf-opensuse-(.*)\.zip$
+
+- name: s3.scf-config-sles
+  type: s3
+  source:
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket-sles))
+    regexp: ((s3-config-prefix-sles))scf-sle-(.*)\.zip$
+
+- name: pool.kube-hosts
+  type: pool
+  source:
+    uri: ((kube-pool-repo))
+    private_key: ((kube-pool-key))
+    branch: ((kube-pool-branch))
+    pool: ((kube-pool-pool))
+
+jobs:
+- name: cap-qa-upgrade-SA-openSUSE
+  plan:
+  - aggregate:
+    - get: ci
+    - get: s3.scf-config-opensuse
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+    on_failure:
+      put: pool.kube-hosts
+      params: {release: pool.kube-hosts}
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      CAP_CHART: -opensuse
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: cf-upgrade
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
+    params:
+      CAP_CHART: -opensuse
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: -opensuse
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  # We intentionally don't put the teardown and pool release steps in an ensure
+  # block, so that when tests fail we have a chance of examining why things are
+  # failing.
+  - task: cf-teardown
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}
+
+- name: cap-qa-upgrade-SA-SLES
+  plan:
+  - aggregate:
+    - get: ci
+    - get: s3.scf-config-sles
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+    on_failure:
+      put: pool.kube-hosts
+      params: {release: pool.kube-hosts}
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-upgrade
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: ""
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  # We intentionally don't put the teardown and pool release steps in an ensure
+  # block, so that when tests fail we have a chance of examining why things are
+  # failing.
+  - task: cf-teardown
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}
+
+- name: cap-qa-upgrade-HA-openSUSE
+  plan:
+  - aggregate:
+    - get: ci
+    - get: s3.scf-config-opensuse
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+    on_failure:
+      put: pool.kube-hosts
+      params: {release: pool.kube-hosts}
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      CAP_CHART: -opensuse
+      HA: false
+      SCALED_HA: true
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: cf-upgrade
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
+    params:
+      CAP_CHART: -opensuse
+      HA: false
+      SCALED_HA: true
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: -opensuse
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  # We intentionally don't put the teardown and pool release steps in an ensure
+  # block, so that when tests fail we have a chance of examining why things are
+  # failing.
+  - task: cf-teardown
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}
+
+- name: cap-qa-upgrade-HA-SLES
+  plan:
+  - aggregate:
+    - get: ci
+    - get: s3.scf-config-sles
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+    on_failure:
+      put: pool.kube-hosts
+      params: {release: pool.kube-hosts}
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: true
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-upgrade
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: true
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      TEST_NAME: smoke-tests
+      CAP_CHART: ""
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  # We intentionally don't put the teardown and pool release steps in an ensure
+  # block, so that when tests fail we have a chance of examining why things are
+  # failing.
+  - task: cf-teardown
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}
