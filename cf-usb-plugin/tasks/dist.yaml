@@ -5,6 +5,8 @@ image_resource:
   source:
     repository: golang
     tag: '1'
+params:
+  CGO_ENABLED: "0"
 inputs:
   - name: src
     path: src/github.com/SUSE/cf-usb-plugin
