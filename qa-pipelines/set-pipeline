@@ -11,7 +11,6 @@ The pipeline configuration file "qa-pipeline.yml" must exist.
 The configuration file "config-<config variant>.yml" must exist.
 
 Available options:
-    -c, --config=       Config file that 
     -h, --help          Print this help and exit
     -p, --prefix=       Set additional pipeline prefix
     --pool=provo        Pool to take pool config and kube config from. Default is 'provo' 
@@ -44,8 +43,8 @@ if test -z "${1:-}" ; then
 fi
 pipeline_file="qa-pipeline.yml"
 vars_file="config-${pool}.yml"
-flags_file=${1}
-pipeline_name=$(basename ${flags_file})
+preset_file=${1}
+pipeline_name=$(basename ${preset_file})
 pipeline_name="${prefix}${pipeline_name%.yml}"
 
 
@@ -63,9 +62,9 @@ if ! test -r "${vars_file}" ; then
     exit 1
 fi
 
-if ! test -r "${flags_file}" ; then
+if ! test -r "${preset_file}" ; then
     usage >&2
-    printf "Failed to read flags file %s\n" "${flags_file}" >&2
+    printf "Failed to read preset file %s\n" "${preset_file}" >&2
     exit 1
 fi
 
@@ -78,19 +77,22 @@ if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     fi
 fi
 
+# We concatenate our secrets file, pipeline variables, preset file (which sets
+# 'enable' flags for each task needed for this pipeline deployment), and an
+# additional set of 'false' enable flags, for every flag which is not mentioned in
+# the preset file. This is created by subtracting the keys in the preset file from
+# the keys in flags.yml, which contains all possible enable flags
 fly \
     ${target:+"--target=${target}"} \
     set-pipeline \
     --pipeline="${pipeline_name}" \
     --config="${pipeline_file}" \
     --load-vars-from=<(
-        # We concatenate the two vars files together so that the config vars can
-        # refer to secret vars correctly
         ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
         sed '/^---$/d' < "${vars_file}"                        # Config vars
-        sed '/^---$/d' < "${flags_file}"
+        sed '/^---$/d' < "${preset_file}"
         ruby -r yaml << EOF | tail -n+2
-          pipeline_flags=YAML.load_file('${flags_file}').keys
+          pipeline_flags=YAML.load_file('${preset_file}').keys
           all_flags=YAML.load_file('flags.yml').keys
           puts YAML.dump((all_flags - pipeline_flags).zip([false].cycle).to_h)
 EOF

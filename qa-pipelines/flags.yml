@@ -1,5 +1,9 @@
 ---
 
+# This contains the list of all flags which can modify the pipeline behaviour.
+# The settings in this file will also be valid for our most complete pipeline
+# (which performs an upgrade and all tests)
+
 # deploy cf for upgrade pipelines
 enable-cf-deploy-pre-upgrade: true
 
