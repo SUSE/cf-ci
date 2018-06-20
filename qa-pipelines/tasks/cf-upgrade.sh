@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+if [[ $ENABLE_CF_UPGRADE != true ]]; then
+  echo "cf-upgrade.sh: Flag not set. Skipping upgrade"
+  exit 0
+fi
+
 # Set kube config from pool
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
@@ -17,6 +22,9 @@ UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 # UAA host/port that SCF will talk to.
 UAA_HOST=uaa.${DOMAIN}
 UAA_PORT=2793
+
+CF_NAMESPACE=scf
+UAA_NAMESPACE=uaa
 
 CAP_DIRECTORY=s3.scf-config
 set +o allexport

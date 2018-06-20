@@ -1,3 +1,6 @@
 [submodule "sample-apps/go-env"]
 	path = sample-apps/go-env
 	url = https://github.com/HartS/go-env.git
+[submodule "sample-apps/rails-example"]
+	path = sample-apps/rails-example
+	url = https://github.com/scf-samples/rails-example.git
