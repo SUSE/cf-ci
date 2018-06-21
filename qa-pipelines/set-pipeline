@@ -114,6 +114,9 @@ if ! git ls-remote --exit-code $src_ci_remote $src_ci_branch; then
   exit 1
 fi
 
+# Append tag/branch name to pipeline name
+pipeline_name=${pipeline_name}-${src_ci_branch}
+
 # We concatenate our secrets file, pipeline variables, preset file (which sets
 # 'enable' flags for each task needed for this pipeline deployment), and an
 # additional set of 'false' enable flags, for every flag which is not mentioned in
