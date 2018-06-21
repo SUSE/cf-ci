@@ -2,7 +2,6 @@
 src-repo: https://github.com/SUSE/scf.git
 src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
-src-ci-branch: master
 
 src-rails-example-repo: https://github.com/scf-samples/rails-example.git
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git

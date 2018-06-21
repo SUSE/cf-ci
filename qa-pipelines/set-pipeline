@@ -15,14 +15,16 @@ Available options:
     -p, --prefix=       Set additional pipeline prefix
     --pool=provo        Pool to take pool config and kube config from. Default is 'provo' 
     -t, --target=       Set fly target concourse
+    -b, --branch=       Use a specific branch or tag. Defaults to the current branch
 
 EOF
 }
 
-OPTS=$(getopt -o hp:t: --long help,pool:,prefix:,target: -- "$@")
+OPTS=$(getopt -o hp:t:b: --long help,pool:,prefix:,target:,branch: -- "$@")
 eval set -- "${OPTS}"
 
 pool=provo
+src_ci_branch=$(git rev-parse --abbrev-ref HEAD)
 prefix=""
 target=""
 secrets_file=""
@@ -32,6 +34,7 @@ while true ; do
         -p|--prefix) prefix="${2%-}-" ; shift 2 ;;
         -t|--target) target="${2}" ; shift 2 ;;
         --pool)      pool="${2}" ; shift 2 ;;
+        -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
     esac
@@ -77,6 +80,43 @@ if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     fi
 fi
 
+# Branch is assumed to be the current branch if not specified, but the concourse git
+# resource doesn't allow commit references to be used directly. 
+if [[ -z $src_ci_branch ]] ||
+    [[  $(echo $src_ci_branch | tr '[:upper:]' '[:lower:]') == head ]]; then
+  printf "Failed to determine ref for git resource to use.\n" >&2
+  printf "Checkout a branch or specify a branch/tag with '-b\n'" >&2
+  exit 1
+fi
+
+# Now that we have the branch/tag, check that it exists in the remote with the URL specified
+# in the config file's 'src_ci_repo'.
+
+src_ci_repo=$(
+  #Remove anchor references from vars file as they break parsing
+  grep -v '\*' $vars_file \
+  | ruby -r yaml -e "puts YAML.load(STDIN.read)['src-ci-repo']"
+)
+src_ci_remote=$(git remote -v | grep -F "$src_ci_repo (fetch)" | cut -f1 | head -1)
+
+# If a matching remote couldn't be found, create one
+if [[ -z $src_ci_remote ]]; then
+  src_ci_remote=${pool}-src-ci-repo
+  git remote add $src_ci_remote $src_ci_repo
+fi
+
+# Ensure we have the latest tag/branch updates from remote
+git fetch $src_ci_remote
+
+# Check that the tag/branch specified exists on the remote
+if ! git ls-remote --exit-code $src_ci_remote $src_ci_branch; then
+  printf "The branch/tag %s could not be found in repo %s\n" $src_ci_branch $src_ci_repo >&2
+  exit 1
+fi
+
+# Append tag/branch name to pipeline name
+pipeline_name=${pipeline_name}-${src_ci_branch}
+
 # We concatenate our secrets file, pipeline variables, preset file (which sets
 # 'enable' flags for each task needed for this pipeline deployment), and an
 # additional set of 'false' enable flags, for every flag which is not mentioned in
@@ -86,7 +126,9 @@ fly \
     ${target:+"--target=${target}"} \
     set-pipeline \
     --pipeline="${pipeline_name}" \
+    --var pipeline-name="${pipeline_name}" \
     --config="${pipeline_file}" \
+    --var src-ci-branch=${src_ci_branch} \
     --load-vars-from=<(
         ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
         sed '/^---$/d' < "${vars_file}"                        # Config vars
