@@ -126,6 +126,7 @@ fly \
     ${target:+"--target=${target}"} \
     set-pipeline \
     --pipeline="${pipeline_name}" \
+    --var pipeline-name="${pipeline_name}" \
     --config="${pipeline_file}" \
     --var src-ci-branch=${src_ci_branch} \
     --load-vars-from=<(

@@ -55,7 +55,7 @@ resources:
     pool: ((kube-pool-pool))
 
 jobs:
-- name: cap-qa-upgrade-SA-openSUSE
+- name: ((pipeline-name))-SA-openSUSE
   plan:
   - aggregate:
     - get: ci
@@ -156,7 +156,7 @@ jobs:
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: cap-qa-upgrade-SA-SLES
+- name: ((pipeline-name))-SA-SLES
   plan:
   - aggregate:
     - get: ci
@@ -269,7 +269,7 @@ jobs:
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: cap-qa-upgrade-HA-openSUSE
+- name: ((pipeline-name))-HA-openSUSE
   plan:
   - aggregate:
     - get: ci
@@ -370,7 +370,7 @@ jobs:
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: cap-qa-upgrade-HA-SLES
+- name: ((pipeline-name))-HA-SLES
   plan:
   - aggregate:
     - get: ci
