@@ -151,6 +151,7 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
     params:
       ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
@@ -264,6 +265,7 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
     params:
       ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
@@ -365,6 +367,7 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
     params:
       ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
@@ -478,6 +481,7 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
     params:
       ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
