@@ -288,8 +288,8 @@ jobs:
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
       ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
@@ -319,8 +319,8 @@ jobs:
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       CAP_CHART: -opensuse
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
     input_mapping:
@@ -333,8 +333,8 @@ jobs:
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       ENABLE_CF_DEPLOY: ((enable-cf-deploy))
     input_mapping:
@@ -393,8 +393,8 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-sle-url))
       ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
@@ -428,8 +428,8 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
     input_mapping:
@@ -446,8 +446,8 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       ENABLE_CF_DEPLOY: ((enable-cf-deploy))
     input_mapping:
