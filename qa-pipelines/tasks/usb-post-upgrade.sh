@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+if [[ $ENABLE_USB_POST_UPGRADE != true ]]; then
+  echo "usb-post-upgrade.sh: Flag not set. Skipping upgrade"
+  exit 0
+fi
+
 # Set kube config from pool
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
@@ -27,7 +32,7 @@ curl -Ikf https://scf-rails-example-mysql.$DOMAIN
 echo "Verify that data created before upgrade can be retrieved:"
 curl -kf https://scf-rails-example-mysql.$DOMAIN/todos/1 | jq .
 
-cd rails-example
+cd ci/sample-apps/rails-example
 cf target -o usb-test-org -s usb-test-space
 cf stop scf-rails-example-postgres
 cf stop scf-rails-example-mysql

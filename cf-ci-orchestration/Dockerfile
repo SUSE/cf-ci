@@ -19,13 +19,13 @@ RUN true \
     tar \
     direnv \
     bash-completion docker-bash-completion systemd-bash-completion \
-    && helm_version=v2.6.1 \
+    && helm_version=v2.8.2 \
     && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
     && chmod a+x /usr/local/bin/helm \
     && echo "eval \"\$(direnv hook bash)\"" >> ~/.bashrc \
     && echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc \
     && echo "source <(helm completion bash)" >> ~/.bashrc \
-    && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.7.7/bin/linux/amd64/kubectl \
+    && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.8/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl \
     && echo "source <(kubectl completion bash)" >> ~/.bashrc \

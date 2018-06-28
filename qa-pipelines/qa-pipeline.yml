@@ -1,6 +1,24 @@
 # Concourse pipeline to deploy and upgrade CAP
 
 resources:
+- name: s3.pg-sidecar
+  type: s3
+  source:
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket-opensuse))
+    regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-postgres-(.*)\.tgz$
+
+- name: s3.mysql-sidecar
+  type: s3
+  source:
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket-opensuse))
+    regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
+
 - name: ci
   type: git
   source:
@@ -37,10 +55,14 @@ resources:
     pool: ((kube-pool-pool))
 
 jobs:
-- name: cap-qa-upgrade-SA-openSUSE
+- name: ((pipeline-name))-SA-openSUSE
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-opensuse
       trigger: true
     - put: pool.kube-hosts
@@ -48,7 +70,7 @@ jobs:
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-  - task: cf-deploy
+  - task: cf-deploy-pre-upgrade
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
@@ -56,25 +78,29 @@ jobs:
       SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
-  - task: cf-smoke-tests
+  - task: cf-smoke-tests-pre-upgrade
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
-  # - task: acceptance-tests-brain
-  #   file: ci/qa-pipelines/tasks/run-test.yml
-  #   params:
-  #     TEST_NAME: acceptance-tests-brain
-  #     CAP_CHART: -opensuse
-  #     CAP_INSTALL_VERSION: ((cap-opensuse-url))
-  #   input_mapping:
-  #     s3.scf-config: s3.scf-config-opensuse
-  # Do not run CATs. They are destructive
+  - task: acceptance-tests-brain-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: usb-deploy
+    file: ci/qa-pipelines/tasks/usb-deploy.yml
+    params:
+      ENABLE_USB_DEPLOY: ((enable-usb-deploy))
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
@@ -82,27 +108,42 @@ jobs:
       HA: false
       SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: usb-post-upgrade
+    file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
+    params:
+      ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      CAP_CHART: -opensuse
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_DEPLOY: ((enable-cf-deploy))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
+      ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
+      ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
+      ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -110,13 +151,20 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
+    params:
+      ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: cap-qa-upgrade-SA-SLES
+- name: ((pipeline-name))-SA-SLES
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-sles
       trigger: true
     - put: pool.kube-hosts
@@ -124,7 +172,7 @@ jobs:
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-  - task: cf-deploy
+  - task: cf-deploy-pre-upgrade
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
@@ -136,25 +184,29 @@ jobs:
       SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
-  - task: cf-smoke-tests
+  - task: cf-smoke-tests-pre-upgrade
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: ""
       CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
-  # - task: acceptance-tests-brain
-  #   file: ci/qa-pipelines/tasks/run-test.yml
-  #   params:
-  #     TEST_NAME: acceptance-tests-brain
-  #     CAP_CHART: ""
-  #     CAP_INSTALL_VERSION: ((cap-sle-url))
-  #   input_mapping:
-  #     s3.scf-config: s3.scf-config-sles
-  # Do not run CATs. They are destructive
+  - task: acceptance-tests-brain-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: usb-deploy
+    file: ci/qa-pipelines/tasks/usb-deploy.yml
+    params:
+      ENABLE_USB_DEPLOY: ((enable-usb-deploy))
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
@@ -166,27 +218,46 @@ jobs:
       HA: false
       SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: usb-post-upgrade
+    file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
+    params:
+      ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_DEPLOY: ((enable-cf-deploy))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: ""
+      ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
+      ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests
       CAP_CHART: ""
+      ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -194,13 +265,20 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
+    params:
+      ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: cap-qa-upgrade-HA-openSUSE
+- name: ((pipeline-name))-HA-openSUSE
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-opensuse
       trigger: true
     - put: pool.kube-hosts
@@ -208,61 +286,80 @@ jobs:
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-  - task: cf-deploy
+  - task: cf-deploy-pre-upgrade
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       CAP_CHART: -opensuse
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
-  - task: cf-smoke-tests
+  - task: cf-smoke-tests-pre-upgrade
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
       CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
-  # - task: acceptance-tests-brain
-  #   file: ci/qa-pipelines/tasks/run-test.yml
-  #   params:
-  #     TEST_NAME: acceptance-tests-brain
-  #     CAP_CHART: -opensuse
-  #     CAP_INSTALL_VERSION: ((cap-opensuse-url))
-  #   input_mapping:
-  #     s3.scf-config: s3.scf-config-opensuse
-  # Do not run CATs. They are destructive
+  - task: acceptance-tests-brain-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: usb-deploy
+    file: ci/qa-pipelines/tasks/usb-deploy.yml
+    params:
+      ENABLE_USB_DEPLOY: ((enable-usb-deploy))
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
       CAP_CHART: -opensuse
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
+  - task: usb-post-upgrade
+    file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
+    params:
+      ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      CAP_CHART: -opensuse
+      HA: true
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_DEPLOY: ((enable-cf-deploy))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: cf-smoke-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: -opensuse
+      ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests-brain
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests-brain
       CAP_CHART: -opensuse
+      ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   - task: acceptance-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests
       CAP_CHART: -opensuse
+      ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -270,13 +367,20 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
+    params:
+      ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
 
-- name: cap-qa-upgrade-HA-SLES
+- name: ((pipeline-name))-HA-SLES
   plan:
   - aggregate:
     - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
     - get: s3.scf-config-sles
       trigger: true
     - put: pool.kube-hosts
@@ -284,7 +388,7 @@ jobs:
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-  - task: cf-deploy
+  - task: cf-deploy-pre-upgrade
     file: ci/qa-pipelines/tasks/cf-deploy.yml
     params:
       KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
@@ -292,29 +396,33 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
       CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: ""
       CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
-  # - task: acceptance-tests-brain
-  #   file: ci/qa-pipelines/tasks/run-test.yml
-  #   params:
-  #     TEST_NAME: acceptance-tests-brain
-  #     CAP_CHART: ""
-  #     CAP_INSTALL_VERSION: ((cap-sle-url))
-  #   input_mapping:
-  #     s3.scf-config: s3.scf-config-sles
-  # Do not run CATs. They are destructive
+  - task: acceptance-tests-brain-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: usb-deploy
+    file: ci/qa-pipelines/tasks/usb-deploy.yml
+    params:
+      ENABLE_USB_DEPLOY: ((enable-usb-deploy))
   - task: cf-upgrade
     file: ci/qa-pipelines/tasks/cf-upgrade.yml
     params:
@@ -323,30 +431,49 @@ jobs:
       KUBE_REGISTRY_PASSWORD: ((registry-password))
       KUBE_ORGANIZATION: ((organization))
       CAP_CHART: ""
-      HA: false
-      SCALED_HA: true
+      HA: true
+      SCALED_HA: false
       MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: usb-post-upgrade
+    file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
+    params:
+      ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: true
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_DEPLOY: ((enable-cf-deploy))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: cf-smoke-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: smoke-tests
       CAP_CHART: ""
+      ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests-brain
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests-brain
       CAP_CHART: ""
+      ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   - task: acceptance-tests
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
-      TEST_NAME: acceptance-tests
       CAP_CHART: ""
+      ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
   # We intentionally don't put the teardown and pool release steps in an ensure
@@ -354,5 +481,8 @@ jobs:
   # failing.
   - task: cf-teardown
     file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
+    params:
+      ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}

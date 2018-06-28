@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit -o nounset
 
+if [[ $ENABLE_USB_DEPLOY != true ]]; then
+  echo "usb-deploy.sh: Flag not set. Skipping USB deploy"
+  exit 0
+fi
+
 # Set kube config from pool
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
@@ -155,7 +160,7 @@ cf create-security-group       sidecar-net-workaround sidecar-net-workaround.jso
 cf bind-running-security-group sidecar-net-workaround
 cf bind-staging-security-group sidecar-net-workaround
 
-cd rails-example
+cd ci/sample-apps/rails-example
 sed -i 's/scf-rails-example-db/testpostgres/g' manifest.yml
 cf push scf-rails-example-postgres
 cf ssh scf-rails-example-postgres -c "export PATH=/home/vcap/deps/0/bin:/usr/local/bin:/usr/bin:/bin && export BUNDLE_PATH=/home/vcap/deps/0/vendor_bundle/ruby/2.5.0 && export BUNDLE_GEMFILE=/home/vcap/app/Gemfile && cd app && bundle exec rake db:seed"

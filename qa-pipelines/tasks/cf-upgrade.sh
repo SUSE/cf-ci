@@ -1,102 +1,16 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-# Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
+if [[ $ENABLE_CF_UPGRADE != true ]]; then
+  echo "cf-upgrade.sh: Flag not set. Skipping upgrade"
+  exit 0
+fi
 
-set -o allexport
-# The IP address assigned to the first kubelet node.
-DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
-external_ip=$(getent hosts $DOMAIN | awk '{ print $1 }')
-# Domain for SCF. DNS for *.DOMAIN must point to the kube node's
-# external ip. This must match the value passed to the
-# cert-generator.sh script.
-# Password for SCF to authenticate with UAA
-UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
-# UAA host/port that SCF will talk to.
-UAA_HOST=uaa.${DOMAIN}
-UAA_PORT=2793
-
-CF_NAMESPACE=scf
-UAA_NAMESPACE=uaa
-CAP_DIRECTORY=s3.scf-config
-set +o allexport
+source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
 # Delete old test pods
 kubectl delete pod -n scf smoke-tests
 #kubectl delete pod -n scf acceptance-tests-brain
-
-unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
-
-# Check that the kube of the cluster is reasonable
-bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
-
-HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
-             --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ips[0]=${external_ip}"
-             --set "kube.auth=rbac")
-if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
-    HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
-fi
-if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
-    HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
-fi
-if [ -n "${KUBE_REGISTRY_PASSWORD:-}" ]; then
-    HELM_PARAMS+=(--set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}")
-fi
-if [ -n "${KUBE_ORGANIZATION:-}" ]; then
-   HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
-fi
-
-# Wait until CF namespaces are ready
-is_namespace_ready() {
-    local namespace="$1"
-
-    # Create regular expression to match active_passive_pods
-    # These are scaled services which are expected to only have one pod listed as ready
-    local active_passive_pod_regex='^diego-api$|^diego-brain$|^routing-api$'
-    local active_passive_role_count=$(awk -F '|' '{ print NF }' <<< "${active_passive_pod_regex}")
-
-    # Get the container name and status for each pod in two columns
-    # The name here will be the role name, not the pod name, e.g. 'diego-brain' not 'diego-brain-1'
-    local active_passive_pod_status=$(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-        | awk '$1 ~ '"/${active_passive_pod_regex}/")
-
-    # Check that the number of containers which are ready is equal to the number of active passive roles 
-    if [[ -n $active_passive_pod_status ]] && [[ $(echo "$active_passive_pod_status" | grep true | wc -l) -ne ${active_passive_role_count} ]]; then
-        return 1
-    fi
-
-    # Finally, check that all pods which do not match the active_passive_pod_regex are ready
-    [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-        | awk '$1 !~ '"/${active_passive_pod_regex}/ { print \$2 }" \
-        | sed '/^ *$/d' \
-        | sort \
-        | uniq) ]]
-}
-
-wait_for_namespace() {
-    local namespace="$1"
-    start=$(date +%s)
-    for (( i = 0  ; i < 960 ; i ++ )) ; do
-        if is_namespace_ready "${namespace}" ; then
-            break
-        fi
-        now=$(date +%s)
-        printf "\rWaiting for %s at %s (%ss)..." "${namespace}" "$(date --rfc-2822)" $((${now} - ${start}))
-        sleep 10
-    done
-    now=$(date +%s)
-    printf "\rDone waiting for %s at %s (%ss)\n" "${namespace}" "$(date --rfc-2822)" $((${now} - ${start}))
-    kubectl get pods --namespace="${namespace}"
-    if ! is_namespace_ready "${namespace}" ; then
-        printf "Namespace %s is still pending\n" "${namespace}"
-        exit 1
-    fi 
-}
-
-PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
 # monitor_url takes a URL argument and a path to a log file
 # This will time out after 3 hours. Until then, repeatedly curl the URL with a 1-second wait period, and log the response
@@ -139,7 +53,9 @@ monitor_url() {
 monitor_file=$(mktemp -d)/downtime.log
 monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
 
-# Upgrade UAA
+set_helm_params # Sets HELM_PARAMS
+set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
+
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --timeout 600 \
@@ -148,29 +64,11 @@ helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA namespace
 wait_for_namespace "${UAA_NAMESPACE}"
 
-# Get the version of the helm chart for uaa
-helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
-generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
-get_internal_ca_cert() {
-    local uaa_secret_name=$(generated_secrets_secret)
-    kubectl get secret ${uaa_secret_name} \
-      --namespace "${UAA_NAMESPACE}" \
-      -o jsonpath="{.data['internal-ca-cert']}" \
-      | base64 -d
-}
-
+# Deploy CF
 CA_CERT="$(get_internal_ca_cert)"
 
-# Upgrade CF
-if [[ ${HA} == true ]]; then
-  HELM_PARAMS+=(--set=sizing.HA=true)
-fi
-
-if [[ ${SCALED_HA} == true ]]; then
-  HELM_PARAMS+=(--set=sizing.routing_api.count=1)
-  HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
-  HELM_PARAMS+=(--set=sizing.{diego_api,diego-locket,diego_cell}.count=3)
-fi
+set_helm_params # Resets HELM_PARAMS
+set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \

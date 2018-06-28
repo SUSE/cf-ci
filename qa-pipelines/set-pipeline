@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+
+set -o errexit -o nounset
+
+usage() {
+    cat <<EOF
+
+${0} [options] <feature-flags preset file>
+
+The pipeline configuration file "qa-pipeline.yml" must exist.
+The configuration file "config-<config variant>.yml" must exist.
+
+Available options:
+    -h, --help          Print this help and exit
+    -p, --prefix=       Set additional pipeline prefix
+    --pool=provo        Pool to take pool config and kube config from. Default is 'provo' 
+    -t, --target=       Set fly target concourse
+    -b, --branch=       Use a specific branch or tag. Defaults to the current branch
+
+EOF
+}
+
+OPTS=$(getopt -o hp:t:b: --long help,pool:,prefix:,target:,branch: -- "$@")
+eval set -- "${OPTS}"
+
+pool=provo
+src_ci_branch=$(git rev-parse --abbrev-ref HEAD)
+prefix=""
+target=""
+secrets_file=""
+while true ; do
+    case "$1" in
+        -h|--help)   usage ; exit 0 ;;
+        -p|--prefix) prefix="${2%-}-" ; shift 2 ;;
+        -t|--target) target="${2}" ; shift 2 ;;
+        --pool)      pool="${2}" ; shift 2 ;;
+        -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
+        --)          shift ; break ;;
+        *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
+    esac
+done
+
+if test -z "${1:-}" ; then
+    usage
+    exit 1
+fi
+pipeline_file="qa-pipeline.yml"
+vars_file="config-${pool}.yml"
+preset_file=${1}
+pipeline_name=$(basename ${preset_file})
+pipeline_name="${prefix}${pipeline_name%.yml}"
+
+
+if ! test -r "${pipeline_file}" ; then
+    usage >&2
+    printf "Failed to read pipeline configuration %s\n" "${pipeline_file}" >&2
+    exit 1
+fi
+
+if ! test -r "${vars_file}" ; then
+    usage >&2
+    if test -n "${1:-}" ; then
+        printf "Variables file %s is not readable\n" "${vars_file}" >&2
+    fi
+    exit 1
+fi
+
+if ! test -r "${preset_file}" ; then
+    usage >&2
+    printf "Failed to read preset file %s\n" "${preset_file}" >&2
+    exit 1
+fi
+
+if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
+    if test -r "${CONCOURSE_SECRETS_FILE:-}" ; then
+        secrets_file="${CONCOURSE_SECRETS_FILE}"
+    else
+        printf "ERROR: Secrets file %s is not readable\n" "${CONCOURSE_SECRETS_FILE}" >&2
+        exit 2
+    fi
+fi
+
+# Branch is assumed to be the current branch if not specified, but the concourse git
+# resource doesn't allow commit references to be used directly. 
+if [[ -z $src_ci_branch ]] ||
+    [[  $(echo $src_ci_branch | tr '[:upper:]' '[:lower:]') == head ]]; then
+  printf "Failed to determine ref for git resource to use.\n" >&2
+  printf "Checkout a branch or specify a branch/tag with '-b\n'" >&2
+  exit 1
+fi
+
+# Now that we have the branch/tag, check that it exists in the remote with the URL specified
+# in the config file's 'src_ci_repo'.
+
+src_ci_repo=$(
+  #Remove anchor references from vars file as they break parsing
+  grep -v '\*' $vars_file \
+  | ruby -r yaml -e "puts YAML.load(STDIN.read)['src-ci-repo']"
+)
+src_ci_remote=$(git remote -v | grep -F "$src_ci_repo (fetch)" | cut -f1 | head -1)
+
+# If a matching remote couldn't be found, create one
+if [[ -z $src_ci_remote ]]; then
+  src_ci_remote=${pool}-src-ci-repo
+  git remote add $src_ci_remote $src_ci_repo
+fi
+
+# Ensure we have the latest tag/branch updates from remote
+git fetch $src_ci_remote
+
+# Check that the tag/branch specified exists on the remote
+if ! git ls-remote --exit-code $src_ci_remote $src_ci_branch; then
+  printf "The branch/tag %s could not be found in repo %s\n" $src_ci_branch $src_ci_repo >&2
+  exit 1
+fi
+
+# Append tag/branch name to pipeline name
+pipeline_name=${pipeline_name}-${src_ci_branch}
+
+# We concatenate our secrets file, pipeline variables, preset file (which sets
+# 'enable' flags for each task needed for this pipeline deployment), and an
+# additional set of 'false' enable flags, for every flag which is not mentioned in
+# the preset file. This is created by subtracting the keys in the preset file from
+# the keys in flags.yml, which contains all possible enable flags
+fly \
+    ${target:+"--target=${target}"} \
+    set-pipeline \
+    --pipeline="${pipeline_name}" \
+    --var pipeline-name="${pipeline_name}" \
+    --config="${pipeline_file}" \
+    --var src-ci-branch=${src_ci_branch} \
+    --load-vars-from=<(
+        ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
+        sed '/^---$/d' < "${vars_file}"                        # Config vars
+        sed '/^---$/d' < "${preset_file}"
+        ruby -r yaml << EOF | tail -n+2
+          pipeline_flags=YAML.load_file('${preset_file}').keys
+          all_flags=YAML.load_file('flags.yml').keys
+          puts YAML.dump((all_flags - pipeline_flags).zip([false].cycle).to_h)
+EOF
+    )
+fly \
+    ${target:+"--target=$target"} \
+    expose-pipeline \
+    --pipeline="${pipeline_name}"
+# fly \
+#     ${target:+"--target=$target"} \
+#     unpause-pipeline \
+#     --pipeline="${pipeline_name}"
