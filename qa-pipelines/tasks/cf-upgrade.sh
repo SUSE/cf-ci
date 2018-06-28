@@ -8,17 +8,6 @@ fi
 
 source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
-set -o allexport
-
-# Domain for SCF, taken from the api pod
-DOMAIN=$(kubectl get pods -o json --namespace ${CF_NAMESPACE} api-0 | jq -r  '.spec.containers[0].env[] |  select(.name == "DOMAIN").value')
-external_ip=${DOMAIN%.${MAGIC_DNS_SERVICE}}
-
-# UAA host/port that SCF will talk to.
-UAA_HOST=uaa.${DOMAIN}
-
-set +o allexport
-
 # Delete old test pods
 kubectl delete pod -n scf smoke-tests
 #kubectl delete pod -n scf acceptance-tests-brain
