@@ -149,7 +149,6 @@ set -o allexport
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
 public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"] // empty')
-public_ip=${public_ip:-$external_ip}
 
 # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
 # referenced by external_ip.
