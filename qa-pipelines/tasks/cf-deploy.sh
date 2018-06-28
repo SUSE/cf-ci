@@ -12,9 +12,6 @@ source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
 set -o allexport
 
-# The IP address assigned to the first kubelet node.
-external_ip=$(kubectl get nodes -o json | jq -er '.items[] | select(.spec.unschedulable == true | not) | .metadata.annotations["flannel.alpha.coreos.com/public-ip"]//empty'| head -n1)
-
 # Domain for SCF. DNS for *.DOMAIN must point to the kube node's
 # external ip. This must match the value passed to the
 # cert-generator.sh script.
