@@ -51,26 +51,16 @@ function semver_is_gte() {
     )" == $1 ]]
 }
 
-if semver_is_gte $(helm_chart_version) 2.7.3; then
-  USER_PROVIDED_VALUES_KEY=secrets
-else
-  USER_PROVIDED_VALUES_KEY=env
-fi
+USER_PROVIDED_VALUES_KEY=secrets
 
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
-if semver_is_gte $(helm_chart_version) 2.8.0; then
-    HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
-                 --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "kube.external_ips[0]=${external_ip}"
-                 --set "kube.auth=rbac")
-else
-    HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
-                 --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "kube.external_ip=${external_ip}"
-                 --set "kube.auth=rbac")
-fi
+HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
+             --set "${USER_PROVIDED_VALUES_KEY}.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
+             --set "kube.external_ips[0]=${external_ip}"
+             --set "kube.auth=rbac")
+
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
 fi
@@ -159,11 +149,7 @@ wait_for_namespace "${UAA_NAMESPACE}"
 generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
 get_internal_ca_cert() {
     local uaa_secret_name
-    if semver_is_gte $(helm_chart_version) 2.7.3; then
-        uaa_secret_name=$(generated_secrets_secret)
-    else
-        uaa_secret_name=secret
-    fi
+    uaa_secret_name=$(generated_secrets_secret)
     kubectl get secret ${uaa_secret_name} \
       --namespace "${UAA_NAMESPACE}" \
       -o jsonpath="{.data['internal-ca-cert']}" \
