@@ -141,3 +141,20 @@ set_scf_sizing_params() {
         HELM_PARAMS+=(--set=sizing.{diego_api,diego_locket,diego_cell}.count=3)
     fi
 }
+
+set -o allexport
+
+# The internal/external and public IP addresses are now taken from the configmap set by prep-new-cluster
+# The external_ip is set to the internal ip of a worker node. When running on openstack or azure, 
+# the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
+external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
+public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"] // empty')
+
+# Domain for SCF. DNS for *.DOMAIN must point to the same kube node
+# referenced by external_ip.
+DOMAIN=${public_ip}.${MAGIC_DNS_SERVICE}
+
+# UAA host/port that SCF will talk to.
+UAA_HOST=uaa.${DOMAIN}
+
+set +o allexport
