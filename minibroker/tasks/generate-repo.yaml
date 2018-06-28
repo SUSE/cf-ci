@@ -1,0 +1,16 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/helm-client
+inputs:
+- name: s3.mariadb-chart
+- name: s3.mongodb-chart
+- name: s3.postgresql-chart
+- name: s3.redis-chart
+- name: src-ci
+outputs:
+- name: repo
+run:
+  path: src-ci/minibroker/scripts/generate-repo.sh
