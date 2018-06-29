@@ -48,6 +48,7 @@ is_namespace_ready() {
 
     # Finally, check that all pods which do not match the active_passive_pod_regex are ready
     [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+        | grep -v secret-generation \
         | awk '$1 !~ '"/${active_passive_pod_regex}/ { print \$2 }" \
         | sed '/^ *$/d' \
         | sort \
