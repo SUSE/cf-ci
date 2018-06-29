@@ -70,6 +70,7 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
+for role in blobstore diego-cell doppler nats ; do kubectl delete sts --namespace=${CF_NAMESPACE} --cascade=false $role ; done
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --timeout 600 \
