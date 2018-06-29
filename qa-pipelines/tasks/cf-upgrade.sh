@@ -8,10 +8,6 @@ fi
 
 source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
-# Delete old test pods
-kubectl delete pod -n scf smoke-tests
-#kubectl delete pod -n scf acceptance-tests-brain
-
 # monitor_url takes a URL argument and a path to a log file
 # This will time out after 3 hours. Until then, repeatedly curl the URL with a 1-second wait period, and log the response
 # If the application state changes, print this to stdout as well
