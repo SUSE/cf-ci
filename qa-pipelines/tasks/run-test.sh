@@ -75,4 +75,10 @@ while [[ -z $(container_status ${TEST_NAME}) ]]; do
   kubectl attach --namespace=scf ${TEST_NAME} ||:
 done
 
-exit $(container_status ${TEST_NAME})
+pod_status=$(container_status ${TEST_NAME})
+
+# Delete test pod if they pass. Required pre upgrade
+if [[ $pod_status -eq 0 ]] ; then
+  kubectl delete pod --namespace=scf ${TEST_NAME}
+fi
+exit $pod_status
