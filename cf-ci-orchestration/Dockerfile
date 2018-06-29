@@ -1,12 +1,12 @@
 #Base image for kube yaml installer
-FROM opensuse:42.2
+FROM opensuse:42.3
 
 # Install: ruby, unzip, openssh, sshpass, vim, nano, curl, kubectl
 # Install: wget, tar, helm, direnv
 # NOTE: The `utilities` repo is added for access to `direnv`.
 #
 RUN true \
-    && zypper --non-interactive addrepo http://download.opensuse.org/repositories/utilities/openSUSE_Leap_42.2/utilities.repo \
+    && zypper --non-interactive addrepo http://download.opensuse.org/repositories/utilities/openSUSE_Leap_42.3/utilities.repo \
     && zypper --non-interactive --gpg-auto-import-keys refresh \
     && zypper --non-interactive install ruby \
     unzip \
