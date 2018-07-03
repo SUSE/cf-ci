@@ -31,10 +31,15 @@ UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 is_namespace_ready() {
     local namespace="$1"
 
-    # Create regular expression to match active_passive_pods
-    # These are scaled services which are expected to only have one pod listed as ready
-    local active_passive_pod_regex='^diego-api$|^diego-brain$|^routing-api$'
-    local active_passive_role_count=$(awk -F '|' '{ print NF }' <<< "${active_passive_pod_regex}")
+    if [[ $(helm_chart_version) == "2.10.1" ]]; then
+        # Create regular expression to match active_passive_pods
+        # These are scaled services which were expected to only have one pod listed as ready prior to 2.11.0
+        local active_passive_pod_regex='^diego-api$|^diego-brain$|^routing-api$'
+        local active_passive_role_count=$(awk -F '|' '{ print NF }' <<< "${active_passive_pod_regex}")
+    else
+        local active_passive_pod_regex='$a' # A regex that will never match anything
+        local active_passive_role_count=0
+    fi
 
     # Get the container name and status for each pod in two columns
     # The name here will be the role name, not the pod name, e.g. 'diego-brain' not 'diego-brain-1'
