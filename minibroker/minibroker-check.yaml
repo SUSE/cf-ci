@@ -62,28 +62,28 @@ resources:
   source:
     <<: *helm-charts-src-configs
     paths:
-    - stable/redis
+    - stable/redis/**
 
 - name: src-postgres
   type: pull-request
   source:
     <<: *helm-charts-src-configs
     paths:
-    - stable/postgres
+    - stable/postgres/**
 
 - name: src-mariadb
   type: pull-request
   source:
     <<: *helm-charts-src-configs
     paths:
-    - stable/mariadb
+    - stable/mariadb/**
 
 - name: src-mongodb
   type: pull-request
   source:
     <<: *helm-charts-src-configs
     paths:
-    - stable/mongodb
+    - stable/mongodb/**
 
 - name: src-ci
   type: git
