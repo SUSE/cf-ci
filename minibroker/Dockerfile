@@ -1,4 +1,4 @@
-FROM opensuse
+FROM opensuse/leap
 
 ARG HELM_VERSION=2.8.2
 
