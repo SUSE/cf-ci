@@ -231,6 +231,7 @@ jobs:
 - name: generate-minibroker-repo
   plan:
   - aggregate:
+    # src is needed to get the PR's commit for the status update
     - get: src
     - get: src-ci
     - get: s3.minibroker-chart
