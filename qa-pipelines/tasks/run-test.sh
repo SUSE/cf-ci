@@ -51,8 +51,10 @@ kube_overrides() {
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
                 end
             end
+            container.delete "resources"
         end
         puts obj.to_json
+
 EOF
 }
 
