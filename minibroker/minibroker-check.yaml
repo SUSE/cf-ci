@@ -64,7 +64,7 @@ resources:
     paths:
     - stable/redis/**
 
-- name: src-postgres
+- name: src-postgresql
   type: pull-request
   source:
     <<: *helm-charts-src-configs
@@ -154,9 +154,8 @@ groups:
   jobs:
   - generate-mariadb
   - generate-mongodb
-  - generate-postgres
+  - generate-postgresql
   - generate-redis
-  - generate-repo
 
 jobs:
 - name: build-minibroker-image
