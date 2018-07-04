@@ -9,5 +9,8 @@ inputs:
 - name: src-ci
 outputs:
 - name: repo
+params:
+  MINIBROKER_BUCKET:
+  CHARTS_DIR:
 run:
   path: src-ci/minibroker/scripts/generate-repo.sh

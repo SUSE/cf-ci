@@ -246,6 +246,9 @@ jobs:
       state: pending
   - task: generate-repo
     file: src-ci/minibroker/tasks/generate-minibroker-repo.yaml
+    params:
+      MINIBROKER_BUCKET: ((s3-bucket))
+      CHARTS_DIR: ((s3-prefix))
   - put: s3.repo-index
     params:
       file: 'repo/index.yaml'
@@ -432,6 +435,9 @@ jobs:
       state: pending
   - task: generate-repo
     file: src-ci/minibroker/tasks/generate-repo.yaml
+    params:
+      MINIBROKER_BUCKET: ((s3-bucket))
+      CHARTS_DIR: ((helm-charts-s3-prefix))
   - put: s3.helm-charts-repo-index
     params:
       file: 'repo/index.yaml'
