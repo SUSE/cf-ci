@@ -201,7 +201,7 @@ jobs:
     trigger: true
   - put: docker.helm-client
     params:
-      build: src-ci/minibroker
+      build: src-ci-docker/minibroker
       build_args:
         HELM_VERSION: ((helm-version))
 - name: generate-mariadb
