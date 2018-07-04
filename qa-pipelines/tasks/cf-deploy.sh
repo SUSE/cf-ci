@@ -10,18 +10,6 @@ set -o nounset
 
 source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
-set -o allexport
-
-# Domain for SCF. DNS for *.DOMAIN must point to the kube node's
-# external ip. This must match the value passed to the
-# cert-generator.sh script.
-DOMAIN=${external_ip}.${MAGIC_DNS_SERVICE}
-
-# UAA host/port that SCF will talk to.
-UAA_HOST=uaa.${external_ip}.${MAGIC_DNS_SERVICE}
-
-set +o allexport
-
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
