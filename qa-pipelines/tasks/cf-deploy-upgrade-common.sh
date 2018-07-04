@@ -124,7 +124,7 @@ set_helm_params() {
 
 set_uaa_sizing_params() {
     if [[ ${HA} == true ]]; then
-        if semver_is_gte $(helm_chart_version) 2.10.1; then
+        if semver_is_gte $(helm_chart_version) 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)
         else
             HELM_PARAMS+=(--set=sizing.HA=true)
@@ -136,7 +136,7 @@ set_uaa_sizing_params() {
 
 set_scf_sizing_params() {
     if [[ ${HA} == true ]]; then
-        if semver_is_gte $(helm_chart_version) 2.10.1; then
+        if semver_is_gte $(helm_chart_version) 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)
         else
             HELM_PARAMS+=(--set=sizing.HA=true)
