@@ -67,13 +67,6 @@ resources:
     paths:
     - minibroker
 
-- name: src-ci-docker
-  type: git
-  source:
-    <<: *src-ci-configs
-    paths:
-    - minibroker/Dockerfile
-
 - name: docker.minibroker
   type: docker-image
   source:
@@ -81,13 +74,6 @@ resources:
     username: ((docker-username))
     password: ((docker-password))
 
-
-- name: docker.helm-client
-  type: docker-image
-  source:
-    repository: ((docker-org))/helm-client
-    username: ((docker-username))
-    password: ((docker-password))
 
 - name: s3.repo-index
   type: s3
@@ -144,9 +130,6 @@ groups:
   - generate-postgres
   - generate-redis
   - generate-repo
-- name: docker
-  jobs:
-  - build-docker-image
 
 jobs:
 - name: build-minibroker-image
@@ -194,16 +177,6 @@ jobs:
     params:
       file: 'repo/index.yaml'
       acl: public-read
-- name: build-docker-image
-  serial: true
-  plan:
-  - get: src-ci-docker
-    trigger: true
-  - put: docker.helm-client
-    params:
-      build: src-ci-docker/minibroker
-      build_args:
-        HELM_VERSION: ((helm-version))
 - name: generate-mariadb
   plan:
   - aggregate:
