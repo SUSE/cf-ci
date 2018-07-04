@@ -171,11 +171,12 @@ jobs:
       description: build-minibroker
       path: src
       state: pending
-  - task: build-minibroker
-    file: src-ci/minibroker/tasks/build-minibroker.yaml
-  - put: docker.minibroker
-    params:
-      build: minibroker/src/image
+  - do:
+    - task: build-minibroker
+      file: src-ci/minibroker/tasks/build-minibroker.yaml
+    - put: docker.minibroker
+      params:
+        build: minibroker/src/image
     on_failure:
       put: status
       params:
@@ -207,12 +208,13 @@ jobs:
       description: generate-minibroker-chart
       path: src
       state: pending
-  - task: generate-chart
-    file: src-ci/minibroker/tasks/generate-minibroker-chart.yaml
-  - put: s3.minibroker-chart
-    params:
-      file: 'chart/minibroker-*.tgz'
-      acl: public-read
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-minibroker-chart.yaml
+    - put: s3.minibroker-chart
+      params:
+        file: 'chart/minibroker-*.tgz'
+        acl: public-read
     on_failure:
       put: status
       params:
@@ -243,15 +245,16 @@ jobs:
       description: generate-minibroker-repo
       path: src
       state: pending
-  - task: generate-repo
-    file: src-ci/minibroker/tasks/generate-minibroker-repo.yaml
-    params:
-      MINIBROKER_BUCKET: ((s3-bucket))
-      CHARTS_DIR: ((s3-prefix))
-  - put: s3.repo-index
-    params:
-      file: 'repo/index.yaml'
-      acl: public-read
+  - do:
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-minibroker-repo.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((s3-prefix))
+    - put: s3.repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
     on_failure:
       put: status
       params:
@@ -275,30 +278,42 @@ jobs:
       trigger: true
   - put: helm-charts-status
     params:
-      context: generate-chart
-      description: generate-chart
+      context: generate-mariadb
+      description: generate-mariadb
       path: src
       state: pending
-  - task: generate-chart
-    file: src-ci/minibroker/tasks/generate-chart.yaml
-    params:
-      CHART_NAME: mariadb
-  - put: s3.mariadb-chart
-    params:
-      file: 'chart/mariadb-*.tgz'
-      acl: public-read
-    on_failure:
-      put: helm-charts-status
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
       params:
-        context: generate-chart
-        description: generate-chart
-        path: src
-        state: failure
+        CHART_NAME: mariadb
+    - put: s3.chart
+      resource: s3.mariadb-chart
+      params:
+        file: 'chart/mariadb-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      do:
+      - put: helm-charts-status
+        params:
+          context: generate-mariadb
+          description: generate-mariadb
+          path: src
+          state: failure
     on_success:
       put: helm-charts-status
       params:
-        context: generate-chart
-        description: generate-chart
+        context: generate-mariadb
+        description: generate-mariadb
         path: src
         state: success
 - name: generate-mongodb
@@ -310,65 +325,89 @@ jobs:
       trigger: true
   - put: helm-charts-status
     params:
-      context: generate-chart
-      description: generate-chart
+      context: generate-mongodb
+      description: generate-mongodb
       path: src
       state: pending
-  - task: generate-chart
-    file: src-ci/minibroker/tasks/generate-chart.yaml
-    params:
-      CHART_NAME: mongodb
-  - put: s3.mongodb-chart
-    params:
-      file: 'chart/mongodb-*.tgz'
-      acl: public-read
-    on_failure:
-      put: helm-charts-status
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
       params:
-        context: generate-chart
-        description: generate-chart
-        path: src
-        state: failure
+        CHART_NAME: mongodb
+    - put: s3.chart
+      resource: s3.mongodb-chart
+      params:
+        file: 'chart/mongodb-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      do:
+      - put: helm-charts-status
+        params:
+          context: generate-mongodb
+          description: generate-mongodb
+          path: src
+          state: failure
     on_success:
       put: helm-charts-status
       params:
-        context: generate-chart
-        description: generate-chart
+        context: generate-mongodb
+        description: generate-mongodb
         path: src
         state: success
-- name: generate-postgres
+- name: generate-postgresql
   plan:
   - aggregate:
     - get: src-ci
     - get: src
-      resource: src-postgres
+      resource: src-postgresql
       trigger: true
   - put: helm-charts-status
     params:
-      context: generate-chart
-      description: generate-chart
+      context: generate-postgresql
+      description: generate-postgresql
       path: src
       state: pending
-  - task: generate-chart
-    file: src-ci/minibroker/tasks/generate-chart.yaml
-    params:
-      CHART_NAME: postgresql
-  - put: s3.postgresql-chart
-    params:
-      file: 'chart/postgresql-*.tgz'
-      acl: public-read
-    on_failure:
-      put: helm-charts-status
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
       params:
-        context: generate-chart
-        description: generate-chart
-        path: src
-        state: failure
+        CHART_NAME: postgresql
+    - put: s3.chart
+      resource: s3.postgresql-chart
+      params:
+        file: 'chart/postgresql-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      do:
+      - put: helm-charts-status
+        params:
+          context: generate-postgresql
+          description: generate-postgresql
+          path: src
+          state: failure
     on_success:
       put: helm-charts-status
       params:
-        context: generate-chart
-        description: generate-chart
+        context: generate-postgresql
+        description: generate-postgresql
         path: src
         state: success
 - name: generate-redis
@@ -380,78 +419,41 @@ jobs:
       trigger: true
   - put: helm-charts-status
     params:
-      context: generate-chart
-      description: generate-chart
+      context: generate-redis
+      description: generate-redis
       path: src
       state: pending
-  - task: generate-chart
-    file: src-ci/minibroker/tasks/generate-chart.yaml
-    params:
-      CHART_NAME: redis
-  - put: s3.redis-chart
-    params:
-      file: 'chart/redis-*.tgz'
-      acl: public-read
-    on_failure:
-      put: helm-charts-status
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
       params:
-        context: generate-chart
-        description: generate-chart
-        path: src
-        state: failure
+        CHART_NAME: redis
+    - put: s3.chart
+      resource: s3.redis-chart
+      params:
+        file: 'chart/redis-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      do:
+      - put: helm-charts-status
+        params:
+          context: generate-redis
+          description: generate-redis
+          path: src
+          state: failure
     on_success:
       put: helm-charts-status
       params:
-        context: generate-chart
-        description: generate-chart
-        path: src
-        state: success
-- name: generate-repo
-  plan:
-  - aggregate:
-    - get: src-ci
-    - get: s3.mariadb-chart
-      trigger: true
-      passed:
-      - generate-mariadb
-    - get: s3.mongodb-chart
-      trigger: true
-      passed:
-      - generate-mongodb
-    - get: s3.redis-chart
-      trigger: true
-      passed:
-      - generate-redis
-    - get: s3.postgresql-chart
-      trigger: true
-      passed:
-      - generate-postgres
-  - put: helm-charts-status
-    params:
-      context: generate-repo
-      description: generate-repo
-      path: src
-      state: pending
-  - task: generate-repo
-    file: src-ci/minibroker/tasks/generate-repo.yaml
-    params:
-      MINIBROKER_BUCKET: ((s3-bucket))
-      CHARTS_DIR: ((helm-charts-s3-prefix))
-  - put: s3.helm-charts-repo-index
-    params:
-      file: 'repo/index.yaml'
-      acl: public-read
-    on_failure:
-      put: helm-charts-status
-      params:
-        context: generate-repo
-        description: generate-repo
-        path: src
-        state: failure
-    on_success:
-      put: helm-charts-status
-      params:
-        context: generate-repo
-        description: generate-repo
+        context: generate-redis
+        description: generate-redis
         path: src
         state: success
