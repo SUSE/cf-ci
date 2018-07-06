@@ -127,7 +127,7 @@ groups:
   jobs:
   - generate-mariadb
   - generate-mongodb
-  - generate-postgres
+  - generate-postgresql
   - generate-redis
   - generate-repo
 
@@ -208,7 +208,7 @@ jobs:
     params:
       file: 'chart/mongodb-*.tgz'
       acl: public-read
-- name: generate-postgres
+- name: generate-postgresql
   plan:
   - aggregate:
     - get: src-ci
@@ -259,7 +259,7 @@ jobs:
     - get: s3.postgresql-chart
       trigger: true
       passed:
-      - generate-postgres
+      - generate-postgresql
   - task: generate-repo
     file: src-ci/minibroker/tasks/generate-repo.yaml
     params:
