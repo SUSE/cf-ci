@@ -133,7 +133,6 @@ groups:
 
 jobs:
 - name: build-minibroker-image
-  serial: true
   plan:
   - aggregate:
     - get: src
