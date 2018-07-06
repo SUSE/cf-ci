@@ -7,7 +7,7 @@ src-branch: master
 helm-charts-src-repo:                         charts
 helm-charts-src-name:                    SUSE/charts
 helm-charts-src-repo-ref: git@github.com:SUSE/charts.git
-helm-charts-src-branch: open-service-broker-fixes
+helm-charts-src-branch: suse
 
 ci-repo: https://github.com/SUSE/cf-ci.git
 ci-branch: master
