@@ -69,7 +69,7 @@ resources:
   source:
     <<: *helm-charts-src-configs
     paths:
-    - stable/postgres/**
+    - stable/postgresql/**
 
 - name: src-mariadb
   type: pull-request
