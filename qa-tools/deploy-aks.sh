@@ -47,7 +47,8 @@ export AZ_MC_RG_NAME=$(az group list -o table | grep MC_"$AZ_RG_NAME"_ | awk '{p
 vmnodes=$(az vm list -g $AZ_MC_RG_NAME | jq -r '.[] | select (.tags.poolName | contains("node")) | .name')
 for i in $vmnodes; do
    az vm run-command invoke -g $AZ_MC_RG_NAME -n $i --command-id RunShellScript \
-   --scripts "sudo sed -i 's|linux.*./boot/vmlinuz-.*|& swapaccount=1|' /boot/grub/grub.cfg"
+     --scripts "sudo sed -i 's|linux.*./boot/vmlinuz-.*|& swapaccount=1|' /boot/grub/grub.cfg"
+   sleep 1 # avoid a weird timing issue?
 done
 
 for i in $vmnodes; do
@@ -76,7 +77,7 @@ for i in $AZ_NIC_NAMES; do
     --address-pool $AZ_AKS_NAME-lb-back
 done
 
-export CAP_PORTS="80 443 4443 2222 2793 8443"
+export CAP_PORTS="80 443 4443 2222 2793 8443 $(echo 2000{0..9})"
 
 for i in $CAP_PORTS; do
   az network lb probe create \
@@ -115,6 +116,11 @@ for i in $CAP_PORTS; do
   pri=$(expr $pri + 1)
 done
 
+internal_ips=($(az network nic list --resource-group $AZ_MC_RG_NAME | jq -r '.[].ipConfigurations[].privateIpAddress'))
+public_ip=$(az network public-ip show --resource-group $AZ_MC_RG_NAME --name $AZ_AKS_NAME-public-ip --query ipAddress)
 echo -e "\n Resource Group:\t$AZ_RG_NAME\n \
-Public IP:\t\t$(az network public-ip show --resource-group $AZ_MC_RG_NAME --name $AZ_AKS_NAME-public-ip --query ipAddress)\n \
-Private IPs:\t\t\"$(az network nic list --resource-group $AZ_MC_RG_NAME | jq -r '.[].ipConfigurations[].privateIpAddress' | paste -s -d " " | sed -e 's/ /", "/g')\"\n"
+Public IP:\t\t${public_ip}\n \
+Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
+
+docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system cap-values --from-literal=internal-ip=${internal_ips[0]} --from-literal=public-ip=$public_ip
+cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker run --rm -i -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create -f -
