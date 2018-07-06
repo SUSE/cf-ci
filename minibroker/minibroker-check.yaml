@@ -301,13 +301,12 @@ jobs:
         file: 'repo/index.yaml'
         acl: public-read
     on_failure:
-      do:
-      - put: helm-charts-status
-        params:
-          context: generate-mariadb
-          description: generate-mariadb
-          path: src
-          state: failure
+      put: helm-charts-status
+      params:
+        context: generate-mariadb
+        description: generate-mariadb
+        path: src
+        state: failure
     on_success:
       put: helm-charts-status
       params:
@@ -348,13 +347,12 @@ jobs:
         file: 'repo/index.yaml'
         acl: public-read
     on_failure:
-      do:
-      - put: helm-charts-status
-        params:
-          context: generate-mongodb
-          description: generate-mongodb
-          path: src
-          state: failure
+      put: helm-charts-status
+      params:
+        context: generate-mongodb
+        description: generate-mongodb
+        path: src
+        state: failure
     on_success:
       put: helm-charts-status
       params:
@@ -395,13 +393,12 @@ jobs:
         file: 'repo/index.yaml'
         acl: public-read
     on_failure:
-      do:
-      - put: helm-charts-status
-        params:
-          context: generate-postgresql
-          description: generate-postgresql
-          path: src
-          state: failure
+      put: helm-charts-status
+      params:
+        context: generate-postgresql
+        description: generate-postgresql
+        path: src
+        state: failure
     on_success:
       put: helm-charts-status
       params:
@@ -442,13 +439,12 @@ jobs:
         file: 'repo/index.yaml'
         acl: public-read
     on_failure:
-      do:
-      - put: helm-charts-status
-        params:
-          context: generate-redis
-          description: generate-redis
-          path: src
-          state: failure
+      put: helm-charts-status
+      params:
+        context: generate-redis
+        description: generate-redis
+        path: src
+        state: failure
     on_success:
       put: helm-charts-status
       params:
