@@ -47,7 +47,8 @@ export AZ_MC_RG_NAME=$(az group list -o table | grep MC_"$AZ_RG_NAME"_ | awk '{p
 vmnodes=$(az vm list -g $AZ_MC_RG_NAME | jq -r '.[] | select (.tags.poolName | contains("node")) | .name')
 for i in $vmnodes; do
    az vm run-command invoke -g $AZ_MC_RG_NAME -n $i --command-id RunShellScript \
-   --scripts "sudo sed -i 's|linux.*./boot/vmlinuz-.*|& swapaccount=1|' /boot/grub/grub.cfg"
+     --scripts "sudo sed -i 's|linux.*./boot/vmlinuz-.*|& swapaccount=1|' /boot/grub/grub.cfg"
+   sleep 1 # avoid a weird timing issue?
 done
 
 for i in $vmnodes; do
@@ -76,7 +77,7 @@ for i in $AZ_NIC_NAMES; do
     --address-pool $AZ_AKS_NAME-lb-back
 done
 
-export CAP_PORTS="80 443 4443 2222 2793 8443"
+export CAP_PORTS="80 443 4443 2222 2793 8443 $(echo 2000{0..9})"
 
 for i in $CAP_PORTS; do
   az network lb probe create \
