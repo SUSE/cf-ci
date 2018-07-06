@@ -127,7 +127,7 @@ set_uaa_sizing_params() {
         if semver_is_gte $(helm_chart_version) 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)
         else
-            HELM_PARAMS+=(--set=sizing.HA=true)
+            HELM_PARAMS+=(--set=sizing.HA=false)
         fi
     elif [[ ${SCALED_HA} == true ]]; then
         HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
