@@ -117,7 +117,7 @@ for i in $CAP_PORTS; do
 done
 
 internal_ips=($(az network nic list --resource-group $AZ_MC_RG_NAME | jq -r '.[].ipConfigurations[].privateIpAddress'))
-public_ip=$(az network public-ip show --resource-group $AZ_MC_RG_NAME --name $AZ_AKS_NAME-public-ip --query ipAddress)
+public_ip=$(az network public-ip show --resource-group $AZ_MC_RG_NAME --name $AZ_AKS_NAME-public-ip --query ipAddress --output tsv)
 echo -e "\n Resource Group:\t$AZ_RG_NAME\n \
 Public IP:\t\t${public_ip}\n \
 Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
