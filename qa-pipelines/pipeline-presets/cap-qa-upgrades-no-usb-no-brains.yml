@@ -1,0 +1,12 @@
+---
+
+enable-cf-deploy-pre-upgrade: true
+
+enable-cf-smoke-tests-pre-upgrade: true
+
+enable-cf-upgrade: true
+
+enable-cf-smoke-tests: true
+enable-cf-acceptance-tests: true
+
+enable-cf-teardown: true

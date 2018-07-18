@@ -42,7 +42,7 @@ monitor_url() {
   cf target -o testorg
   cf create-space testspace
   cf target -o testorg -s testspace
-  instance_count=$(helm get scf  | ruby -rjson -ryaml -e 'puts YAML.load(ARGF.read)["sizing"]["diego_cell"]["count"]')
+  instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | jq .spec.replicas)
   cf push -i ${instance_count}
 )
 
