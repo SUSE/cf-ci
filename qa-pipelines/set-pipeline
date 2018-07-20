@@ -40,10 +40,11 @@ while true ; do
     esac
 done
 
-if test -z "${1:-}" ; then
+if test -z "${1:-}" || test -z "${target}" ; then
     usage
     exit 1
 fi
+
 pipeline_file="qa-pipeline.yml"
 vars_file="config-${pool}.yml"
 preset_file=${1}
