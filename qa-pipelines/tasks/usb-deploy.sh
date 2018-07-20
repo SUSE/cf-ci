@@ -20,16 +20,20 @@ fi
 
 # Ensure persistent is the only default storageclass
 for sc in $(kubectl get storageclass | tail -n+2 | cut -f1 -d ' '); do
-  kubectl patch storageclass ${sc} -p '
-    {
-      "metadata": {
-        "annotations": {
-          "storageclass.kubernetes.io/is-default-class":
-            "'$([[ $sc == "persistent" ]] && echo true || echo false)'"
+  sc_desired_default_status=$([[ $sc == "persistent" ]] && echo true || echo false ) 
+  sc_current_default_status=$(kubectl get -o json storageclass persistent | jq -r '.metadata.annotations["storageclass.kubernetes.io/is-default-class"]')
+  if [[ ${sc_current_default_status} != ${sc_desired_default_status} ]]; then
+    kubectl patch storageclass ${sc} -p '
+      {
+        "metadata": {
+          "annotations": {
+            "storageclass.kubernetes.io/is-default-class":
+              "'${sc_desired_default_status}'"
+          }
         }
       }
-    }
-  '
+    '
+  fi
 done
 
 
