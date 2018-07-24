@@ -1,0 +1,454 @@
+---
+shared:
+  helm-charts-s3-configs: &helm-charts-s3-configs
+    access_key_id: ((s3-access-key))
+    bucket: ((s3-bucket))
+    disable_ssl: ((s3-disable-ssl))
+    endpoint: ((s3-endpoint))
+    private: false
+    secret_access_key: ((s3-secret-key))
+  helm-charts-src-configs: &helm-charts-src-configs
+    access_token: ((github-access-token))
+    base: ((helm-charts-src-branch))
+    disable_forks: true
+    private_key: ((github-private-key))
+    repo: ((helm-charts-src-name))
+    uri: ((helm-charts-src-repo-ref))
+  s3-configs: &s3-configs
+    access_key_id: ((s3-access-key))
+    bucket: ((s3-bucket))
+    disable_ssl: ((s3-disable-ssl))
+    endpoint: ((s3-endpoint))
+    private: false
+    secret_access_key: ((s3-secret-key))
+
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
+
+- name: status
+  type: docker-image
+  source:
+    repository: splatform/concourse-github-status
+
+
+resources:
+- name: src
+  type: pull-request
+  source:
+    access_token: ((github-access-token))
+    base: ((src-branch))
+    disable_forks: true
+    private_key: ((github-private-key))
+    repo: ((src-name))
+    uri: ((src-repo-ref))
+
+- name: status
+  type: status
+  source:
+    access_token: ((github-access-token))
+    repo: ((src-name))
+
+- name: helm-charts-status
+  type: status
+  source:
+    access_token: ((github-access-token))
+    repo: ((helm-charts-src-name))
+
+- name: src-redis
+  type: pull-request
+  source:
+    <<: *helm-charts-src-configs
+    paths:
+    - stable/redis/**
+
+- name: src-postgresql
+  type: pull-request
+  source:
+    <<: *helm-charts-src-configs
+    paths:
+    - stable/postgresql/**
+
+- name: src-mariadb
+  type: pull-request
+  source:
+    <<: *helm-charts-src-configs
+    paths:
+    - stable/mariadb/**
+
+- name: src-mongodb
+  type: pull-request
+  source:
+    <<: *helm-charts-src-configs
+    paths:
+    - stable/mongodb/**
+
+- name: src-ci
+  type: git
+  source:
+    uri: ((ci-repo))
+    branch: ((ci-branch))
+    private_key: ((github-private-key))
+    paths:
+    - minibroker
+
+- name: docker.minibroker
+  type: docker-image
+  source:
+    repository: ((docker-org))/minibroker-check
+    username: ((docker-username))
+    password: ((docker-password))
+
+
+- name: s3.repo-index
+  type: s3
+  source:
+    <<: *s3-configs
+    versioned_file: ((s3-prefix))/checks/index.yaml
+
+- name: s3.minibroker-chart
+  type: s3
+  source:
+    <<: *s3-configs
+    regexp: ((s3-prefix))/checks/minibroker-(.*).tgz
+
+- name: s3.helm-charts-repo-index
+  type: s3
+  source:
+    <<: *helm-charts-s3-configs
+    versioned_file: ((helm-charts-s3-prefix))/checks/index.yaml
+
+- name: s3.redis-chart
+  type: s3
+  source:
+    <<: *helm-charts-s3-configs
+    regexp: ((helm-charts-s3-prefix))/checks/redis-(.*).tgz
+
+- name: s3.postgresql-chart
+  type: s3
+  source:
+    <<: *helm-charts-s3-configs
+    regexp: ((helm-charts-s3-prefix))/checks/postgresql-(.*).tgz
+
+- name: s3.mariadb-chart
+  type: s3
+  source:
+    <<: *helm-charts-s3-configs
+    regexp: ((helm-charts-s3-prefix))/checks/mariadb-(.*).tgz
+
+- name: s3.mongodb-chart
+  type: s3
+  source:
+    <<: *helm-charts-s3-configs
+    regexp: ((helm-charts-s3-prefix))/checks/mongodb-(.*).tgz
+
+groups:
+- name: minibroker
+  jobs:
+  - build-minibroker-image
+  - generate-minibroker-chart
+  - generate-minibroker-repo
+- name: charts
+  jobs:
+  - generate-mariadb
+  - generate-mongodb
+  - generate-postgresql
+  - generate-redis
+
+jobs:
+- name: build-minibroker-image
+  plan:
+  - aggregate:
+    - get: src
+      trigger: true
+    - get: src-ci
+  - put: status
+    params:
+      context: build-minibroker
+      description: build-minibroker
+      path: src
+      state: pending
+  - do:
+    - task: build-minibroker
+      file: src-ci/minibroker/tasks/build-minibroker.yaml
+    - put: docker.minibroker
+      params:
+        build: minibroker/src/image
+    on_failure:
+      put: status
+      params:
+        context: build-minibroker
+        description: build-minibroker
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: build-minibroker
+        description: build-minibroker
+        path: src
+        state: success
+
+
+- name: generate-minibroker-chart
+  plan:
+  - aggregate:
+    - get: src-ci
+    - get: src
+    - get: docker.minibroker
+      trigger: true
+      passed:
+      - build-minibroker-image
+  - put: status
+    params:
+      context: generate-minibroker-chart
+      description: generate-minibroker-chart
+      path: src
+      state: pending
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-minibroker-chart.yaml
+    - put: s3.minibroker-chart
+      params:
+        file: 'chart/minibroker-*.tgz'
+        acl: public-read
+    on_failure:
+      put: status
+      params:
+        context: generate-minibroker-chart
+        description: generate-minibroker-chart
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: generate-minibroker-chart
+        description: generate-minibroker-chart
+        path: src
+        state: success
+- name: generate-minibroker-repo
+  plan:
+  - aggregate:
+    # src is needed to get the PR's commit for the status update
+    - get: src
+    - get: src-ci
+    - get: s3.minibroker-chart
+      trigger: true
+      passed:
+      - generate-minibroker-chart
+  - put: status
+    params:
+      context: generate-minibroker-repo
+      description: generate-minibroker-repo
+      path: src
+      state: pending
+  - do:
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-minibroker-repo.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((s3-prefix))/checks/
+    - put: s3.repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      put: status
+      params:
+        context: generate-minibroker-repo
+        description: generate-minibroker-repo
+        path: src
+        state: failure
+    on_success:
+      put: status
+      params:
+        context: generate-minibroker-repo
+        description: generate-minibroker-repo
+        path: src
+        state: success
+- name: generate-mariadb
+  plan:
+  - aggregate:
+    - get: src-ci
+    - get: src
+      resource: src-mariadb
+      trigger: true
+  - put: helm-charts-status
+    params:
+      context: generate-mariadb
+      description: generate-mariadb
+      path: src
+      state: pending
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
+      params:
+        CHART_NAME: mariadb
+    - put: s3.chart
+      resource: s3.mariadb-chart
+      params:
+        file: 'chart/mariadb-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))/checks/
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      put: helm-charts-status
+      params:
+        context: generate-mariadb
+        description: generate-mariadb
+        path: src
+        state: failure
+    on_success:
+      put: helm-charts-status
+      params:
+        context: generate-mariadb
+        description: generate-mariadb
+        path: src
+        state: success
+- name: generate-mongodb
+  plan:
+  - aggregate:
+    - get: src-ci
+    - get: src
+      resource: src-mongodb
+      trigger: true
+  - put: helm-charts-status
+    params:
+      context: generate-mongodb
+      description: generate-mongodb
+      path: src
+      state: pending
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
+      params:
+        CHART_NAME: mongodb
+    - put: s3.chart
+      resource: s3.mongodb-chart
+      params:
+        file: 'chart/mongodb-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))/checks/
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      put: helm-charts-status
+      params:
+        context: generate-mongodb
+        description: generate-mongodb
+        path: src
+        state: failure
+    on_success:
+      put: helm-charts-status
+      params:
+        context: generate-mongodb
+        description: generate-mongodb
+        path: src
+        state: success
+- name: generate-postgresql
+  plan:
+  - aggregate:
+    - get: src-ci
+    - get: src
+      resource: src-postgresql
+      trigger: true
+  - put: helm-charts-status
+    params:
+      context: generate-postgresql
+      description: generate-postgresql
+      path: src
+      state: pending
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
+      params:
+        CHART_NAME: postgresql
+    - put: s3.chart
+      resource: s3.postgresql-chart
+      params:
+        file: 'chart/postgresql-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))/checks/
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      put: helm-charts-status
+      params:
+        context: generate-postgresql
+        description: generate-postgresql
+        path: src
+        state: failure
+    on_success:
+      put: helm-charts-status
+      params:
+        context: generate-postgresql
+        description: generate-postgresql
+        path: src
+        state: success
+- name: generate-redis
+  plan:
+  - aggregate:
+    - get: src-ci
+    - get: src
+      resource: src-redis
+      trigger: true
+  - put: helm-charts-status
+    params:
+      context: generate-redis
+      description: generate-redis
+      path: src
+      state: pending
+  - do:
+    - task: generate-chart
+      file: src-ci/minibroker/tasks/generate-chart.yaml
+      params:
+        CHART_NAME: redis
+    - put: s3.chart
+      resource: s3.redis-chart
+      params:
+        file: 'chart/redis-*.tgz'
+        acl: public-read
+    - task: generate-repo
+      file: src-ci/minibroker/tasks/generate-repo-check.yaml
+      params:
+        MINIBROKER_BUCKET: ((s3-bucket))
+        CHARTS_DIR: ((helm-charts-s3-prefix))/checks/
+    - put: s3.helm-charts-repo-index
+      params:
+        file: 'repo/index.yaml'
+        acl: public-read
+    on_failure:
+      put: helm-charts-status
+      params:
+        context: generate-redis
+        description: generate-redis
+        path: src
+        state: failure
+    on_success:
+      put: helm-charts-status
+      params:
+        context: generate-redis
+        description: generate-redis
+        path: src
+        state: success

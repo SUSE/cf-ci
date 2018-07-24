@@ -1,0 +1,23 @@
+src-owner:                   SUSE
+src-repo:                         minibroker
+src-name:                    SUSE/minibroker
+src-repo-ref: git@github.com:SUSE/minibroker.git
+src-branch: master
+
+helm-charts-src-repo:                         charts
+helm-charts-src-name:                    SUSE/charts
+helm-charts-src-repo-ref: git@github.com:SUSE/charts.git
+helm-charts-src-branch: suse
+
+ci-repo: https://github.com/SUSE/cf-ci.git
+ci-branch: master
+
+s3-endpoint: ~
+s3-disable-ssl: false
+s3-access-key: *aws-access-key
+s3-secret-key: *aws-secret-key
+s3-bucket: minibroker-helm-charts
+s3-prefix: /minibroker-charts
+helm-charts-s3-prefix: /kubernetes-charts
+
+helm-version: 2.9.1
