@@ -120,6 +120,7 @@ set_helm_params() {
     if [ -n "${KUBE_ORGANIZATION:-}" ]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
+    HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
 set_uaa_sizing_params() {
@@ -153,7 +154,8 @@ set -o allexport
 # The external_ip is set to the internal ip of a worker node. When running on openstack or azure, 
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
-public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"] // empty')
+public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
+garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
 # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
 # referenced by external_ip.
