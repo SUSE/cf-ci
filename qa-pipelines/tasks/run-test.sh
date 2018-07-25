@@ -7,7 +7,8 @@ if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
   TEST_NAME=acceptance-tests-brain
-elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]]; then
+elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
+     [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
   TEST_NAME=acceptance-tests
 else
   echo "run-tests.sh: No test flag set. Skipping tests"
