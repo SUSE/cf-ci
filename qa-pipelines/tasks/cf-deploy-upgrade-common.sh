@@ -23,7 +23,7 @@ fi
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
-PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+#PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
@@ -106,7 +106,11 @@ get_internal_ca_cert() {
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "kube.external_ips[0]=${external_ip}")
+                 --set "kube.external_ips[0]=${external_ip}"
+                 --set "env.GARDEN_ROOTFS_DRIVER=overlay-xfs"
+                 --set "env.GARDEN_APPARMOR_PROFILE="
+                 --set "kube.storage_class.persistent=gp2"
+                 --set "kube.storage_class.shared=gp2")
 
     if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
@@ -120,7 +124,6 @@ set_helm_params() {
     if [ -n "${KUBE_ORGANIZATION:-}" ]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
-    HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
 set_uaa_sizing_params() {
@@ -136,6 +139,14 @@ set_uaa_sizing_params() {
 }
 
 set_scf_sizing_params() {
+    HELM_PARAMS+=(--set sizing.cc_uploader.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.nats.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.routing_api.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.router.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_locket.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_access.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_brain.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_api.capabilities={"ALL"})
     if [[ ${HA} == true ]]; then
         if semver_is_gte $(helm_chart_version) 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)
@@ -152,11 +163,15 @@ set_scf_sizing_params() {
 set -o allexport
 
 # The internal/external and public IP addresses are now taken from the configmap set by prep-new-cluster
-# The external_ip is set to the internal ip of a worker node. When running on openstack or azure, 
+# The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
-external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
-public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
-garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
+
+#external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
+#public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
+#garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
+
+external_ip=192.168.133.66
+public_ip=52.36.224.251
 
 # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
 # referenced by external_ip.
