@@ -2,12 +2,12 @@ src-owner:                   SUSE
 src-repo:                         minibroker
 src-name:                    SUSE/minibroker
 src-repo-ref: git@github.com:SUSE/minibroker.git
-src-branch: master
+src-branch: suse-cf
 
 helm-charts-src-repo:                         charts
 helm-charts-src-name:                    SUSE/charts
 helm-charts-src-repo-ref: git@github.com:SUSE/charts.git
-helm-charts-src-branch: suse
+helm-charts-src-branch: suse-cf
 
 ci-repo: https://github.com/SUSE/cf-ci.git
 ci-branch: master
