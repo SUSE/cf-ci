@@ -22,7 +22,6 @@ else
   exit 0
 fi
 
-set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 011
 EXCLUDE_BRAINS_PREFIX=011
@@ -54,7 +53,7 @@ kube_overrides() {
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
                 if env['name'] == "MONIT_PASSWORD"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
             end
             if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix

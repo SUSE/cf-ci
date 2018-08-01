@@ -8,7 +8,7 @@ fi
 
 set -o nounset
 
-source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
+source "cf-ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
@@ -17,10 +17,10 @@ echo UAA customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 # Deploy UAA
-kubectl create namespace "${UAA_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
-fi
+#kubectl create namespace "${UAA_NAMESPACE}"
+# if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
+#     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
+# fi
 
 helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
@@ -40,10 +40,10 @@ set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 echo SCF customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-kubectl create namespace "${CF_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
-fi
+#kubectl create namespace "${CF_NAMESPACE}"
+# if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
+#     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
+# fi
 
 helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \

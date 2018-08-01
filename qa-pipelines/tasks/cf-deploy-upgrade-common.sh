@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
+# mkdir -p /root/.kube/
+# cp pool.kube-hosts/metadata /root/.kube/config
 
 UAA_PORT=2793
 
@@ -123,7 +123,7 @@ set_helm_params() {
     fi
     if [ -n "${KUBE_ORGANIZATION:-}" ]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
-    fi
+    fi 
 }
 
 set_uaa_sizing_params() {
