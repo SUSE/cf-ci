@@ -66,6 +66,13 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
+# Previous versions have pods that aren't in a ready state because they
+# were a passive role. 2.11+ passive roles show ready, so we don't need this
+# flag.
+if [[ $(helm_chart_version) == "2.11.0" ]]; then
+        HELM_PARAMS+=(--recreate-pods)
+fi
+
 for role in blobstore diego-cell doppler nats ; do kubectl delete sts --namespace=${CF_NAMESPACE} --cascade=false $role ; done
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
