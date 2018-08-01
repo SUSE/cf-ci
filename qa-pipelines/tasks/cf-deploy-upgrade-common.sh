@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
+# mkdir -p /root/.kube/
+# cp pool.kube-hosts/metadata /root/.kube/config
 
 UAA_PORT=2793
 
@@ -22,7 +22,7 @@ fi
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
-PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+#PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
@@ -123,7 +123,7 @@ set_helm_params() {
     fi
     if [ -n "${KUBE_ORGANIZATION:-}" ]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
-    fi
+    fi 
 }
 
 set_uaa_sizing_params() {
@@ -138,6 +138,14 @@ set_uaa_sizing_params() {
 }
 
 set_scf_sizing_params() {
+    HELM_PARAMS+=(--set sizing.cc_uploader.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.nats.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.routing_api.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.router.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_locket.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_access.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_brain.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.diego_api.capabilities={"ALL"})
     if [[ ${HA} == true ]]; then
         if semver_is_gte $(helm_chart_version) 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)

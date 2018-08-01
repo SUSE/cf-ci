@@ -8,16 +8,16 @@ fi
 
 set -o nounset
 
-source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
+source "cf-ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
 # Deploy UAA
-kubectl create namespace "${UAA_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
-fi
+#kubectl create namespace "${UAA_NAMESPACE}"
+# if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
+#     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
+# fi
 
 helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
@@ -34,10 +34,10 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
-kubectl create namespace "${CF_NAMESPACE}"
-if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
-fi
+#kubectl create namespace "${CF_NAMESPACE}"
+# if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
+#     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
+# fi
 
 helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
