@@ -95,3 +95,9 @@ subjects:
 - kind: ServiceAccount
   name: default
   namespace: stratos
+- kind: ServiceAccount
+  name: default
+  namespace: pg-sidecar
+- kind: ServiceAccount
+  name: default
+  namespace: mysql-sidecar
