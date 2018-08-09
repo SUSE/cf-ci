@@ -14,7 +14,7 @@ set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
 echo UAA customization ...
-echo "${HELM_PARAMS[@]}"
+echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 # Deploy UAA
 kubectl create namespace "${UAA_NAMESPACE}"
@@ -38,7 +38,7 @@ set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
 echo SCF customization ...
-echo "${HELM_PARAMS[@]}"
+echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
