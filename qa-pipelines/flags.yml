@@ -11,8 +11,15 @@ enable-cf-deploy-pre-upgrade: true
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true
 
+# This should *only* ever be true when running a *full* pre-upgrade pipeline. The only reason to do this is
+# when you want to deploy a pipeline which uses a custom config URL instead of determining it from the
+# s3.scf-config-* resources. A typical upgrade pipeline only runs cats post-upgrade, and a typical deploy
+# pipeline has all the 'pre-upgrade' flags set to false
+enable-cf-acceptance-tests-pre-upgrade: false
+
 # deploy mysql and postgres services, sidecars, and sample apps before an upgrade
 enable-usb-deploy: true
+
 
 # upgrade cf deployment to latest. When this is set to true, URLs for the pre-upgrade charts should be provide
 enable-cf-upgrade: true

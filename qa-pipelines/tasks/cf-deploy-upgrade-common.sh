@@ -12,6 +12,7 @@ CAP_DIRECTORY=s3.scf-config
 
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
     # For pre-upgrade deploys
+    echo "Using CAP ${CAP_INSTALL_VERSION}"
     curl ${CAP_INSTALL_VERSION} -Lo cap-install-version.zip
     export CAP_DIRECTORY=cap-install-version
     unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/

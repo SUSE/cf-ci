@@ -97,6 +97,14 @@ jobs:
       ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
+  - task: acceptance-tests-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
   - task: usb-deploy
     file: ci/qa-pipelines/tasks/usb-deploy.yml
     params:
@@ -203,6 +211,14 @@ jobs:
       ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
   - task: usb-deploy
     file: ci/qa-pipelines/tasks/usb-deploy.yml
     params:
@@ -313,6 +329,14 @@ jobs:
       ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-opensuse
+  - task: acceptance-tests-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: -opensuse
+      CAP_INSTALL_VERSION: ((cap-opensuse-url))
+      ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
   - task: usb-deploy
     file: ci/qa-pipelines/tasks/usb-deploy.yml
     params:
@@ -419,6 +443,14 @@ jobs:
       ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-opensuse
   - task: usb-deploy
     file: ci/qa-pipelines/tasks/usb-deploy.yml
     params:
