@@ -108,11 +108,12 @@ jobs:
       description: test
       path: src
       state: pending
-  - task: tools
-    file: src-ci/cf-usb-plugin/tasks/tools.yaml
-  - task: test
-    privileged: true
-    file: src-ci/cf-usb-plugin/tasks/test.yaml
+  - do:
+    - task: tools
+      file: src-ci/cf-usb-plugin/tasks/tools.yaml
+    - task: test
+      privileged: true
+      file: src-ci/cf-usb-plugin/tasks/test.yaml
     on_failure:
       put: status
       params:
@@ -205,10 +206,11 @@ jobs:
       description: build
       path: src
       state: pending
-  - task: tools
-    file: src-ci/cf-usb-plugin/tasks/tools.yaml
-  - task: build
-    file: src-ci/cf-usb-plugin/tasks/build.yaml
+  - do:
+    - task: tools
+      file: src-ci/cf-usb-plugin/tasks/tools.yaml
+    - task: build
+      file: src-ci/cf-usb-plugin/tasks/build.yaml
     on_failure:
       put: status
       params:
@@ -239,20 +241,21 @@ jobs:
       description: packaging
       path: src
       state: pending
-  - task: tools
-    file: src-ci/cf-usb-plugin/tasks/tools.yaml
-  - task: dist
-    file: src-ci/cf-usb-plugin/tasks/dist.yaml
-  - aggregate:
-    - put: s3.cf-usb-plugin-check.linux-amd64
-      params:
-        file: 'cf-usb-plugin/cf-usb-plugin-*linux-amd64*.tgz'
-    - put: s3.cf-usb-plugin-check.darwin-amd64
-      params:
-        file: 'cf-usb-plugin/cf-usb-plugin-*darwin-amd64*.tgz'
-    - put: s3.cf-usb-plugin-check.windows-amd64
-      params:
-        file: 'cf-usb-plugin/cf-usb-plugin-*windows-amd64*.tgz'
+  - do:
+    - task: tools
+      file: src-ci/cf-usb-plugin/tasks/tools.yaml
+    - task: dist
+      file: src-ci/cf-usb-plugin/tasks/dist.yaml
+    - aggregate:
+      - put: s3.cf-usb-plugin-check.linux-amd64
+        params:
+          file: 'cf-usb-plugin/cf-usb-plugin-*linux-amd64*.tgz'
+      - put: s3.cf-usb-plugin-check.darwin-amd64
+        params:
+          file: 'cf-usb-plugin/cf-usb-plugin-*darwin-amd64*.tgz'
+      - put: s3.cf-usb-plugin-check.windows-amd64
+        params:
+          file: 'cf-usb-plugin/cf-usb-plugin-*windows-amd64*.tgz'
     on_failure:
       put: status
       params:
