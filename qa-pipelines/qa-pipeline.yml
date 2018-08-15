@@ -218,7 +218,7 @@ jobs:
       CAP_INSTALL_VERSION: ((cap-sle-url))
       ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
     input_mapping:
-      s3.scf-config: s3.scf-config-opensuse
+      s3.scf-config: s3.scf-config-sles
   - task: usb-deploy
     file: ci/qa-pipelines/tasks/usb-deploy.yml
     params:
@@ -450,7 +450,7 @@ jobs:
       CAP_INSTALL_VERSION: ((cap-sle-url))
       ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
     input_mapping:
-      s3.scf-config: s3.scf-config-opensuse
+      s3.scf-config: s3.scf-config-sles
   - task: usb-deploy
     file: ci/qa-pipelines/tasks/usb-deploy.yml
     params:
