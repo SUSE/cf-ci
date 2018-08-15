@@ -107,7 +107,8 @@ set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "kube.external_ips[0]=${external_ip}"
-                 --set "kube.auth=rbac")
+                 --set "kube.auth=rbac"
+                 --set "kube.hostpath_available=true")
 
     if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
@@ -153,7 +154,7 @@ set_scf_sizing_params() {
 set -o allexport
 
 # The internal/external and public IP addresses are now taken from the configmap set by prep-new-cluster
-# The external_ip is set to the internal ip of a worker node. When running on openstack or azure, 
+# The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
 public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
