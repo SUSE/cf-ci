@@ -11,6 +11,7 @@ spec:
   privileged: true
   # Volumes and File Systems
   volumes:
+    - hostPath
     # Kubernetes Pseudo Volume Types
     - configMap
     - secret
@@ -38,7 +39,8 @@ spec:
     # control anyway as a belt+braces protection. /dev/null may be a better
     # option, but the implications of pointing this towards a device are
     # unclear.
-    - pathPrefix: /opt/kubernetes-hostpath-volumes
+    #- pathPrefix: /opt/kubernetes-hostpath-volumes
+    - pathPrefix: /sys/fs/cgroup
   readOnlyRootFilesystem: false
   # Users and groups
   runAsUser:
