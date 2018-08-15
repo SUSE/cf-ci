@@ -1,5 +1,4 @@
 ---
-src-repo: https://github.com/SUSE/scf.git
 src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
 
