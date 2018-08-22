@@ -101,3 +101,9 @@ subjects:
 - kind: ServiceAccount
   name: default
   namespace: mysql-sidecar
+# Workaround test-brain serviceaccount psp issue for brains tests.
+# We should remove the line which checks for this in run-test when we have a better
+# way of adding the appropriate permissions to the brain tests
+- kind: ServiceAccount
+  name: test-brain
+  namespace: scf
