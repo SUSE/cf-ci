@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit
 
+
+# Set kube config from pool
+mkdir -p /root/.kube/
+cp  pool.kube-hosts/metadata /root/.kube/config
+
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
   TEST_NAME=smoke-tests
@@ -19,11 +24,6 @@ else
 fi
 
 set -o nounset
-
-# Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
-
 set -o allexport
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 CF_NAMESPACE=scf
