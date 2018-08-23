@@ -79,6 +79,8 @@ helm upgrade --force scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
 # Wait for CF namespace
 wait_for_namespace "${CF_NAMESPACE}"
 echo "Post Upgrade State:"
+cf api --skip-ssl-validation "https://api.${DOMAIN}"
+cf login -u admin -p changeme -o system
 cf orgs
 cf apps
 
