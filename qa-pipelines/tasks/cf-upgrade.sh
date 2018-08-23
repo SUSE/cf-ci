@@ -78,11 +78,10 @@ helm upgrade --force scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
 
 # Wait for CF namespace
 wait_for_namespace "${CF_NAMESPACE}"
-echo "Post Upgrade State:"
+echo "Post Upgrade Orgs State:"
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
 cf orgs
-cf apps
 
 # While the background app monitoring job is running, *and* the app isn't yet ready, sleep
 while jobs %% &>/dev/null && ! tail -1 ${monitor_file} | grep -q "200 OK"; do
