@@ -34,8 +34,7 @@ curl ${cap_upgrade_url} -o ${cap_upgrade_version}.zip
 
 HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
              --set "env.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-             --set "kube.external_ip=${external_ip}"
-             --set "kube.auth=rbac")
+             --set "kube.external_ip=${external_ip}" }
 if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME}")
 fi
