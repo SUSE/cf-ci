@@ -7,12 +7,12 @@ if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
   TEST_NAME=acceptance-tests-brain
-elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
-     [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
-  TEST_NAME=acceptance-tests
   if ! kubectl get clusterrolebinding -o json cap:clusterrole | jq -e  '.subjects[] | select(.name=="test-brain")' > /dev/null; then
     kubectl apply -f ci/qa-tools/cap-psp-rbac.yaml
   fi
+elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
+     [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
+  TEST_NAME=acceptance-tests
 else
   echo "run-tests.sh: No test flag set. Skipping tests"
   exit 0
