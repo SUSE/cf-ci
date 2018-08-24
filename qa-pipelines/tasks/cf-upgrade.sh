@@ -66,15 +66,14 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
-helm upgrade --force scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
+helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --timeout 600 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
-    "${HELM_PARAMS[@]}" \
-    --recreate-pods
+    "${HELM_PARAMS[@]}"
 
 # Wait for CF namespace
 wait_for_namespace "${CF_NAMESPACE}"
