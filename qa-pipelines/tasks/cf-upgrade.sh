@@ -33,11 +33,13 @@ monitor_url() {
   done
 }
 
+# Create pre-upgrade user
 # push app in subshell to avoid changing directory
 (
   cd ci/sample-apps/go-env
   cf api --skip-ssl-validation "https://api.${DOMAIN}"
   cf login -u admin -p changeme -o system
+  cf create-user pre-upgrade-user pre-upgrade-user
   cf create-org testorg
   cf target -o testorg
   cf create-space testspace
@@ -77,9 +79,11 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
 
 # Wait for CF namespace
 wait_for_namespace "${CF_NAMESPACE}"
-echo "Post Upgrade Orgs State:"
+echo "Post Upgrade Users and Orgs State:"
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
+oauth-token=$(cf oauth-token)
+curl -sk "https://api.${DOMAIN}/v2/users" -X GET -H "Authorization: $oauth-token" | grep "username"
 cf orgs
 
 # While the background app monitoring job is running, *and* the app isn't yet ready, sleep
