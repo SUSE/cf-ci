@@ -83,7 +83,6 @@ wait_for_namespace "${CF_NAMESPACE}"
 echo "Post Upgrade Users and Orgs State:"
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
-oauth-token=$(cf oauth-token)
 cf  curl /v2/users | grep "username"
 cf orgs
 
