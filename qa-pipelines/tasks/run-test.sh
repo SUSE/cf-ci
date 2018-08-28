@@ -1,12 +1,19 @@
 #!/bin/bash
 set -o errexit
 
+# Set kube config from pool
+mkdir -p /root/.kube/
+cp  pool.kube-hosts/metadata /root/.kube/config
+
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
   TEST_NAME=smoke-tests
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
   TEST_NAME=acceptance-tests-brain
+  if ! kubectl get clusterrolebinding -o json cap:clusterrole | jq -e  '.subjects[] | select(.name=="test-brain")' > /dev/null; then
+    kubectl apply -f ci/qa-tools/cap-psp-rbac.yaml
+  fi
 elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
      [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
   TEST_NAME=acceptance-tests
@@ -16,12 +23,9 @@ else
 fi
 
 set -o nounset
-
-# Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
-
 set -o allexport
+# Set this to skip a test, e.g. 011
+EXCLUDE_BRAINS_PREFIX=011
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 CF_NAMESPACE=scf
 CAP_DIRECTORY=s3.scf-config
@@ -43,6 +47,7 @@ kube_overrides() {
     ruby <<EOF
         require 'yaml'
         require 'json'
+        exclude_brains_prefix = ENV["EXCLUDE_BRAINS_PREFIX"]
         obj = YAML.load_file('$1')
         obj['spec']['containers'].each do |container|
             container['env'].each do |env|
@@ -52,10 +57,12 @@ kube_overrides() {
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
                 end
             end
+            if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
+                container['env'].push name: "EXCLUDE", value: exclude_brains_prefix
+            end
             container.delete "resources"
         end
         puts obj.to_json
-
 EOF
 }
 

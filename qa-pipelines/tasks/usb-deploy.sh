@@ -13,7 +13,8 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
-if [[ ${PROVISIONER} != "nfs" ]]; then
+nfs_regex='\bnfs'
+if ! [[ ${PROVISIONER} =~ $nfs_regex ]]; then
   echo "postgres and mysql charts can only be deployed with NFS storageclass"
   exit 1
 fi
