@@ -83,8 +83,10 @@ wait_for_namespace "${CF_NAMESPACE}"
 echo "Post Upgrade Users and Orgs State:"
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
-cf  curl /v2/users | grep "username"
+echo "List of Orgs, post-upgrade:"
 cf orgs
+echo "Checking /v2/users for 'pre-upgrade-user':"
+cf curl /v2/users | jq -e '.resources[] | .entity.username | select( . == "pre-upgrade-user")'
 
 # While the background app monitoring job is running, *and* the app isn't yet ready, sleep
 while jobs %% &>/dev/null && ! tail -1 ${monitor_file} | grep -q "200 OK"; do
