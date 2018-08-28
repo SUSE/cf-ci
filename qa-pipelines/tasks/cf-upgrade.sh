@@ -33,18 +33,18 @@ monitor_url() {
   done
 }
 
-# Create pre-upgrade user
+# Create pre-upgrade user, testorg and Push pre-upgrade app
+cf api --skip-ssl-validation "https://api.${DOMAIN}"
+cf login -u admin -p changeme -o system
+cf create-user pre-upgrade-user pre-upgrade-user
+cf create-org testorg
+cf target -o testorg
+cf create-space testspace
+cf target -o testorg -s testspace
+instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | jq .spec.replicas)
 # push app in subshell to avoid changing directory
 (
   cd ci/sample-apps/go-env
-  cf api --skip-ssl-validation "https://api.${DOMAIN}"
-  cf login -u admin -p changeme -o system
-  cf create-user pre-upgrade-user pre-upgrade-user
-  cf create-org testorg
-  cf target -o testorg
-  cf create-space testspace
-  cf target -o testorg -s testspace
-  instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | jq .spec.replicas)
   cf push -i ${instance_count}
 )
 
@@ -79,11 +79,12 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
 
 # Wait for CF namespace
 wait_for_namespace "${CF_NAMESPACE}"
+
 echo "Post Upgrade Users and Orgs State:"
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
 oauth-token=$(cf oauth-token)
-curl -sk "https://api.${DOMAIN}/v2/users" -X GET -H "Authorization: $oauth-token" | grep "username"
+cf  curl /v2/users | grep "username"
 cf orgs
 
 # While the background app monitoring job is running, *and* the app isn't yet ready, sleep
