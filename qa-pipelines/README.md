@@ -44,6 +44,8 @@ Example usage:
 
 When a new pipeline is deployed, all jobs will be paused, so when you want to start a new build from a job on this pipeline, you can drill down to the job in the concourse UI, unpause it, and click the '+' sign.
 
+Additionally, when deploying a pipeline, a `CONCOURSE_SECRETS_FILE` environment variable must be set, which points to the location of the file `secure/concourse-secrets.yml.gpg` from your clone of https://github.com/SUSE/cloudfoundry. You must have a private GPG key in your keyring capable of decrypting this file.
+
 # Pool requirements
 
 In our usage of [concourse pools](https://github.com/concourse/pool-resource), the lock files used by concourse signal which kubernetes deployments are available, but should also be valid kubernetes configs for accessing those kubernetes hosts. When a config is taken from the `unlocked/` directory by a pipeline which is running a cf-deploy task (see [Additional considerations](#additional-considerations) for an example case where this may not be true), the cf-deploy task expects that the kubernetes deployment does not have existing `scf` or `uaa` namespaces, and that its tiller also does not have `scf` or `uaa` releases (even historical ones... this means they should be deleted with `helm delete --purge`)
