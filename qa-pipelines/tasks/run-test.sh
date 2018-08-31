@@ -60,6 +60,10 @@ kube_overrides() {
             if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
                 container['env'].push name: "EXCLUDE", value: exclude_brains_prefix
             end
+            if obj['metadata']['name'] == "acceptance-tests"
+                container['env'].push name: "CATS_SUITES", value: '${CATS_SUITES:-}'
+                container['env'].push name: "CATS_RERUN", value: '${CATS_RERUN:-}'
+            end
             container.delete "resources"
         end
         puts obj.to_json
@@ -87,8 +91,44 @@ done
 
 pod_status=$(container_status ${TEST_NAME})
 
+if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
+  export CATS_RERUN=1
+  while [[ $CATS_RERUN -lt 5 ]] && [[ $pod_status -gt 0 ]]; do
+    export CATS_SUITES="=$(
+        # Gets comma-separated list of all failing tests.
+        # The first tr removes the formatting control characters from the test output, because it breaks grep
+        # The sed command is required because the displayed names for docker and ssh suites are different from the variable
+        # expected by CATS to run those tests (diego_docker and diego_ssh respectively)
+        kubectl logs --namespace=scf ${TEST_NAME} \
+        | tr -d '\000\001\220\221\133\033\071\060\061\155' \
+        | grep -oE '^Fail\] [a-zA-Z]+\]' \
+        | tr -d ']' \
+        | cut -f 2 -d ' ' \
+        | sort \
+        | uniq \
+        | sed -r 's/^(docker|ssh)$/diego_\1/g' \ 
+        | tr '\n' ','
+    )"
+    echo "CATS_SUITES=$CATS_SUITES"
+    kubectl delete pod --namespace=scf ${TEST_NAME}
+    kubectl run \
+        --namespace="${CF_NAMESPACE}" \
+        --attach \
+        --restart=Never \
+        --image="${image}" \
+        --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+        "${TEST_NAME}" ||:
+
+    while [[ -z $(container_status ${TEST_NAME}) ]]; do
+      kubectl attach --namespace=scf ${TEST_NAME} ||:
+    done
+    pod_status=$(container_status ${TEST_NAME})
+    ((CATS_RERUN+=1))
+  done
+fi
+
 # Delete test pod if they pass. Required pre upgrade
-if [[ $pod_status -eq 0 ]] ; then
+if [[ $pod_status -eq 0 ]]; then
   kubectl delete pod --namespace=scf ${TEST_NAME}
 fi
 exit $pod_status
