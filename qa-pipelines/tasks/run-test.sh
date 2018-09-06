@@ -26,6 +26,8 @@ set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 011
 EXCLUDE_BRAINS_PREFIX=011
+# Set this to define number of parallel ginkgo nodes in the acceptance test pod
+ACCEPTANCE_TEST_NODES=3
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 CF_NAMESPACE=scf
 CAP_DIRECTORY=s3.scf-config
@@ -53,6 +55,7 @@ kube_overrides() {
             container['env'].each do |env|
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
+                env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
                 if env['name'] == "MONIT_PASSWORD"
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
                 end
