@@ -8,7 +8,7 @@ fi
 
 set -o nounset
 
-source "cf-ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
+source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
