@@ -7,8 +7,8 @@ if [[ $ENABLE_USB_DEPLOY != true ]]; then
 fi
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
+# mkdir -p /root/.kube/
+# cp  pool.kube-hosts/metadata /root/.kube/config
 
 DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
@@ -21,7 +21,7 @@ fi
 
 # Ensure persistent is the only default storageclass
 for sc in $(kubectl get storageclass | tail -n+2 | cut -f1 -d ' '); do
-  sc_desired_default_status=$([[ $sc == "persistent" ]] && echo true || echo false ) 
+  sc_desired_default_status=$([[ $sc == "persistent" ]] && echo true || echo false )
   sc_current_default_status=$(kubectl get -o json storageclass persistent | jq -r '.metadata.annotations["storageclass.kubernetes.io/is-default-class"]')
   if [[ ${sc_current_default_status} != ${sc_desired_default_status} ]]; then
     kubectl patch storageclass ${sc} -p '

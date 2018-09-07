@@ -6,7 +6,7 @@ if [[ $ENABLE_CF_UPGRADE != true ]]; then
   exit 0
 fi
 
-source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
+source "cf-ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
 # monitor_url takes a URL argument and a path to a log file
 # This will time out after 3 hours. Until then, repeatedly curl the URL with a 1-second wait period, and log the response

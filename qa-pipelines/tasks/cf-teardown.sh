@@ -6,9 +6,9 @@ if [[ $ENABLE_CF_TEARDOWN != true ]]; then
   exit 1
 fi
 
-# Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
+# # Set kube config from pool
+# mkdir -p /root/.kube/
+# cp pool.kube-hosts/metadata /root/.kube/config
 
 set -o allexport
 CF_NAMESPACE=scf
