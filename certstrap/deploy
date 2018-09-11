@@ -60,6 +60,6 @@ fly \
     --load-vars-from=<(
         # We concatenate the two vars files together so that the config vars can
         # refer to secret vars correctly
-        ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
-        sed '/^---$/d' < "${vars_file}"                        # Config vars
+        ${secrets_file:+gpg --decrypt --batch --quiet ${secrets_file}} # Import secrets
+        sed '/^---$/d' < "${vars_file}"                                # Config vars
     )
