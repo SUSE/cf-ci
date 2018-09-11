@@ -46,6 +46,7 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
 fi
 
 helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
+    --recreate-pods \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
     --timeout 600 \
