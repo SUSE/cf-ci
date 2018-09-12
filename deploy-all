@@ -51,6 +51,7 @@ Dir.chdir('../cloudfoundry/ci/pipelines') do
 end
 
 # Vancouver targets
+run 'fly', '-t', 'vancouver', 'sync'
 deploy_vancouver 'certstrap',       variants: %w[master], config: 'production'
 deploy_vancouver 'cf-usb-plugin',   variants: %w[check master]
 deploy_vancouver 'minibroker',      variants: %w[check master]
@@ -58,6 +59,7 @@ deploy_vancouver '../fissile-ci',   variants: %w[check master develop]
 deploy_vancouver '../configgin-ci', variants: %w[check master]
 
 # Nuremberg targets
+run 'fly', '-t', 'suse.de', 'sync'
 Dir.chdir('cf-usb') do
   status 'deploying cf-usb (openSUSE develop)'
   run './deploy', '-t', 'suse.de', 'production'
