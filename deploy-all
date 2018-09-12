@@ -1,125 +1,138 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-"""
-This script deploys all known CI pipelines.
-Run as `deploy-all` to deploy pipelines one by one.
-"""
+# This script deploys all known CI pipelines.
+# Run as `deploy-all` to deploy pipelines one by one.
+
+require 'English'
+require 'tempfile'
 
 # Print a status message
 def status(message)
-    puts "\e[0;1;32m#{message}\e[0m"
+  puts "\e[0;1;32m#{message}\e[0m"
 end
 
 # Run a command
 def run(*args)
-    puts "Running #{args.join(' ')}..."
-    pid = Process.spawn(*args)
-    Process.wait pid
-    fail "#{args.join(' ')} returned #{$?.exitstatus}" unless $?.success?
+  puts "Running #{args.join(' ')}..."
+  pid = Process.spawn(*args)
+  Process.wait pid
+  status = $CHILD_STATUS.exitstatus
+  raise "#{args.join(' ')} returned #{status}" unless $CHILD_STATUS.success?
 end
 
 # Deploy using the deploy script standard for Vancouver pipelines
-def deploy_standard(path, opts={})
-    Dir.chdir(path) do
-        opts[:variants].each do |variant|
-            status "deploying #{path} (#{variant})"
-            args = [%w(./deploy ./deploy.sh).find {|f| File.exist? f }].compact
-            fail "No deploy script found for #{path}" if args.empty?
-            args += ['-t', opts[:target]] if opts.include? :target
-            args << variant
-            args << opts[:config] if opts.include? :config
-            run *args
-        end
+def deploy_vancouver(path, opts = {})
+  Dir.chdir(path) do
+    opts[:variants].each do |variant|
+      status "deploying #{path} (#{variant})"
+      args = [%w[./deploy ./deploy.sh].find { |f| File.exist? f }].compact
+      raise "No deploy script found for #{path}" if args.empty?
+      args += ['-t', 'vancouver', variant]
+      args << opts[:config] if opts.include? :config
+      run(*args)
     end
+  end
 end
 
 # Set default environment
-ENV['CONCOURSE_SECRETS_FILE'] ||= File.join(Dir.pwd, "../cloudfoundry/secure/concourse-secrets.yml.gpg")
+ENV['CONCOURSE_SECRETS_FILE'] ||= \
+  File.join(Dir.pwd, '../cloudfoundry/secure/concourse-secrets.yml.gpg')
 
 # Login everywhere
 Dir.chdir('../cloudfoundry/ci/pipelines') do
-    status 'Logging in to concourse servers...'
-    run *%w(make login-suse.de)
-    run *%w(make TARGET=vancouver CONCOURSE_URL=http://concourse.ca-west-1.howdoi.website login-suse.de)
+  status 'Logging in to concourse servers...'
+  {
+    'suse.de' => 'http://concourse.suse.de',
+    'vancouver' => 'http://concourse.ca-west-1.howdoi.website'
+  }.each do |target, url|
+    run 'make', "TARGET=#{target}", "CONCOURSE_URL=#{url}", 'login-suse.de'
+  end
 end
 
 # Vancouver targets
-deploy_standard 'certstrap',       target: 'vancouver', variants: %w(master),              config: 'production'
-deploy_standard 'cf-usb-plugin',   target: 'vancouver', variants: %w(check master)
-deploy_standard 'minibroker',      target: 'vancouver', variants: %w(check master)
-deploy_standard '../fissile-ci',   target: 'vancouver', variants: %w(check master develop)
-deploy_standard '../configgin-ci', target: 'vancouver', variants: %w(check master)
+deploy_vancouver 'certstrap',       variants: %w[master], config: 'production'
+deploy_vancouver 'cf-usb-plugin',   variants: %w[check master]
+deploy_vancouver 'minibroker',      variants: %w[check master]
+deploy_vancouver '../fissile-ci',   variants: %w[check master develop]
+deploy_vancouver '../configgin-ci', variants: %w[check master]
 
 # Nuremberg targets
 Dir.chdir('cf-usb') do
-    status 'deploying cf-usb (openSUSE develop)'
-    run *%w(./deploy -t suse.de production)
-    status 'deploying cf-usb (SLE master)'
-    run *%w(./deploy -t suse.de sle-production-master sle)
+  status 'deploying cf-usb (openSUSE develop)'
+  run './deploy', '-t', 'suse.de', 'production'
+  status 'deploying cf-usb (SLE master)'
+  run './deploy', '-t', 'suse.de', 'sle-production-master', 'sle'
 end
 
 Dir.chdir('../bosh-linux-stemcell-builder-ci') do
-    %w(
-        develop-fissile
-        develop-os-images
-        release-fissile
-        release-os-images
-        release-sles-os-images
-    ).each do |target|
-        status "Deploying bosh-linux-stemcell-builder-ci target #{target}"
-        run *%w(make TARGET=suse.de), target
-    end
+  %w[
+    develop-fissile
+    develop-os-images
+    release-fissile
+    release-os-images
+    release-sles-os-images
+  ].each do |target|
+    status "Deploying bosh-linux-stemcell-builder-ci target #{target}"
+    run 'make', 'TARGET=suse.de', target
+  end
 end
 
 Dir.chdir('../cloudfoundry/ci/pipelines') do
-    begin
-        # This has a bunch of pipelines, but we don't have a good way of
-        # selecting all of the relevant ones
-        run *%w(make pre)
-        %w(
-            pipeline-cf-openstack-validator
-            pipeline-concourse-lftp-resource
-            pipeline-concourse-obs-resource
-            pipeline-helm-charts-check
-            pipeline-helm-charts-sync
-            pipeline-helm-charts-sync-container
-            pipeline-network-test
-            pipeline-opensuse-rootfs-publish
-            pipeline-publish-release-notes
-            pipeline-sle-rootfs-publish
-            pipeline-suse-os-image-stemcell-builder
-            pipeline-suse-packages
-            pipeline-update-handling
-        ).each do |target|
-            status "deploying #{target}"
-            run 'make', 'NON_INTERACTIVE=', target
-        end
-    ensure
-        run *%w(make post)
-    end
+  # This has a bunch of pipelines, but we don't have a good way of
+  # selecting all of the relevant ones
+  run 'make', 'pre'
+  %w[
+    pipeline-cf-openstack-validator
+    pipeline-concourse-lftp-resource
+    pipeline-concourse-obs-resource
+    pipeline-helm-charts-check
+    pipeline-helm-charts-sync
+    pipeline-helm-charts-sync-container
+    pipeline-network-test
+    pipeline-opensuse-rootfs-publish
+    pipeline-publish-release-notes
+    pipeline-sle-rootfs-publish
+    pipeline-suse-os-image-stemcell-builder
+    pipeline-suse-packages
+    pipeline-update-handling
+  ].each do |target|
+    status "deploying #{target}"
+    run 'make', 'NON_INTERACTIVE=', target
+  end
+ensure
+  run 'make', 'post'
 end
 
 Dir.chdir('../cf-buildpacks-ci') do
-    %w(sle12 opensuse42).each do |stack|
-        status "deploying #{stack}-binary-builder pipeline"
-        run ({'CONCOURSE_TARGET_NAME' => 'suse.de'}), *%W(bin/update-pipelines --include binary-builder --exclude new --stack #{stack})
-    end
-    status 'deploying buildpack builder pipelines'
-    run ({'CONCOURSE_TARGET_NAME' => 'suse.de'}), *%w(bin/update-pipelines --template buildpack --exclude apt-buildpack --stack sle12)
+  def update(*args)
+    run({ 'CONCOURSE_TARGET_NAME' => 'suse.de' }, 'bin/update-pipelines', *args)
+  end
+  %w[sle12 opensuse42].each do |stack|
+    status "deploying #{stack}-binary-builder pipeline"
+    update(*(%w[--include binary-builder --exclude new --stack] + [stack]))
+  end
+  status 'deploying buildpack builder pipelines'
+  update(*'--template buildpack --exclude apt-buildpack --stack sle12'.split)
 end
 
 # Java pipeline is special
 Dir.chdir('../cf-java-buildpack-dependency-builder/ci') do
-    status 'deploying Java dependencies pipeline'
-    run *%w(./set-master.sh suse.de)
+  status 'deploying Java dependencies pipeline'
+  run './set-master.sh', 'suse.de'
 end
 Dir.chdir('../cf-java-buildpack/ci') do
-    status 'deploying Java buildpack pipeline'
-    run *%w(./set-master.sh suse.de)
+  status 'deploying Java buildpack pipeline'
+  run './set-master.sh', 'suse.de'
 end
 
 Dir.chdir('../buildpacks-ci') do
-    # We need to decode the secrets for this pipeline manually
-    status 'deploying buildpacks pipeline'
-    run 'bash', '-c', %q(/usr/bin/env TARGET=suse.de CONCOURSE_SECRETS_FILE=<(gpg --decrypt --batch --quiet ${CONCOURSE_SECRETS_FILE}) ./deploy.sh buildpacks)
+  # We need to decode the secrets for this pipeline manually
+  status 'deploying buildpacks pipeline'
+  Tempfile.open(['concourse-secrets', '.yml']) do |decrypted|
+    encrypted = ENV['CONCOURSE_SECRETS_FILE']
+    run('gpg', '--decrypt', '--batch', '--quiet', encrypted, out: decrypted)
+    run({ 'TARGET' => 'suse.de', 'CONCOURSE_SECRETS_FILE' => decrypted.path },
+        './deploy.sh', 'buildpacks')
+  end
 end
