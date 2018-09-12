@@ -36,8 +36,6 @@ if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
     CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
 fi
 
-echo cat "config-${config}.yaml"
-
 fly set-pipeline \
     ${target:+"--target=${target}"} \
     --pipeline="${PROJ_NAME}-${variant}${suffix}" \
