@@ -2,6 +2,13 @@
 
 set -o nounset -o errexit
 
+target=""
+while getopts 't:' arg ; do
+    case $arg in
+        t) target="${OPTARG}" ; shift 2;;
+    esac
+done
+
 if test -z "${1:-}" -o ! -r "config-${1:-}.yaml" ; then
     exec >&2
     echo "Failed to find configuration file config-${1:-}.yaml"
@@ -15,6 +22,7 @@ if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
 fi
 
 fly set-pipeline \
+    ${target:+--target "${target}"} \
     --pipeline="cf-usb${2:+-${2:-}}" \
     --config="cf-usb.yaml" \
     --load-vars-from=<(
