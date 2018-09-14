@@ -1,0 +1,6 @@
+---
+
+enable-cf-deploy: true
+enable-cf-smoke-tests: true
+enable-autoscaler-smoke: true
+enable-cf-teardown: true

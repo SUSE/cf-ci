@@ -518,3 +518,133 @@ jobs:
       ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
   - put: pool.kube-hosts
     params: {release: pool.kube-hosts}
+
+- name: ((pipeline-name))-AutoScaler-SA-SLES
+  plan:
+  - aggregate:
+    - get: ci
+    - get: s3.pg-sidecar
+      trigger: true
+    - get: s3.mysql-sidecar
+      trigger: true
+    - get: s3.scf-config-sles
+      trigger: true
+    - put: pool.kube-hosts
+      params: {acquire: true}
+    on_failure:
+      put: pool.kube-hosts
+      params: {release: pool.kube-hosts}
+  - task: cf-deploy-pre-upgrade
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-smoke-tests-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests-brain-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests-pre-upgrade
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      CAP_INSTALL_VERSION: ((cap-sle-url))
+      ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: usb-deploy
+    file: ci/qa-pipelines/tasks/usb-deploy.yml
+    params:
+      ENABLE_USB_DEPLOY: ((enable-usb-deploy))
+  - task: cf-upgrade
+    file: ci/qa-pipelines/tasks/cf-upgrade.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: false
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: usb-post-upgrade
+    file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
+    params:
+      ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+  - task: cf-deploy
+    file: ci/qa-pipelines/tasks/cf-deploy.yml
+    params:
+      KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+      KUBE_REGISTRY_USERNAME: ((registry-username))
+      KUBE_REGISTRY_PASSWORD: ((registry-password))
+      KUBE_ORGANIZATION: ((organization))
+      CAP_CHART: ""
+      HA: false
+      SCALED_HA: false
+      AutoScaler: true
+      MAGIC_DNS_SERVICE: ((magic-dns-service))
+      ENABLE_CF_DEPLOY: ((enable-cf-deploy))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: cf-smoke-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: autoscaler-smoke
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      ENABLE_AUTOSCALER_TESTS: ((enable-autoscaler-smoke))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests-brain
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  - task: acceptance-tests
+    file: ci/qa-pipelines/tasks/run-test.yml
+    params:
+      CAP_CHART: ""
+      ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
+    input_mapping:
+      s3.scf-config: s3.scf-config-sles
+  # We intentionally don't put the teardown and pool release steps in an ensure
+  # block, so that when tests fail we have a chance of examining why things are
+  # failing.
+  - task: cf-teardown
+    file: ci/qa-pipelines/tasks/cf-teardown.yml
+    timeout: 1h
+    params:
+      ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
+  - put: pool.kube-hosts
+    params: {release: pool.kube-hosts}

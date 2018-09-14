@@ -8,6 +8,8 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
   TEST_NAME=smoke-tests
+elif [[ $ENABLE_AUTOSCALER_TESTS == true ]]; then
+  TEST_NAME=autoscaler-smoke
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
   TEST_NAME=acceptance-tests-brain
@@ -54,7 +56,7 @@ kube_overrides() {
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
                 if env['name'] == "MONIT_PASSWORD"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
             end
             if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
