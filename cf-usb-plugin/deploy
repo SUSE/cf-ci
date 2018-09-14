@@ -12,6 +12,14 @@ cf-usb-plugin-master-<thing> instead.
 EOF
 }
 
+target=""
+while getopts '?t:' arg ; do
+    case $arg in
+        t) target="${OPTARG}" ; shift 2;;
+        ?) usage ; exit ;;
+    esac
+done
+
 variant="${1:-}"
 config="${2:-production}"
 suffix="${2:+-${2:-}}"
@@ -28,9 +36,8 @@ if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
     CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
 fi
 
-echo cat "config-${config}.yaml"
-
 fly set-pipeline \
+    ${target:+"--target=${target}"} \
     --pipeline="${PROJ_NAME}-${variant}${suffix}" \
     --config="${PROJ_NAME}-${variant}.yaml" \
     --load-vars-from=<(
