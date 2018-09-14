@@ -11,7 +11,7 @@ set -o nounset
 source "cf-ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 
 set_helm_params # Sets HELM_PARAMS
-set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
+#set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
 echo UAA customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'

@@ -170,8 +170,8 @@ set -o allexport
 #public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 #garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
-external_ip=192.168.133.66
-public_ip=52.36.224.251
+external_ip=192.168.213.222
+public_ip=54.213.118.116
 
 # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
 # referenced by external_ip.
