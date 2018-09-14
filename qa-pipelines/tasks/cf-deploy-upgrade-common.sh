@@ -146,7 +146,6 @@ set_scf_sizing_params() {
         HELM_PARAMS+=(--set=sizing.routing_api.count=1)
         HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
         HELM_PARAMS+=(--set=sizing.{diego_api,diego_locket,diego_cell}.count=3)
-    fi
     elif [[ ${AutoScaler} == true ]]; then
          HELM_PARAMS+=(--set=sizing.{autoscaler_actors,autoscaler_api,autoscaler_metrics,autoscaler_postgres}.count=1)
     fi
