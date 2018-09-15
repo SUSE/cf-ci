@@ -100,12 +100,11 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
         # The sed command is required because the displayed names for docker and ssh suites are different from the variable
         # expected by CATS to run those tests (diego_docker and diego_ssh respectively)
         kubectl logs --namespace=scf ${TEST_NAME} \
-        | tr -d '\000\001\220\221\133\033\071\060\061\155' \
-        | grep -oE '^Fail\] [a-zA-Z]+\]' \
-        | tr -d ']' \
+        | perl -pe 's@\e.*?m@@g' \
+        | grep -oE '^\[Fail\] \[[a-zA-Z_]+\]' \
+        | tr -d '[]' \
         | cut -f 2 -d ' ' \
-        | sort \
-        | uniq \
+        | sort -u \
         | sed -r 's/^(docker|ssh)$/diego_\1/g' \
         | tr '\n' ','
     )"
