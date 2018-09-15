@@ -106,7 +106,7 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
         | cut -f 2 -d ' ' \
         | sort \
         | uniq \
-        | sed -r 's/^(docker|ssh)$/diego_\1/g' \ 
+        | sed -r 's/^(docker|ssh)$/diego_\1/g' \
         | tr '\n' ','
     )"
     echo "CATS_SUITES=$CATS_SUITES"
