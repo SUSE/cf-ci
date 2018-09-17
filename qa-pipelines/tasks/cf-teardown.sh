@@ -16,15 +16,18 @@ UAA_NAMESPACE=uaa
 set +o allexport
 
 for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
-    while [[ $(kubectl get statefulsets --output json --namespace "${namespace}" | jq '.items | length == 0') != "true" ]]; do
-      kubectl delete statefulsets --all --namespace "${namespace}" ||:
+    while [[ -n $(helm list --short --all ${namespace}) ]]; do
+        helm delete --purge ${namespace} ||:
+        sleep 10
     done
+done
+
+for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
     while kubectl get namespace "${namespace}" 2>/dev/null; do
       kubectl delete namespace "${namespace}" ||:
       sleep 30
     done
-    while [[ -n $(helm list --short --all ${namespace}) ]]; do
-        helm delete --purge ${namespace} ||:
-        sleep 10
+    while [[ $(kubectl get statefulsets --output json --namespace "${namespace}" | jq '.items | length == 0') != "true" ]]; do
+      kubectl delete statefulsets --all --namespace "${namespace}" ||:
     done
 done
