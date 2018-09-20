@@ -157,6 +157,8 @@ set_scf_sizing_params() {
         HELM_PARAMS+=(--set=sizing.routing_api.count=1)
         HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
         HELM_PARAMS+=(--set=sizing.{diego_api,diego_locket,diego_cell}.count=3)
+    elif [[ ${AutoScaler} == true ]]; then
+         HELM_PARAMS+=(--set=sizing.{autoscaler_actors,autoscaler_api,autoscaler_metrics,autoscaler_postgres}.count=1)
     fi
 }
 
@@ -170,8 +172,8 @@ set -o allexport
 #public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 #garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
-external_ip=192.168.213.222
-public_ip=54.213.118.116
+external_ip=192.168.214.176
+public_ip=54.202.191.90
 
 # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
 # referenced by external_ip.
