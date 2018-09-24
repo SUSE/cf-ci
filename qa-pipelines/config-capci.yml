@@ -1,4 +1,5 @@
 #Dev's upgrade CI: Test upgrades on nightly buids
+#Deploy: ./set-pipeline -t provo -p DEV-UPGRADES --pool=capci pipeline-presets/cap-qa-upgrades-lite.yml
 ---
 src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
