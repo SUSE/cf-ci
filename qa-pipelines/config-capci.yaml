@@ -1,3 +1,4 @@
+#Dev's upgrade CI: Test upgrades on nightly buids
 ---
 src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
@@ -5,17 +6,17 @@ src-ci-repo: https://github.com/SUSE/cf-ci.git
 src-rails-example-repo: https://github.com/scf-samples/rails-example.git
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
 kube-pool-key: *github-private-key
-kube-pool-branch: provo-kube-hosts
-kube-pool-pool: provo-kube-hosts
+kube-pool-branch: cap-ci-kube-hosts
+kube-pool-pool: cap-ci-kube-hosts
 
 s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
 s3-config-bucket-opensuse: cap-release-archives
-s3-config-prefix-opensuse: master/
+s3-config-prefix-opensuse: nightly/
 
 s3-config-bucket-sles: cap-release-archives
-s3-config-prefix-sles: master/
+s3-config-prefix-sles: nightly/
 
 s3-config-prefix-sidecars: brokers/
 
