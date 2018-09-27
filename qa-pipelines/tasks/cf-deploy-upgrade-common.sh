@@ -95,13 +95,14 @@ helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/C
 
 generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
 
-get_internal_ca_cert() {
+get_internal_ca_cert() (
+    set -o pipefail
     local uaa_secret_name=$(generated_secrets_secret)
     kubectl get secret ${uaa_secret_name} \
       --namespace "${UAA_NAMESPACE}" \
       -o jsonpath="{.data['internal-ca-cert']}" \
       | base64 -d
-}
+)
 
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
