@@ -57,3 +57,20 @@ helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
 
 # Wait for CF release
 wait_for_release scf
+
+if [[ $(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data.platform') == "azure" ]]; then
+    keys=( $(kubectl get configmap -n kube-system custom-broker-args -o json | jq -r '.data | keys[]') )
+    cd $(mktemp -d)
+    git clone https://github.com/Azure/open-service-broker-azure
+    cd open-service-broker-azure
+    for key in "${keys[@]}"; do
+        sed -i "s/${key}:.*/${key}: $(kubectl get configmap -n kube-system custom-broker-args -o json | jq -r ".data.${key}")/" contrib/cf/manifest.yml
+    done
+    cf api --skip-ssl-validation "https://api.${DOMAIN}"
+    cf login -u admin -p changeme -o system
+    cf create-org osba-org
+    cf create-space -o osba-org osba-space
+    cf target -o osba-org -s osba-space
+    cf push -f contrib/cf/manifest.yml
+    cf create-service-broker open-service-broker-azure username password https://osba.$DOMAIN
+fi
