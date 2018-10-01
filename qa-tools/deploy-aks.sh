@@ -123,6 +123,29 @@ echo -e "\n Resource Group:\t$AZ_RG_NAME\n \
 Public IP:\t\t${public_ip}\n \
 Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
 
-docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system cap-values --from-literal=internal-ip=${internal_ips[0]} --from-literal=public-ip=$public_ip --from-literal=garden-rootfs-driver=overlay-xfs
+docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system cap-values --from-literal=internal-ip=${internal_ips[0]} --from-literal=public-ip=$public_ip --from-literal=garden-rootfs-driver=overlay-xfs --from-literal=platform=azure
 cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker run --rm -i -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create -f -
 docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm init
+
+# Azure Open Service Broker preparation
+docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm install svc-cat/catalog --name catalog --namespace catalog
+az provider register --namespace Microsoft.Cache
+az redis create -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} -l eastus --sku Basic --vm-size C1
+AZ_REDIS_HOST=$(az redis show -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME}
+AZ_REDIS_PK=$(az redis list-keys -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} | jq -r .primaryKey)
+AZ_REDIS_SK=$(az redis list-keys -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} | jq -r .secondaryKey)
+AZ_SUBSCRIPTION_ID=$(az account show | jq -r .id)
+service_principal=$(az ad sp create-for-rbac)
+AZ_TENANT_ID=$(echo "${service_principal}" | jq -r .tenant)
+AZ_CLIENT_ID=$(echo "${service_principal}" | jq -r .appId)
+AZ_CLIENT_SECRET=$(echo "${service_principal}" | jq -r .password)
+docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system custom-broker-args \
+  --from-literal=AZURE_SUBSCRIPTION_ID=$AZ_SUBSCRIPTION_ID \
+  --from-literal=AZURE_TENANT_ID=$AZ_TENANT_ID \
+  --from-literal=AZURE_CLIENT_ID=$AZ_CLIENT_ID \
+  --from-literal=AZURE_CLIENT_SECRET=$AZ_CLIENT_SECRET \
+  --from-literal=STORAGE_REDIS_HOST=$AZ_REDIS_HOST \
+  --from-literal=STORAGE_REDIS_PASSWORD=$AZ_REDIS_PK \
+  --from-literal=ASYNC_REDIS_HOST=$AZ_REDIS_HOST \
+  --from-literal=ASYNC_REDIS_PASSWORD=$AZ_REDIS_PK
