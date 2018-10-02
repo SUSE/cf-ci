@@ -3,23 +3,23 @@ set -o errexit
 
 # Set kube config from pool
 mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
+cp pool.kube-hosts/metadata /root/.kube/config
 
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
-  TEST_NAME=smoke-tests
+    TEST_NAME=smoke-tests
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
-  TEST_NAME=acceptance-tests-brain
-  if ! kubectl get clusterrolebinding -o json cap:clusterrole | jq -e  '.subjects[] | select(.name=="test-brain")' > /dev/null; then
-    kubectl apply -f ci/qa-tools/cap-psp-rbac.yaml
-  fi
+    TEST_NAME=acceptance-tests-brain
+    if ! kubectl get clusterrolebinding -o json cap:clusterrole | jq -e  '.subjects[] | select(.name=="test-brain")' > /dev/null; then
+        kubectl apply -f ci/qa-tools/cap-psp-rbac.yaml
+    fi
 elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
      [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
-  TEST_NAME=acceptance-tests
+    TEST_NAME=acceptance-tests
 else
-  echo "run-tests.sh: No test flag set. Skipping tests"
-  exit 0
+    echo "run-tests.sh: No test flag set. Skipping tests"
+    exit 0
 fi
 
 set -o nounset
@@ -89,48 +89,84 @@ kubectl run \
     "${TEST_NAME}" ||:
 
 while [[ -z $(container_status ${TEST_NAME}) ]]; do
-  kubectl attach --namespace=scf ${TEST_NAME} ||:
+    kubectl attach --namespace=scf ${TEST_NAME} ||:
 done
 
 pod_status=$(container_status ${TEST_NAME})
 
 if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
-  export CATS_RERUN=1
-  while [[ $CATS_RERUN -lt 5 ]] && [[ $pod_status -gt 0 ]]; do
-    export CATS_SUITES="=$(
-        # Gets comma-separated list of all failing tests.
-        # The first tr removes the formatting control characters from the test output, because it breaks grep
-        # The sed command is required because the displayed names for docker and ssh suites are different from the variable
-        # expected by CATS to run those tests (diego_docker and diego_ssh respectively)
-        kubectl logs --namespace=scf ${TEST_NAME} \
-        | perl -pe 's@\e.*?m@@g' \
-        | grep -oE '^\[Fail\] \[[a-zA-Z_]+\]' \
-        | tr -d '[]' \
-        | cut -f 2 -d ' ' \
-        | sort -u \
-        | sed -r 's/^(docker|ssh)$/diego_\1/g' \
-        | tr '\n' ','
-    )"
-    echo "CATS_SUITES=$CATS_SUITES"
-    kubectl delete pod --namespace=scf ${TEST_NAME}
-    kubectl run \
-        --namespace="${CF_NAMESPACE}" \
-        --attach \
-        --restart=Never \
-        --image="${image}" \
-        --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
-        "${TEST_NAME}" ||:
+    export CATS_RERUN=1
+    # Put an actual string here, because even after failing tests, if no current failures match recurring_failures, this will
+    # then get set to an empty string which is considered a passing state, since intermittent failures are nearly inevitable
+    # on some platforms
+    recurring_failures="unset"
+    while [[ $CATS_RERUN -lt 5 ]] && [[ $pod_status -gt 0 ]] && [[ -n ${recurring_failures} ]]; do
+        # Store failure messages in current_failures. The perl expression removes formatting
+        current_failures=$(
+            kubectl logs --namespace=scf acceptance-tests \
+            | perl -pe 's@\e.*?m@@g' \
+            | awk '
+                /Summarizing [0-9]+ Failures/ {
+                    numfailures=$2
+                }
+                ( numfailures > 0 ) && ( /\[Fail\]/ ) {
+                    numfailures--
+                    print
+                }
+            '
+        )
+        if [[ $recurring_failures == "unset" ]]; then
+            recurring_failures=${current_failures}
+        else
+            # Get list of failures from recurring failures which reappeared in current failures
+            recurring_failures=$(echo "${recurring_failures}" | grep -Fxf - <(echo "${current_failures}") || true)
+            echo "Recurring failures:"
+            echo "${recurring_failures}"
+        fi
+        if [[ -n ${recurring_failures} ]]; then
+            export CATS_SUITES="=$(
+                # Gets comma-separated list of all failing test suites.
+                # The sed command is required because the displayed names for docker and ssh suites are different from the variable
+                # expected by CATS to run those tests (diego_docker and diego_ssh respectively)
+                echo "${recurring_failures}" \
+                | tr -d '[]' \
+                | cut -f 2 -d ' ' \
+                | sort -u \
+                | sed -r 's/^(docker|ssh)$/diego_\1/g' \
+                | tr '\n' ','
+            )"
+            echo "CATS_SUITES=$CATS_SUITES"
+            kubectl delete pod --namespace=scf ${TEST_NAME}
+            kubectl run \
+                --namespace="${CF_NAMESPACE}" \
+                --attach \
+                --restart=Never \
+                --image="${image}" \
+                --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+                "${TEST_NAME}" ||:
 
-    while [[ -z $(container_status ${TEST_NAME}) ]]; do
-      kubectl attach --namespace=scf ${TEST_NAME} ||:
+            while [[ -z $(container_status ${TEST_NAME}) ]]; do
+                kubectl attach --namespace=scf ${TEST_NAME} ||:
+            done
+            pod_status=$(container_status ${TEST_NAME})
+            ((CATS_RERUN+=1))
+        fi
     done
-    pod_status=$(container_status ${TEST_NAME})
-    ((CATS_RERUN+=1))
-  done
+fi
+
+if [[ ${TEST_NAME} == "acceptance-tests" ]]; then
+    if [[ -n ${recurring_failures} ]]; then
+        # This only happens if acceptance-tests fail 5 times with at least one error which appears in all runs
+        echo "Failures which recurred in all runs"
+        echo "${recurring_failures}"
+    else
+        # Even though the pod_status may be non-zero, set it to zero because no failures occurred in every run
+        pod_status=0
+   fi
 fi
 
 # Delete test pod if they pass. Required pre upgrade
 if [[ $pod_status -eq 0 ]]; then
-  kubectl delete pod --namespace=scf ${TEST_NAME}
+    kubectl delete pod --namespace=scf ${TEST_NAME}
 fi
 exit $pod_status
