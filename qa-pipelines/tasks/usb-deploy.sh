@@ -129,7 +129,6 @@ is_namespace_ready() {
 }
 
 wait_for_namespace() {
-  # This should be the same as wait_for_namespace in cf_deploy, other than a shorter timeout
   local namespace="$1"
   start=$(date +%s)
   for (( i = 0  ; i < 120 ; i ++ )) ; do

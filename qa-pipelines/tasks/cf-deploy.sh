@@ -28,8 +28,8 @@ helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --timeout 600 \
     "${HELM_PARAMS[@]}"
 
-# Wait for UAA namespace
-wait_for_namespace "${UAA_NAMESPACE}"
+# Wait for UAA release
+wait_for_release uaa
 
 # Deploy CF
 CA_CERT="$(get_internal_ca_cert)"
@@ -55,5 +55,5 @@ helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
     "${HELM_PARAMS[@]}"
 
-# Wait for CF namespace
-wait_for_namespace "${CF_NAMESPACE}"
+# Wait for CF release
+wait_for_release scf
