@@ -83,8 +83,8 @@ wait_for_jobs() {
 }
 
 wait_for_release() {
-    local release=$1
-    local namespace=$(helm list | awk '$1=="'"$release"'" {print $NF}')
+    local release="$1"
+    local namespace=$(helm list "${release}" | awk '$1=="'"$release"'" {print $NF}')
     start=$(date +%s)
     wait_for_jobs $release || exit 1
     for (( i = 0  ; i < 480 ; i ++ )) ; do
