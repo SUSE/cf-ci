@@ -60,23 +60,46 @@ is_namespace_ready() {
         | sort \
         | uniq) ]]
 }
-
-wait_for_namespace() {
-    local namespace="$1"
+wait_for_jobs() {
+    local release=$1
+    local jobs_desired_remaining
     start=$(date +%s)
-    for (( i = 0  ; i < 960 ; i ++ )) ; do
+    for (( i = 0 ; i < 480 ; i ++ )); do
+        # Get the list of all jobs in the helm release, and subtract the value of 'completed' from 'desired'
+        # It would be better to parse this from `helm get manifest`, but since that command is broken in helm 
+        # v2.8.2 (https://github.com/helm/helm/issues/3833) for now we'll parse it from the human-readable status
+        jobs_desired_remaining=$(helm status $release | awk '/==> v1\/Job/ { getline; getline; while (NF>0) { print $2 - $3; getline } }')
+        now=$(date +%s)
+        if [[ $(echo "${jobs_desired_remaining}" | sort -n | tail -1) -le 0 ]]; then
+           printf "\rDone waiting for %s jobs at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
+           return 0
+        else
+           sleep 10
+        fi
+        printf "\rWaiting for %s jobs at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
+    done
+    printf "%s jobs not completed\n" "${release}"
+    return 1
+}
+
+wait_for_release() {
+    local release="$1"
+    local namespace=$(helm list "${release}" | awk '$1=="'"$release"'" {print $NF}')
+    start=$(date +%s)
+    wait_for_jobs $release || exit 1
+    for (( i = 0  ; i < 480 ; i ++ )) ; do
         if is_namespace_ready "${namespace}" ; then
             break
         fi
         now=$(date +%s)
-        printf "\rWaiting for %s at %s (%ss)..." "${namespace}" "$(date --rfc-2822)" $((${now} - ${start}))
+        printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
         sleep 10
     done
     now=$(date +%s)
-    printf "\rDone waiting for %s at %s (%ss)\n" "${namespace}" "$(date --rfc-2822)" $((${now} - ${start}))
+    printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
     kubectl get pods --namespace="${namespace}"
     if ! is_namespace_ready "${namespace}" ; then
-        printf "Namespace %s is still pending\n" "${namespace}"
+        printf "%s pods are still pending\n" "${release}"
         exit 1
     fi
 }
