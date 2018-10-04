@@ -1,10 +1,6 @@
 #!/bin/bash
 set -o errexit
 
-# Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
-
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
   TEST_NAME=smoke-tests
