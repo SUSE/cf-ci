@@ -127,6 +127,11 @@ get_internal_ca_cert() (
       | base64 -d
 )
 
+set_psp() {
+    HELM_PARAMS+=(--set "kube.psp.nonprivileged=suse.cap.psp")
+    HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp")
+}
+
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
@@ -145,6 +150,8 @@ set_helm_params() {
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
+
+    set_psp # Sets PSP
 }
 
 set_uaa_sizing_params() {
@@ -176,7 +183,7 @@ set_scf_sizing_params() {
 set -o allexport
 
 # The internal/external and public IP addresses are now taken from the configmap set by prep-new-cluster
-# The external_ip is set to the internal ip of a worker node. When running on openstack or azure, 
+# The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
 public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
