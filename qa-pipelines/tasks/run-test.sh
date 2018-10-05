@@ -28,8 +28,8 @@ set -o allexport
 EXCLUDE_BRAINS_PREFIX=011
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
-DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 CF_NAMESPACE=scf
+DOMAIN=$(kubectl get pods -o json --namespace "${CF_NAMESPACE}" api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
@@ -50,6 +50,7 @@ kube_overrides() {
         require 'yaml'
         require 'json'
         exclude_brains_prefix = ENV["EXCLUDE_BRAINS_PREFIX"]
+
         obj = YAML.load_file('$1')
         obj['spec']['containers'].each do |container|
             container['env'].each do |env|
@@ -74,18 +75,38 @@ EOF
 }
 
 container_status() {
-  kubectl get --output=json --namespace=scf pod $1 \
+  kubectl get --output=json --namespace="${CF_NAMESPACE}" pod $1 \
     | jq '.status.containerStatuses[0].state.terminated.exitCode | tonumber' 2>/dev/null
 }
 
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
+
+test_pod_yml="${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml"
+test_non_pods_yml=
+if [[ ${TEST_NAME} == "acceptance-tests-brain" ]]; then
+    test_non_pods_yml="${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}-non-pods.yaml"
+    ruby <<EOF
+        require 'yaml'
+        yml = YAML.load_stream(File.read "${test_pod_yml}")
+        non_pods_yml = yml.reject { |doc| doc["kind"] == "Pod" }
+        yml.each do
+            |doc|
+            if doc["kind"] == "Pod"
+                File.open("${test_pod_yml}", 'w') { |file| file.write(doc.to_yaml) }
+            else
+                File.open("${test_non_pods_yml}", 'a') { |file| file.write(doc.to_yaml) } 
+            end
+        end
+EOF
+    kubectl create --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
+fi
 
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --attach \
     --restart=Never \
     --image="${image}" \
-    --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+    --overrides="$(kube_overrides "${test_pod_yml}")" \
     "${TEST_NAME}" ||:
 
 while [[ -z $(container_status ${TEST_NAME}) ]]; do
@@ -129,6 +150,9 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
   done
 fi
 
+if [[ -n "${test_non_pods_yml}" ]]; then
+    kubectl delete --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
+fi
 # Delete test pod if they pass. Required pre upgrade
 if [[ $pod_status -eq 0 ]]; then
   kubectl delete pod --namespace=scf ${TEST_NAME}
