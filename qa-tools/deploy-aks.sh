@@ -125,11 +125,15 @@ Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
 
 docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system cap-values --from-literal=internal-ip=${internal_ips[0]} --from-literal=public-ip=$public_ip --from-literal=garden-rootfs-driver=overlay-xfs --from-literal=platform=azure
 cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker run --rm -i -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create -f -
-docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm init
+HELM_DIR=$(mktemp -d)
+docker run --rm -it -v "${HELM_DIR}":/root/.helm/ -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm init
 
 # Azure Open Service Broker preparation
-docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
-docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm install svc-cat/catalog --name catalog --namespace catalog
+docker run --rm -it -v "${HELM_DIR}":/root/.helm/ -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+docker run --rm -it -v "${HELM_DIR}":/root/.helm/ -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm install svc-cat/catalog --name catalog --namespace catalog
+
+# Manually insert /tmp/tmp. prefix to avoid potential for disaster
+rm -rf "/tmp/tmp.${HELM_DIR##/tmp/tmp.}"
 az provider register --namespace Microsoft.Cache
 az redis create -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} -l eastus --sku Basic --vm-size C1
 AZ_REDIS_HOST=$(az redis show -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME}
