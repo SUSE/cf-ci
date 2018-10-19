@@ -126,7 +126,7 @@ Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
 docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system cap-values --from-literal=internal-ip=${internal_ips[0]} --from-literal=public-ip=$public_ip --from-literal=garden-rootfs-driver=overlay-xfs --from-literal=platform=azure
 cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker run --rm -i -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create -f -
 HELM_DIR=$(mktemp -d)
-docker run --rm -it -v "${HELM_DIR}":/root/.helm/ -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm init
+docker run --rm -it -v "${HELM_DIR}":/root/.helm/ -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm init --wait
 
 # Azure Open Service Broker preparation
 docker run --rm -it -v "${HELM_DIR}":/root/.helm/ -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
@@ -136,7 +136,7 @@ docker run --rm -it -v "${HELM_DIR}":/root/.helm/ -v $KUBECONFIG:/root/.kube/con
 rm -rf "/tmp/tmp.${HELM_DIR##/tmp/tmp.}"
 az provider register --namespace Microsoft.Cache
 az redis create -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} -l eastus --sku Basic --vm-size C1
-AZ_REDIS_HOST=$(az redis show -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME}
+AZ_REDIS_HOST=$(az redis show -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} | jq -r .hostName)
 AZ_REDIS_PK=$(az redis list-keys -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} | jq -r .primaryKey)
 AZ_REDIS_SK=$(az redis list-keys -n ${az_user_prefix}osba-cache -g ${AZ_MC_RG_NAME} | jq -r .secondaryKey)
 AZ_SUBSCRIPTION_ID=$(az account show | jq -r .id)
