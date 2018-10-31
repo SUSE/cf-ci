@@ -116,9 +116,9 @@ while [[ -z $(container_status ${TEST_NAME}) ]]; do
 done
 
 pod_status=$(container_status ${TEST_NAME})
+export CATS_RERUN=1
 
 if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
-    export CATS_RERUN=1
     # Put an actual string here, because even after failing tests, if no current failures match recurring_failures, this will
     # then get set to an empty string which is considered a passing state, since intermittent failures are nearly inevitable
     # on some platforms
@@ -178,7 +178,7 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
 fi
 
 if [[ ${TEST_NAME} == "acceptance-tests" ]]; then
-    if [[ -n ${recurring_failures} ]]; then
+    if [[ ${CATS_RERUN} -eq 5 ]] && [[ -n ${recurring_failures} ]]; then
         # This only happens if acceptance-tests fail 5 times with at least one error which appears in all runs
         echo "Failures which recurred in all runs"
         echo "${recurring_failures}"
