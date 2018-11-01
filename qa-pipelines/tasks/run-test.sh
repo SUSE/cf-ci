@@ -129,7 +129,7 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
             kubectl logs --namespace=scf acceptance-tests \
             | perl -pe 's@\e.*?m@@g' \
             | awk '
-                /Summarizing [0-9]+ Failures/ {
+                /Summarizing [0-9]+ Failure/ {
                     numfailures=$2
                 }
                 ( numfailures > 0 ) && ( /\[Fail\]/ ) {
