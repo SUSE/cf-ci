@@ -139,14 +139,13 @@ set_uaa_sizing_params() {
 }
 
 set_scf_sizing_params() {
-    HELM_PARAMS+=(--set sizing.cc_uploader.capabilities={"ALL"})
-    HELM_PARAMS+=(--set sizing.nats.capabilities={"ALL"})
-    HELM_PARAMS+=(--set sizing.routing_api.capabilities={"ALL"})
-    HELM_PARAMS+=(--set sizing.router.capabilities={"ALL"})
-    HELM_PARAMS+=(--set sizing.diego_locket.capabilities={"ALL"})
-    HELM_PARAMS+=(--set sizing.diego_access.capabilities={"ALL"})
-    HELM_PARAMS+=(--set sizing.diego_brain.capabilities={"ALL"})
-    HELM_PARAMS+=(--set sizing.diego_api.capabilities={"ALL"})
+    HELM_PARAMS+=(--set sizing.cc_uploader.capabilities={"SYS_RESOURCE"})
+    HELM_PARAMS+=(--set sizing.nats.capabilities={"SYS_RESOURCE"})
+    HELM_PARAMS+=(--set sizing.routing_api.capabilities={"SYS_RESOURCE"})
+    HELM_PARAMS+=(--set sizing.router.capabilities={"SYS_RESOURCE"})
+    HELM_PARAMS+=(--set sizing.diego_brain.capabilities={"SYS_RESOURCE"})
+    HELM_PARAMS+=(--set sizing.diego_api.capabilities={"SYS_RESOURCE"})
+    HELM_PARAMS+=(--set sizing.diego_ssh.capabilities={"SYS_RESOURCE"})
     if [[ ${HA} == true ]]; then
         if semver_is_gte $(helm_chart_version) 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)
@@ -172,8 +171,8 @@ set -o allexport
 #public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 #garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
-external_ip=192.168.120.216
-public_ip=34.220.8.40
+external_ip=192.168.75.8
+public_ip=54.191.201.139
 
 # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
 # referenced by external_ip.
