@@ -135,7 +135,8 @@ set_psp() {
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "kube.external_ips[0]=${external_ip}")
+                 --set "kube.external_ips[0]=${external_ip}"
+                 --set "sizing.credhub_user.count=1")
 
     if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
