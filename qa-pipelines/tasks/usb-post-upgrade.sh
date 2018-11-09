@@ -10,7 +10,7 @@ fi
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
 
-DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
+DOMAIN=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
 

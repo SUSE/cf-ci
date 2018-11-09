@@ -10,7 +10,12 @@ fi
 mkdir -p /root/.kube/
 cp  pool.kube-hosts/metadata /root/.kube/config
 
-DOMAIN=$(kubectl get pods -o json --namespace scf api-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
+if kubectl get pod --namespace scf api-0 2>/dev/null; then
+    api_pod_name=api-0
+else
+    api_pod_name=api-group-0
+fi
+DOMAIN=$(kubectl get pods -o json --namespace scf ${api_pod_name} | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
 
 nfs_regex='\bnfs'
