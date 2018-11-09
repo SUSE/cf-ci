@@ -110,7 +110,8 @@ set_helm_params() {
                  --set "env.GARDEN_ROOTFS_DRIVER=overlay-xfs"
                  --set "env.GARDEN_APPARMOR_PROFILE="
                  --set "kube.storage_class.persistent=gp2"
-                 --set "kube.storage_class.shared=gp2")
+                 --set "kube.storage_class.shared=gp2"
+                 --set "sizing.credhub_user.count=1")
 
     if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
