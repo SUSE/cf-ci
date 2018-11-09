@@ -68,7 +68,7 @@ helm install stable/postgresql \
   --name postgres              \
   --set "service.externalIPs={${DB_EXTERNAL_IP}}"
 
-PG_PASS=$(kubectl get secret --namespace postgres postgres-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode)
+PG_PASS=$(kubectl get secret --namespace postgres postgres-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
 
 helm install stable/mysql                   \
   --name mysql                              \
