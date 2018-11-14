@@ -14,12 +14,12 @@ set -o errexit
 export AZ_USER=$(az login | jq -r .[0].user.name)
 export AZ_SUBSCRIPTION_ID=$(az account show --query "{ subscription_id: id }" | jq -r .subscription_id)
 az account set --subscription $AZ_SUBSCRIPTION_ID
-az_user_prefix=${AZ_USER%%@*}-
+az_user_prefix=${AZ_USER%%@*}2-
 export AZ_RG_NAME=${az_user_prefix}cap-aks
 export AZ_AKS_NAME=$AZ_RG_NAME
 export AZ_REGION=eastus
 export AZ_AKS_NODE_COUNT=3
-export AZ_AKS_NODE_VM_SIZE=Standard_D2_v2
+export AZ_AKS_NODE_VM_SIZE=Standard_D3_v2
 export AZ_SSH_KEY=~/.ssh/id_rsa.pub
 export AZ_ADMIN_USER=scf-admin
 
