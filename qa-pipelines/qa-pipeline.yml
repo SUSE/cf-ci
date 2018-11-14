@@ -427,7 +427,7 @@ jobs:
       ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
     input_mapping:
       s3.scf-config: s3.scf-config-sles
-  - task: cf-smoke-tests
+  - task: cf-smoke-tests-pre-upgrade
     file: ci/qa-pipelines/tasks/run-test.yml
     params:
       CAP_CHART: ""
