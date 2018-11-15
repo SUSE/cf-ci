@@ -169,14 +169,15 @@ set_uaa_sizing_params() {
 
 set_scf_sizing_params() {
     if [[ ${HA} == true ]]; then
-        if semver_is_gte $(helm_chart_version) 2.11.0; then
-            HELM_PARAMS+=(--set=config.HA=true)
-        else
-            HELM_PARAMS+=(--set=sizing.HA=true)
-        fi
+        HELM_PARAMS+=(--set=sizing.HA=true)
     elif [[ ${SCALED_HA} == true ]]; then
+        if $(semver_is_gte 2.13.3 $(helm_chart_version)); then
+            api_role_name=api
+        else # helm_chart_version > 2.13.3
+            api_role_name=api-group
+        fi
         HELM_PARAMS+=(--set=sizing.routing_api.count=1)
-        HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
+        HELM_PARAMS+=(--set=sizing.{${api_role_name},cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
         HELM_PARAMS+=(--set=sizing.{diego_api,diego_locket,diego_cell}.count=3)
     fi
 }
