@@ -140,6 +140,15 @@ set_uaa_sizing_params() {
 }
 
 set_scf_sizing_params() {
+    #HELM_PARAMS+=(--set sizing.cc_uploader.capabilities={"ALL"})
+    #HELM_PARAMS+=(--set sizing.nats.capabilities={"ALL"})
+    #HELM_PARAMS+=(--set sizing.routing_api.capabilities={"ALL"})
+    #HELM_PARAMS+=(--set sizing.router.capabilities={"ALL"})
+    #HELM_PARAMS+=(--set sizing.diego_locket.capabilities={"ALL"})
+    #HELM_PARAMS+=(--set sizing.diego_access.capabilities={"ALL"})
+    #HELM_PARAMS+=(--set sizing.diego_brain.capabilities={"ALL"})
+    #HELM_PARAMS+=(--set sizing.diego_api.capabilities={"ALL"})
+
     HELM_PARAMS+=(--set sizing.cc_uploader.capabilities={"SYS_RESOURCE"})
     HELM_PARAMS+=(--set sizing.nats.capabilities={"SYS_RESOURCE"})
     HELM_PARAMS+=(--set sizing.routing_api.capabilities={"SYS_RESOURCE"})
