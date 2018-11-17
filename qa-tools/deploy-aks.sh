@@ -8,25 +8,51 @@ usage() {
 EOF
 }
 
+cleanup() {
+  for container in "${CONTAINERS_TMP[@]}"; do
+    docker rm --force $container
+  done
+  for path in "${PATHS_TMP[@]}"; do
+    # Only cleanup tmp paths in /tmp/
+    if [[ -d "${path}" ]] && [[ ${path} =~ ^/tmp/ ]]; then
+      rm -rf "${path}"
+    fi
+  done
+  for file in "${FILES_TMP[@]}"; do
+    if [[ -f "${file}" ]]; then
+      rm -f "${file}"
+    fi
+  done
+}
+
+CONTAINERS_TMP=()
+PATHS_TMP=()
+FILES_TMP=()
+trap cleanup EXIT
+
 set -o errexit
 
 # interactive step requiring you to login in browser:
 export AZ_USER=$(az login | jq -r .[0].user.name)
 export AZ_SUBSCRIPTION_ID=$(az account show --query "{ subscription_id: id }" | jq -r .subscription_id)
 az account set --subscription $AZ_SUBSCRIPTION_ID
-az_user_prefix=${AZ_USER%%@*}2-
+az_user_prefix=${AZ_USER%%@*}-
 export AZ_RG_NAME=${az_user_prefix}cap-aks
 export AZ_AKS_NAME=$AZ_RG_NAME
 export AZ_REGION=eastus
 export AZ_AKS_NODE_COUNT=3
 export AZ_AKS_NODE_VM_SIZE=Standard_D3_v2
-export AZ_SSH_KEY=~/.ssh/id_rsa.pub
 export AZ_ADMIN_USER=scf-admin
+export AZ_SSH_KEY_PATH=$(mktemp -d)
+PATHS_TMP+=($AZ_SSH_KEY_PATH)
+export AZ_SSH_KEY=${AZ_SSH_KEY_PATH}/aks-deploy
+ssh-keygen -f ${AZ_SSH_KEY} -N ""
+
 
 az group create --name $AZ_RG_NAME --location $AZ_REGION
 az aks create --resource-group $AZ_RG_NAME --name $AZ_AKS_NAME \
               --node-count $AZ_AKS_NODE_COUNT --admin-username $AZ_ADMIN_USER \
-              --ssh-key-value $AZ_SSH_KEY --node-vm-size $AZ_AKS_NODE_VM_SIZE \
+              --ssh-key-value ${AZ_SSH_KEY}.pub --node-vm-size $AZ_AKS_NODE_VM_SIZE \
               --node-osdisk-size 60
 
 export KUBECONFIG=$(mktemp -d)/config
@@ -45,7 +71,7 @@ docker run \
   --volume $KUBECONFIG:/root/.kube/config \
   splatform/cf-ci-orchestration sleep infinity
 
-trap "docker rm --force aks-deploy" EXIT
+CONTAINERS_TMP+=(aks-deploy)
 
 while [[ $node_readiness != "$AZ_AKS_NODE_COUNT True" ]]; do
   sleep 10
@@ -139,7 +165,8 @@ Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
 docker exec -it aks-deploy kubectl create configmap -n kube-system cap-values \
   --from-literal=internal-ip=${internal_ips[0]} \
   --from-literal=public-ip=$public_ip \
-  --from-literal=garden-rootfs-driver=overlay-xfs
-
+  --from-literal=garden-rootfs-driver=overlay-xfs \
+  --from-literal=platform=azure \
+  --from-literal="node-ssh-access=$(cat $AZ_SSH_KEY)"
 cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker exec -i aks-deploy kubectl create -f -
-docker exec -it splatform/cf-ci-orchestration helm init
+docker exec -it aks-deploy helm init
