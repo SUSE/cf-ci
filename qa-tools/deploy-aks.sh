@@ -35,10 +35,22 @@ while ! az aks get-credentials --admin --resource-group $AZ_RG_NAME --name $AZ_A
   sleep 10
 done
 
+
+# All future kubectl commands will be run in this container. This ensures the
+# correct version of kubectl is used, and that it matches the version used by CI
+docker run \
+  --name aks-deploy \
+  --detach \
+  --rm \
+  --volume $KUBECONFIG:/root/.kube/config \
+  splatform/cf-ci-orchestration sleep infinity
+
+trap "docker rm --force aks-deploy" EXIT
+
 while [[ $node_readiness != "$AZ_AKS_NODE_COUNT True" ]]; do
   sleep 10
   node_readiness=$(
-    docker run -v "$KUBECONFIG:/root/.kube/config" --rm  splatform/cf-ci-orchestration kubectl get nodes -o json \
+    docker exec aks-deploy kubectl get nodes -o json \
       | jq -r '.items[] | .status.conditions[] | select(.type == "Ready").status' \
       | uniq -c | grep -o '\S.*'
   )
@@ -123,6 +135,11 @@ echo -e "\n Resource Group:\t$AZ_RG_NAME\n \
 Public IP:\t\t${public_ip}\n \
 Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
 
-docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system cap-values --from-literal=internal-ip=${internal_ips[0]} --from-literal=public-ip=$public_ip --from-literal=garden-rootfs-driver=overlay-xfs
-cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker run --rm -i -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create -f -
-docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm init
+# TODO: check if -i and -it are really needed in the following 3 commands
+docker exec -it aks-deploy kubectl create configmap -n kube-system cap-values \
+  --from-literal=internal-ip=${internal_ips[0]} \
+  --from-literal=public-ip=$public_ip \
+  --from-literal=garden-rootfs-driver=overlay-xfs
+
+cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker exec -i aks-deploy kubectl create -f -
+docker exec -it splatform/cf-ci-orchestration helm init
