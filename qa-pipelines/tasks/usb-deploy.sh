@@ -26,7 +26,7 @@ fi
 
 # Ensure persistent is the only default storageclass
 for sc in $(kubectl get storageclass | tail -n+2 | cut -f1 -d ' '); do
-  sc_desired_default_status=$([[ $sc == "persistent" ]] && echo true || echo false ) 
+  sc_desired_default_status=$([[ $sc == "persistent" ]] && echo true || echo false )
   sc_current_default_status=$(kubectl get -o json storageclass persistent | jq -r '.metadata.annotations["storageclass.kubernetes.io/is-default-class"]')
   if [[ ${sc_current_default_status} != ${sc_desired_default_status} ]]; then
     kubectl patch storageclass ${sc} -p '
@@ -63,69 +63,6 @@ DB_EXTERNAL_IP=$(kubectl get nodes -o json | jq -r '[.items[] | .status.addresse
 
 helm init --client-only
 
-helm install stable/postgresql \
-  --namespace postgres         \
-  --name postgres              \
-  --set "service.externalIPs={${DB_EXTERNAL_IP}}"
-
-PG_PASS=$(kubectl get secret --namespace postgres postgres-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
-
-helm install stable/mysql                   \
-  --name mysql                              \
-  --namespace mysql                         \
-  --set imageTag=5.7.22                     \
-  --set mysqlRootPassword=password          \
-  --set persistence.storageClass=persistent \
-  --set persistence.size=4Gi                \
-  --set service.type=NodePort               \
-  --set service.nodePort=30306              \
-  --set service.port=3306
-
-COMMON_SIDECAR_PARAMS=(
-  --set "env.CF_ADMIN_USER=admin"
-  --set "env.CF_ADMIN_PASSWORD=changeme"
-  --set "env.CF_DOMAIN=${DOMAIN}"
-  --set "env.CF_CA_CERT=${CF_CERT}"
-  --set "env.UAA_CA_CERT=${UAA_CERT}"
-  --set "kube.registry.hostname=registry.suse.com"
-  --set "kube.organization=cap"
-)
-
-PG_SIDECAR_PARAMS=(
-  --set "env.SERVICE_TYPE=postgres"
-  --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-postgres.pg-sidecar:8081"
-  --set "env.SERVICE_POSTGRESQL_HOST=${DB_EXTERNAL_IP}"
-  --set "env.SERVICE_POSTGRESQL_PORT=5432"
-  --set "env.SERVICE_POSTGRESQL_USER=postgres"
-  --set "env.SERVICE_POSTGRESQL_PASS=${PG_PASS}"
-  --set "env.SERVICE_POSTGRESQL_SSLMODE=disable"
-)
-
-MYSQL_SIDECAR_PARAMS=(
-  --set "env.SERVICE_TYPE=mysql"
-  --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-mysql.mysql-sidecar:8081"
-  --set "env.SERVICE_MYSQL_HOST=${DB_EXTERNAL_IP}"
-  --set "env.SERVICE_MYSQL_PORT=30306"
-  --set "env.SERVICE_MYSQL_USER=root"
-  --set "env.SERVICE_MYSQL_PASS=password"
-)
-
-tar xf s3.pg-sidecar/*.tgz -C s3.pg-sidecar/
-tar xf s3.mysql-sidecar/*.tgz -C s3.mysql-sidecar/
-
-helm install s3.pg-sidecar  \
-  --name pg-sidecar         \
-  --namespace pg-sidecar    \
-  "${PG_SIDECAR_PARAMS[@]}" \
-  "${COMMON_SIDECAR_PARAMS[@]}"
-
-helm install s3.mysql-sidecar  \
-  --name mysql-sidecar         \
-  --namespace mysql-sidecar    \
-  "${MYSQL_SIDECAR_PARAMS[@]}" \
-  "${COMMON_SIDECAR_PARAMS[@]}"
-
-
 is_namespace_ready() {
   # This is simpler than is_namespace_ready in cf_deploy, because there's no HA
   # and only one pod should be ready after the setup job finishes
@@ -153,8 +90,47 @@ wait_for_namespace() {
   fi
 }
 
+
+# Unzip sidecar tars
+tar xf s3.pg-sidecar/*.tgz -C s3.pg-sidecar/
+tar xf s3.mysql-sidecar/*.tgz -C s3.mysql-sidecar/
+
+# Test POSTGRES
+helm install stable/postgresql \
+  --namespace postgres         \
+  --name postgres              \
+  --set "service.externalIPs={${DB_EXTERNAL_IP}}"
+
+PG_PASS=$(kubectl get secret --namespace postgres postgres-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+
+COMMON_SIDECAR_PARAMS=(
+  --set "env.CF_ADMIN_USER=admin"
+  --set "env.CF_ADMIN_PASSWORD=changeme"
+  --set "env.CF_DOMAIN=${DOMAIN}"
+  --set "env.CF_CA_CERT=${CF_CERT}"
+  --set "env.UAA_CA_CERT=${UAA_CERT}"
+  --set "kube.registry.hostname=registry.suse.com"
+  --set "kube.organization=cap"
+)
+
+PG_SIDECAR_PARAMS=(
+  --set "env.SERVICE_TYPE=postgres"
+  --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-postgres.pg-sidecar:8081"
+  --set "env.SERVICE_POSTGRESQL_HOST=${DB_EXTERNAL_IP}"
+  --set "env.SERVICE_POSTGRESQL_PORT=5432"
+  --set "env.SERVICE_POSTGRESQL_USER=postgres"
+  --set "env.SERVICE_POSTGRESQL_PASS=${PG_PASS}"
+  --set "env.SERVICE_POSTGRESQL_SSLMODE=disable"
+)
+
+helm install s3.pg-sidecar  \
+  --name pg-sidecar         \
+  --namespace pg-sidecar    \
+  "${PG_SIDECAR_PARAMS[@]}" \
+  "${COMMON_SIDECAR_PARAMS[@]}"
+
+
 wait_for_namespace pg-sidecar
-wait_for_namespace mysql-sidecar
 
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme
@@ -162,7 +138,6 @@ cf create-org usb-test-org
 cf create-space -o usb-test-org usb-test-space
 cf target -o usb-test-org -s usb-test-space
 cf create-service postgres default testpostgres
-cf create-service mysql default testmysql
 
 echo > "sidecar-net-workaround.json" "[{ \"destination\": \"${DB_EXTERNAL_IP}/32\", \"protocol\": \"tcp\", \"ports\": \"5432,30306\" }]"
 cf create-security-group       sidecar-net-workaround sidecar-net-workaround.json
@@ -173,6 +148,39 @@ cd ci/sample-apps/rails-example
 sed -i 's/scf-rails-example-db/testpostgres/g' manifest.yml
 cf push scf-rails-example-postgres
 cf ssh scf-rails-example-postgres -c "export PATH=/home/vcap/deps/0/bin:/usr/local/bin:/usr/bin:/bin && export BUNDLE_PATH=/home/vcap/deps/0/vendor_bundle/ruby/2.5.0 && export BUNDLE_GEMFILE=/home/vcap/app/Gemfile && cd app && bundle exec rake db:seed"
+
+# Test MYSQL
+helm install stable/mysql                   \
+  --name mysql                              \
+  --namespace mysql                         \
+  --set imageTag=5.7.22                     \
+  --set mysqlRootPassword=password          \
+  --set persistence.storageClass=persistent \
+  --set persistence.size=4Gi                \
+  --set service.type=NodePort               \
+  --set service.nodePort=30306              \
+  --set service.port=3306
+
+MYSQL_SIDECAR_PARAMS=(
+  --set "env.SERVICE_TYPE=mysql"
+  --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-mysql.mysql-sidecar:8081"
+  --set "env.SERVICE_MYSQL_HOST=${DB_EXTERNAL_IP}"
+  --set "env.SERVICE_MYSQL_PORT=30306"
+  --set "env.SERVICE_MYSQL_USER=root"
+  --set "env.SERVICE_MYSQL_PASS=password"
+)
+
+helm install s3.mysql-sidecar  \
+  --name mysql-sidecar         \
+  --namespace mysql-sidecar    \
+  "${MYSQL_SIDECAR_PARAMS[@]}" \
+  "${COMMON_SIDECAR_PARAMS[@]}"
+
+wait_for_namespace mysql-sidecar
+
+cf api --skip-ssl-validation "https://api.${DOMAIN}"
+cf login -u admin -p changeme -o usb-test-org -s usb-test-space
+cf create-service mysql default testmysql
 
 git checkout manifest.yml
 sed -i 's/scf-rails-example-db/testmysql/g' manifest.yml
