@@ -68,6 +68,8 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
+kubectl top nodes
+kubectl top pods --all-namespaces
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --recreate-pods \
     --namespace "${CF_NAMESPACE}" \
@@ -104,6 +106,8 @@ fi
 echo "Results of app monitoring:"
 echo "SECONDS|STATUS"
 uniq -c "${monitor_file}"
+kubectl top nodes
+kubectl top pods --all-namespaces
 cf login -u admin -p changeme -o testorg -s testspace
 cf delete -f go-env
 cf delete-org -f testorg

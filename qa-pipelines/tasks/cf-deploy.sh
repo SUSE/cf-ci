@@ -45,6 +45,9 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
+kubectl top nodes
+kubectl top pods --all-namespaces
+
 helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
@@ -57,3 +60,5 @@ helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
 
 # Wait for CF release
 wait_for_release scf
+kubectl top nodes
+kubectl top pods --all-namespaces
