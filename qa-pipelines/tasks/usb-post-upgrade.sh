@@ -14,11 +14,12 @@ DOMAIN=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.con
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
 
+cd ci/sample-apps/rails-example
+
 # echo "Verify that app bound to postgres service instance is reachable:"
 # curl -Ikf https://scf-rails-example-postgres.$DOMAIN
 # echo "Verify that data created before upgrade can be retrieved:"
 # curl -kf https://scf-rails-example-postgres.$DOMAIN/todos/1 | jq .
-# cd ci/sample-apps/rails-example
 # cf target -o usb-test-org -s usb-test-space
 # cf stop scf-rails-example-postgres
 # sleep 15
