@@ -13,14 +13,13 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 DOMAIN=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
-
+cf target -o usb-test-org -s usb-test-space
 cd ci/sample-apps/rails-example
 
 # echo "Verify that app bound to postgres service instance is reachable:"
 # curl -Ikf https://scf-rails-example-postgres.$DOMAIN
 # echo "Verify that data created before upgrade can be retrieved:"
 # curl -kf https://scf-rails-example-postgres.$DOMAIN/todos/1 | jq .
-# cf target -o usb-test-org -s usb-test-space
 # cf stop scf-rails-example-postgres
 # sleep 15
 # cf delete -f scf-rails-example-postgres
@@ -42,7 +41,7 @@ cf unbind-running-security-group sidecar-net-workaround
 cf delete-security-group -f sidecar-net-workaround
 
 cf install-plugin -f "https://github.com/SUSE/cf-usb-plugin/releases/download/1.0.0/cf-usb-plugin-1.0.0.0.g47b49cd-linux-amd64"
-yes | cf usb-delete-driver-endpoint postgres
+#yes | cf usb-delete-driver-endpoint postgres
 yes | cf usb-delete-driver-endpoint mysql
 
 for namespace in mysql-sidecar pg-sidecar postgres mysql; do

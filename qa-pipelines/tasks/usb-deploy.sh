@@ -64,10 +64,12 @@ DB_EXTERNAL_IP=$(kubectl get nodes -o json | jq -r '[.items[] | .status.addresse
 helm init --client-only
 
 is_namespace_ready() {
-  # This is simpler than is_namespace_ready in cf_deploy, because there's no HA
-  # and only one pod should be ready after the setup job finishes
-  [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].ready' \
-    | sed '/^ *$/d') ]]
+  [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
+      | grep -vE 'setup' \
+      | awk '{ print $2 }' \
+      | sed '/^ *$/d' \
+      | sort \
+      | uniq) ]]
 }
 
 wait_for_namespace() {
@@ -105,6 +107,17 @@ COMMON_SIDECAR_PARAMS=(
   --set "kube.organization=cap"
 )
 
+cf api --skip-ssl-validation "https://api.${DOMAIN}"
+cf login -u admin -p changeme
+cf create-org usb-test-org
+cf create-space -o usb-test-org usb-test-space
+cf target -o usb-test-org -s usb-test-space
+
+echo > "sidecar-net-workaround.json" "[{ \"destination\": \"${DB_EXTERNAL_IP}/32\", \"protocol\": \"tcp\", \"ports\": \"5432,30306\" }]"
+cf create-security-group sidecar-net-workaround sidecar-net-workaround.json
+cf bind-running-security-group sidecar-net-workaround
+cf bind-staging-security-group sidecar-net-workaround
+
 # Test POSTGRES
 # helm install stable/postgresql \
 #   --namespace postgres         \
@@ -133,16 +146,8 @@ COMMON_SIDECAR_PARAMS=(
 # wait_for_namespace pg-sidecar
 
 # cf api --skip-ssl-validation "https://api.${DOMAIN}"
-# cf login -u admin -p changeme
-# cf create-org usb-test-org
-# cf create-space -o usb-test-org usb-test-space
-# cf target -o usb-test-org -s usb-test-space
+# cf login -u admin -p changeme -o usb-test-org -s usb-test-space
 # cf create-service postgres default testpostgres
-
-# echo > "sidecar-net-workaround.json" "[{ \"destination\": \"${DB_EXTERNAL_IP}/32\", \"protocol\": \"tcp\", \"ports\": \"5432,30306\" }]"
-# cf create-security-group       sidecar-net-workaround sidecar-net-workaround.json
-# cf bind-running-security-group sidecar-net-workaround
-# cf bind-staging-security-group sidecar-net-workaround
 
 # # push app in subshell to avoid changing directory
 # (
@@ -181,7 +186,7 @@ helm install s3.mysql-sidecar  \
   "${COMMON_SIDECAR_PARAMS[@]}"
 
 wait_for_namespace mysql-sidecar
-
+sleep 60
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o usb-test-org -s usb-test-space
 cf create-service mysql default testmysql
@@ -191,6 +196,6 @@ cf create-service mysql default testmysql
   cd ci/sample-apps/rails-example
   git checkout manifest.yml
   sed -i 's/scf-rails-example-db/testmysql/g' manifest.yml
-  cf push scf-rails-example-mysql
+  cf push scf-rails-example-mysql -s cflinuxfs2
 )
 cf ssh scf-rails-example-mysql -c "export PATH=/home/vcap/deps/0/bin:/usr/local/bin:/usr/bin:/bin && export BUNDLE_PATH=/home/vcap/deps/0/vendor_bundle/ruby/2.5.0 && export BUNDLE_GEMFILE=/home/vcap/app/Gemfile && cd app && bundle exec rake db:seed"
