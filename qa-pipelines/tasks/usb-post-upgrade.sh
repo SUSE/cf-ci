@@ -16,6 +16,9 @@ cf login -u admin -p changeme -o system
 cf target -o usb-test-org -s usb-test-space
 cd ci/sample-apps/rails-example
 
+# CAP 1.3 Workaround
+cf update-service-broker usb broker-admin "$(kubectl get secret secrets-2.14.5-1 --namespace scf -o yaml | grep \\scf-usb-password: | cut -d: -f2 | base64 -id)" https://cf-usb-cf-usb.scf.svc.cluster.local:24054
+
 # echo "Verify that app bound to postgres service instance is reachable:"
 # curl -Ikf https://scf-rails-example-postgres.$DOMAIN
 # echo "Verify that data created before upgrade can be retrieved:"
