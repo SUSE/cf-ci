@@ -60,7 +60,7 @@ deploy_vancouver '../configgin-ci', variants: %w[check master]
 
 # Nuremberg targets
 run 'fly', '-t', 'suse.de', 'sync'
-Dir.chdir('cf-usb') do
+Dir.chdir('../cloudfoundry/ci/pipelines/cf-usb') do
   status 'deploying cf-usb (openSUSE develop)'
   run './deploy', '-t', 'suse.de', 'production'
   status 'deploying cf-usb (SLE master)'
