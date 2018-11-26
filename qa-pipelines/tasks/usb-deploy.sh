@@ -119,43 +119,44 @@ cf bind-running-security-group sidecar-net-workaround
 cf bind-staging-security-group sidecar-net-workaround
 
 # Test POSTGRES
-# helm install stable/postgresql \
-#   --namespace postgres         \
-#   --name postgres              \
-#   --set "service.externalIPs={${DB_EXTERNAL_IP}}"
+helm install stable/postgresql \
+  --version 0.18.1             \
+  --namespace postgres         \
+  --name postgres              \
+  --set "service.externalIPs={${DB_EXTERNAL_IP}}"
 
-# PG_PASS=$(kubectl get secret --namespace postgres postgres-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+PG_PASS=$(kubectl get secret --namespace postgres postgres-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode)
 
-# PG_SIDECAR_PARAMS=(
-#   --set "env.SERVICE_TYPE=postgres"
-#   --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-postgres.pg-sidecar:8081"
-#   --set "env.SERVICE_POSTGRESQL_HOST=${DB_EXTERNAL_IP}"
-#   --set "env.SERVICE_POSTGRESQL_PORT=5432"
-#   --set "env.SERVICE_POSTGRESQL_USER=postgres"
-#   --set "env.SERVICE_POSTGRESQL_PASS=${PG_PASS}"
-#   --set "env.SERVICE_POSTGRESQL_SSLMODE=disable"
-# )
+PG_SIDECAR_PARAMS=(
+  --set "env.SERVICE_TYPE=postgres"
+  --set "env.SERVICE_LOCATION=http://cf-usb-sidecar-postgres.pg-sidecar:8081"
+  --set "env.SERVICE_POSTGRESQL_HOST=${DB_EXTERNAL_IP}"
+  --set "env.SERVICE_POSTGRESQL_PORT=5432"
+  --set "env.SERVICE_POSTGRESQL_USER=postgres"
+  --set "env.SERVICE_POSTGRESQL_PASS=${PG_PASS}"
+  --set "env.SERVICE_POSTGRESQL_SSLMODE=disable"
+)
 
-# helm install s3.pg-sidecar  \
-#   --name pg-sidecar         \
-#   --namespace pg-sidecar    \
-#   "${PG_SIDECAR_PARAMS[@]}" \
-#   "${COMMON_SIDECAR_PARAMS[@]}"
+helm install s3.pg-sidecar  \
+  --name pg-sidecar         \
+  --namespace pg-sidecar    \
+  "${PG_SIDECAR_PARAMS[@]}" \
+  "${COMMON_SIDECAR_PARAMS[@]}"
 
 
-# wait_for_namespace pg-sidecar
+wait_for_namespace pg-sidecar
+sleep 60
+cf api --skip-ssl-validation "https://api.${DOMAIN}"
+cf login -u admin -p changeme -o usb-test-org -s usb-test-space
+cf create-service postgres default testpostgres
 
-# cf api --skip-ssl-validation "https://api.${DOMAIN}"
-# cf login -u admin -p changeme -o usb-test-org -s usb-test-space
-# cf create-service postgres default testpostgres
-
-# # push app in subshell to avoid changing directory
-# (
-#   cd ci/sample-apps/rails-example
-#   sed -i 's/scf-rails-example-db/testpostgres/g' manifest.yml
-#   cf push scf-rails-example-postgres
-# )
-# cf ssh scf-rails-example-postgres -c "export PATH=/home/vcap/deps/0/bin:/usr/local/bin:/usr/bin:/bin && export BUNDLE_PATH=/home/vcap/deps/0/vendor_bundle/ruby/2.5.0 && export BUNDLE_GEMFILE=/home/vcap/app/Gemfile && cd app && bundle exec rake db:seed"
+# push app in subshell to avoid changing directory
+(
+  cd ci/sample-apps/rails-example
+  sed -i 's/scf-rails-example-db/testpostgres/g' manifest.yml
+  cf push scf-rails-example-postgres -s cflinuxfs2
+)
+cf ssh scf-rails-example-postgres -c "export PATH=/home/vcap/deps/0/bin:/usr/local/bin:/usr/bin:/bin && export BUNDLE_PATH=/home/vcap/deps/0/vendor_bundle/ruby/2.5.0 && export BUNDLE_GEMFILE=/home/vcap/app/Gemfile && cd app && bundle exec rake db:seed"
 
 
 # Test MYSQL

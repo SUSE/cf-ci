@@ -19,14 +19,14 @@ cd ci/sample-apps/rails-example
 # CAP 1.3 Workaround
 cf update-service-broker usb broker-admin "$(kubectl get secret secrets-2.14.5-1 --namespace scf -o yaml | grep \\scf-usb-password: | cut -d: -f2 | base64 -id)" https://cf-usb-cf-usb.scf.svc.cluster.local:24054
 
-# echo "Verify that app bound to postgres service instance is reachable:"
-# curl -Ikf https://scf-rails-example-postgres.$DOMAIN
-# echo "Verify that data created before upgrade can be retrieved:"
-# curl -kf https://scf-rails-example-postgres.$DOMAIN/todos/1 | jq .
-# cf stop scf-rails-example-postgres
-# sleep 15
-# cf delete -f scf-rails-example-postgres
-# cf delete-service -f testpostgres
+echo "Verify that app bound to postgres service instance is reachable:"
+curl -Ikf https://scf-rails-example-postgres.$DOMAIN
+echo "Verify that data created before upgrade can be retrieved:"
+curl -kf https://scf-rails-example-postgres.$DOMAIN/todos/1 | jq .
+cf stop scf-rails-example-postgres
+sleep 15
+cf delete -f scf-rails-example-postgres
+cf delete-service -f testpostgres
 
 echo "Verify that app bound to mysql service instance is reachable:"
 curl -Ikf https://scf-rails-example-mysql.$DOMAIN
@@ -44,7 +44,7 @@ cf unbind-running-security-group sidecar-net-workaround
 cf delete-security-group -f sidecar-net-workaround
 
 cf install-plugin -f "https://github.com/SUSE/cf-usb-plugin/releases/download/1.0.0/cf-usb-plugin-1.0.0.0.g47b49cd-linux-amd64"
-#yes | cf usb-delete-driver-endpoint postgres
+yes | cf usb-delete-driver-endpoint postgres
 yes | cf usb-delete-driver-endpoint mysql
 
 for namespace in mysql-sidecar pg-sidecar postgres mysql; do
