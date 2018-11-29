@@ -46,7 +46,6 @@ export AZ_AKS_NODE_COUNT=3
 export AZ_AKS_NODE_VM_SIZE=Standard_D3_v2
 export AZ_ADMIN_USER=scf-admin
 export AZ_SSH_KEY_PATH=$(mktemp -d)
-PATHS_TMP+=($AZ_SSH_KEY_PATH)
 export AZ_SSH_KEY=${AZ_SSH_KEY_PATH}/aks-deploy
 ssh-keygen -f ${AZ_SSH_KEY} -N ""
 
@@ -168,5 +167,6 @@ docker exec -it aks-deploy kubectl create configmap -n kube-system cap-values \
   --from-literal=garden-rootfs-driver=overlay-xfs \
   --from-literal=platform=azure \
   --from-literal="node-ssh-access=$(cat $AZ_SSH_KEY)"
+rm -rf "/tmp/tmp.${AZ_SSH_KEY_PATH##/tmp/tmp.}"
 cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker exec -i aks-deploy kubectl create -f -
 docker exec -it aks-deploy helm init
