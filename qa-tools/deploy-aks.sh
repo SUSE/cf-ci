@@ -10,7 +10,9 @@ EOF
 
 cleanup() {
   for container in "${CONTAINERS_TMP[@]}"; do
-    docker rm --force $container
+    if docker ps --format '{{.Names}}' | grep -Eq "^$container\$"; then
+      docker rm --force $container
+    fi
   done
   for path in "${PATHS_TMP[@]}"; do
     # Only cleanup tmp paths in /tmp/
@@ -25,7 +27,7 @@ cleanup() {
   done
 }
 
-CONTAINERS_TMP=()
+CONTAINERS_TMP=(aks-deploy)
 PATHS_TMP=()
 FILES_TMP=()
 trap cleanup EXIT
@@ -70,8 +72,6 @@ docker run \
   --rm \
   --volume $KUBECONFIG:/root/.kube/config \
   splatform/cf-ci-orchestration sleep infinity
-
-CONTAINERS_TMP+=(aks-deploy)
 
 while [[ $node_readiness != "$AZ_AKS_NODE_COUNT True" ]]; do
   sleep 10
