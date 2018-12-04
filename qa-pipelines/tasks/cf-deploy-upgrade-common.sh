@@ -128,8 +128,8 @@ get_internal_ca_cert() (
 )
 
 set_psp() {
-    HELM_PARAMS+=(--set "kube.psp.nonprivileged=suse.cap.psp")
-    HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp")
+    HELM_PARAMS+=(--set "kube.psp.nonprivileged=suse.cap.psp.nonprivileged")
+    HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp.privileged")
 }
 
 set_helm_params() {

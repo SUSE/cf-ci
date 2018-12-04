@@ -2,13 +2,11 @@
 apiVersion: extensions/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: suse.cap.psp
+  name: suse.cap.psp.nonprivileged
   annotations:
     seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
 spec:
-  # Privileged
-  #privileged: false      	<<< default in suse.caasp.psp.unprivileged
-  privileged: true
+  privileged: false
   # Volumes and File Systems
   volumes:
     # Kubernetes Pseudo Volume Types
@@ -47,10 +45,8 @@ spec:
     rule: RunAsAny
   fsGroup:
     rule: RunAsAny
-  # Privilege Escalation
-  #allowPrivilegeEscalation: false	   <<< default in suse.caasp.psp.unprivileged
-  allowPrivilegeEscalation: true
-  #defaultAllowPrivilegeEscalation: false  <<< default in suse.caasp.psp.unprivileged
+  allowPrivilegeEscalation: false
+  defaultAllowPrivilegeEscalation: false
   # Capabilities
   allowedCapabilities: []
   defaultAddCapabilities: []
@@ -66,44 +62,3 @@ spec:
   seLinux:
     # SELinux is unsed in CaaSP
     rule: 'RunAsAny'
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: suse:cap:psp
-rules:
-  - apiGroups: ['extensions']
-    resources: ['podsecuritypolicies']
-    verbs: ['use']
-    resourceNames: ['suse.cap.psp']
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: cap:clusterrole
-roleRef:
-  kind: ClusterRole
-  name: suse:cap:psp
-  apiGroup: rbac.authorization.k8s.io
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: uaa
-- kind: ServiceAccount
-  name: default
-  namespace: scf
-- kind: ServiceAccount
-  name: default
-  namespace: stratos
-- kind: ServiceAccount
-  name: default
-  namespace: pg-sidecar
-- kind: ServiceAccount
-  name: default
-  namespace: mysql-sidecar
-# Workaround test-brain serviceaccount psp issue for brains tests.
-# We should remove the line which checks for this in run-test when we have a better
-# way of adding the appropriate permissions to the brain tests
-- kind: ServiceAccount
-  name: test-brain
-  namespace: scf
