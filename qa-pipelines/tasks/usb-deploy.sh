@@ -64,12 +64,19 @@ DB_EXTERNAL_IP=$(kubectl get nodes -o json | jq -r '[.items[] | .status.addresse
 helm init --client-only
 
 is_namespace_ready() {
+  # Check that the setup pod is Completed. Return with a failure status if not
+  if [[ Completed != $(kubectl get pods -a --namespace=pg-sidecar 2>/dev/null \
+        | grep setup \
+        | awk '{print $3}') ]]; then
+    return 1
+  fi
+  # Return successfully if all non-setup pods are ready
   [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-      | grep -vE 'setup' \
-      | awk '{ print $2 }' \
-      | sed '/^ *$/d' \
-      | sort \
-      | uniq) ]]
+    | grep -v 'setup' \
+    | awk '{ print $2 }' \
+    | sed '/^ *$/d' \
+    | sort \
+    | uniq) ]]
 }
 
 wait_for_namespace() {
@@ -145,7 +152,6 @@ helm install s3.pg-sidecar  \
 
 
 wait_for_namespace pg-sidecar
-sleep 60
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o usb-test-org -s usb-test-space
 cf create-service postgres default testpostgres
@@ -187,7 +193,6 @@ helm install s3.mysql-sidecar  \
   "${COMMON_SIDECAR_PARAMS[@]}"
 
 wait_for_namespace mysql-sidecar
-sleep 60
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o usb-test-org -s usb-test-space
 cf create-service mysql default testmysql
