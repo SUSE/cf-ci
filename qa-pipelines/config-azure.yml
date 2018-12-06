@@ -26,5 +26,6 @@ organization: splatform
 
 magic-dns-service: omg.howdoi.website
 
+src-repo: SUSE/scf
 cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.13.3%2Bcf2.7.0.0.gf95d9aed.zip
 cap-opensuse-url: https://s3.amazonaws.com/cap-release-archives/master/scf-opensuse-2.13.3%2Bcf2.7.0.0.gf95d9aed.zip
