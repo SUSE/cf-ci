@@ -13,26 +13,30 @@ cp  pool.kube-hosts/metadata /root/.kube/config
 DOMAIN=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
 cf login -u admin -p changeme -o system
+cf target -o usb-test-org -s usb-test-space
+cd ci/sample-apps/rails-example
+
+# CAP 1.3 Workaround
+cf update-service-broker usb broker-admin "$(kubectl get secret secrets-2.14.5-1 --namespace scf -o yaml | grep \\scf-usb-password: | cut -d: -f2 | base64 -id)" https://cf-usb-cf-usb.scf.svc.cluster.local:24054
 
 echo "Verify that app bound to postgres service instance is reachable:"
 curl -Ikf https://scf-rails-example-postgres.$DOMAIN
 echo "Verify that data created before upgrade can be retrieved:"
 curl -kf https://scf-rails-example-postgres.$DOMAIN/todos/1 | jq .
+cf stop scf-rails-example-postgres
+sleep 15
+cf delete -f scf-rails-example-postgres
+cf delete-service -f testpostgres
 
 echo "Verify that app bound to mysql service instance is reachable:"
 curl -Ikf https://scf-rails-example-mysql.$DOMAIN
 echo "Verify that data created before upgrade can be retrieved:"
 curl -kf https://scf-rails-example-mysql.$DOMAIN/todos/1 | jq .
-
-cd ci/sample-apps/rails-example
-cf target -o usb-test-org -s usb-test-space
-cf stop scf-rails-example-postgres
 cf stop scf-rails-example-mysql
 sleep 15
-cf delete -f scf-rails-example-postgres
 cf delete -f scf-rails-example-mysql
-cf delete-service -f testpostgres
 cf delete-service -f testmysql
+
 cf delete-org -f usb-test-org
 
 cf unbind-staging-security-group sidecar-net-workaround

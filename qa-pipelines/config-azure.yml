@@ -1,5 +1,4 @@
 ---
-src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
 
 src-rails-example-repo: https://github.com/scf-samples/rails-example.git
