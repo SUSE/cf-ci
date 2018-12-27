@@ -7,8 +7,7 @@ metadata:
     seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
 spec:
   # Privileged
-  #default in suse.caasp.psp.unprivileged
-  #privileged: false
+  #privileged: false      	<<< default in suse.caasp.psp.unprivileged
   privileged: true
   # Volumes and File Systems
   volumes:
@@ -34,8 +33,11 @@ spec:
     - azureFile
     - vsphereVolume
   allowedFlexVolumes: []
-  # hostPath volumes are not allowed; pathPrefix must still be specified
-  allowedHostPaths:      
+  allowedHostPaths:
+    # Note: We don't allow hostPath volumes above, but set this to a path we
+    # control anyway as a belt+braces protection. /dev/null may be a better
+    # option, but the implications of pointing this towards a device are
+    # unclear.
     - pathPrefix: /opt/kubernetes-hostpath-volumes
   readOnlyRootFilesystem: false
   # Users and groups
@@ -46,11 +48,9 @@ spec:
   fsGroup:
     rule: RunAsAny
   # Privilege Escalation
-  #default in suse.caasp.psp.unprivileged
-  #allowPrivilegeEscalation: false
+  #allowPrivilegeEscalation: false	   <<< default in suse.caasp.psp.unprivileged
   allowPrivilegeEscalation: true
-  #default in suse.caasp.psp.unprivileged
-  #defaultAllowPrivilegeEscalation: false
+  #defaultAllowPrivilegeEscalation: false  <<< default in suse.caasp.psp.unprivileged
   # Capabilities
   allowedCapabilities: []
   defaultAddCapabilities: []
@@ -66,4 +66,44 @@ spec:
   seLinux:
     # SELinux is unsed in CaaSP
     rule: 'RunAsAny'
-    
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: suse:cap:psp
+rules:
+  - apiGroups: ['extensions']
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames: ['suse.cap.psp']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cap:clusterrole
+roleRef:
+  kind: ClusterRole
+  name: suse:cap:psp
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: uaa
+- kind: ServiceAccount
+  name: default
+  namespace: scf
+- kind: ServiceAccount
+  name: default
+  namespace: stratos
+- kind: ServiceAccount
+  name: default
+  namespace: pg-sidecar
+- kind: ServiceAccount
+  name: default
+  namespace: mysql-sidecar
+# Workaround test-brain serviceaccount psp issue for brains tests.
+# We should remove the line which checks for this in run-test when we have a better
+# way of adding the appropriate permissions to the brain tests
+- kind: ServiceAccount
+  name: test-brain
+  namespace: scf
