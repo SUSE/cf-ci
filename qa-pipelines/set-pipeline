@@ -115,7 +115,7 @@ if ! git ls-remote --exit-code $src_ci_remote $src_ci_branch; then
 fi
 
 # Append tag/branch name to pipeline name
-pipeline_name=${pipeline_name}-${src_ci_branch}
+pipeline_name=${pipeline_name}-${src_ci_branch//\//-}
 
 # Determine if pipeline already exists. This will be used to pause the jobs by default
 existing_pipeline_job_count=$(

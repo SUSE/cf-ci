@@ -1,7 +1,6 @@
 #Dev's upgrade CI: Test upgrades on nightly buids
-#Deploy: ./set-pipeline -t provo -p DEV-UPGRADES --pool=capci pipeline-presets/cap-qa-upgrades-lite.yml
+#Deploy: ./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci pipeline-presets/cap-qa-upgrades-lite.yml
 ---
-src-branch: develop
 src-ci-repo: https://github.com/SUSE/cf-ci.git
 
 src-rails-example-repo: https://github.com/scf-samples/rails-example.git
@@ -28,5 +27,7 @@ organization: splatform
 
 magic-dns-service: omg.howdoi.website
 
-cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.13.3%2Bcf2.7.0.0.gf95d9aed.zip
-cap-opensuse-url: https://s3.amazonaws.com/cap-release-archives/master/scf-opensuse-2.13.3%2Bcf2.7.0.0.gf95d9aed.zip
+src-repo: SUSE/scf
+cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.14.5%2Bcf2.7.0.0.g6360c016.zip
+cap-opensuse-url: https://s3.amazonaws.com/cap-release-archives/master/scf-opensuse-2.14.5%2Bcf2.7.0.0.g6360c016.zip
+
