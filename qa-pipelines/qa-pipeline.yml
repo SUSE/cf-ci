@@ -213,19 +213,19 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
-    - task: cf-get-commit-id
-      file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
-      input_mapping:
-        s3.archive: s3.scf-config-sles
-    - put: status.src
-      params: &status-params-SA-SLES
-        context: ((pipeline-name))-SA-SLES
-        description: "QA Pipeline: ((pipeline-name)) (SLES non-HA)"
-        path: commit-id/sha
-        state: pending
-    on_failure:
-      put: pool.kube-hosts
-      params: {release: pool.kube-hosts}
+    # - task: cf-get-commit-id
+    #   file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
+    #   input_mapping:
+    #     s3.archive: s3.scf-config-sles
+    # - put: status.src
+    #   params: &status-params-SA-SLES
+    #     context: ((pipeline-name))-SA-SLES
+    #     description: "QA Pipeline: ((pipeline-name)) (SLES non-HA)"
+    #     path: commit-id/sha
+    #     state: pending
+    # on_failure:
+    #   put: pool.kube-hosts
+    #   params: {release: pool.kube-hosts}
   - do:
     - task: cf-deploy-pre-upgrade
       file: ci/qa-pipelines/tasks/cf-deploy.yml
@@ -333,16 +333,16 @@ jobs:
         ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-    on_success:
-      put: status.src
-      params:
-        <<: *status-params-SA-SLES
-        state: success
-    on_failure:
-      put: status.src
-      params:
-        <<: *status-params-SA-SLES
-        state: failure
+    # on_success:
+    #   put: status.src
+    #   params:
+    #     <<: *status-params-SA-SLES
+    #     state: success
+    # on_failure:
+    #   put: status.src
+    #   params:
+    #     <<: *status-params-SA-SLES
+    #     state: failure
 
 - name: ((pipeline-name))-HA-openSUSE
   plan:
