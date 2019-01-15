@@ -18,7 +18,7 @@ Pipelines are deployed to a concourse installation with the [set-pipeline](qa-pi
 
 ## Pipeline deployment prerequisites
 
-- A pool-specific config file in the directory of the `set-pipeline` script. `set-pipeline` will look for a file containing various configurable values in the current working directory named `config-${POOL_NAME}.yml`. See [config-provo.yml](qa-pipelines/config-provo.yml) for an example.
+- A pool-specific config file in the directory of the `set-pipeline` script. `set-pipeline` will look for a file containing various configurable values in the current working directory named `config-${POOL_NAME}.yml`. See [config-provo.yml](config-provo.yml) for an example.
   
 - A cloneable git repository with kube configs which also serve as lock files, as well as a pool-specific config following the `config-${POOL_NAME}.yml` naming convention. See [Pool requirements](#pool-requirements) for more details.
 
