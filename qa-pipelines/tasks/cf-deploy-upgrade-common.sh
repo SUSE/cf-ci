@@ -23,7 +23,8 @@ fi
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
-PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+#PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+PROVISIONER=$(kubectl get storageclasses default -o "jsonpath={.provisioner}")
 
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
