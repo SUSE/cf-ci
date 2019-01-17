@@ -26,6 +26,8 @@ set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 011
 EXCLUDE_BRAINS_PREFIX=011
+# Set this to run only one test. If EXCLUDE and INCLUDE are both specified, EXCLUDE is applied after INCLUDE
+INCLUDE_BRAINS_PREFIX=
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
 CF_NAMESPACE=scf
@@ -64,6 +66,7 @@ kube_overrides() {
         require 'yaml'
         require 'json'
         exclude_brains_prefix = ENV["EXCLUDE_BRAINS_PREFIX"]
+        include_brains_prefix = ENV["INCLUDE_BRAINS_PREFIX"]
 
         obj = YAML.load_file('$1')
         obj['spec']['containers'].each do |container|
@@ -75,8 +78,13 @@ kube_overrides() {
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
                 end
             end
-            if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
-                container['env'].push name: "EXCLUDE", value: exclude_brains_prefix
+            if obj['metadata']['name'] == "acceptance-tests-brain"
+                unless exclude_brains_prefix.empty?
+                    container['env'].push name: "EXCLUDE", value: exclude_brains_prefix
+                end
+                unless include_brains_prefix.empty?
+                    container['env'].push name: "INCLUDE", value: include_brains_prefix
+                end
             end
             if obj['metadata']['name'] == "acceptance-tests"
                 container['env'].push name: "CATS_SUITES", value: '${CATS_SUITES:-}'
