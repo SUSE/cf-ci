@@ -33,6 +33,7 @@ resources:
     branch: ((src-ci-branch))
     paths:
     - qa-pipelines/*
+    - qa-tools/*
     - sample-apps/*
 
 - name: s3.scf-config-opensuse
@@ -95,6 +96,12 @@ jobs:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
   - do:
+    - task: cf-image-diff
+      file: ci/qa-pipelines/tasks/cf-image-diff.yml
+      params:
+        CAP_CHART: opensuse
+      input_mapping:
+        s3.scf-config: s3.scf-config-opensuse
     - task: cf-deploy-pre-upgrade
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
@@ -227,6 +234,14 @@ jobs:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
   - do:
+    - task: cf-image-diff
+      file: ci/qa-pipelines/tasks/cf-image-diff.yml
+      params:
+        KUBE_REGISTRY_USERNAME: ((registry-username))
+        KUBE_REGISTRY_PASSWORD: ((registry-password))
+        CAP_CHART: ""
+      input_mapping:
+        s3.scf-config: s3.scf-config-sles
     - task: cf-deploy-pre-upgrade
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
