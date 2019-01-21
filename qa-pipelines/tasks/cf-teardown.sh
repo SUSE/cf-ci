@@ -31,3 +31,10 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
       kubectl delete statefulsets --all --namespace "${namespace}" ||:
     done
 done
+
+kubectl delete --ignore-not-found \
+    --filename ci/qa-tools/cap-cr-privileged.yaml \
+    --filename ci/qa-tools/cap-crb-2.13.3.yaml \
+    --filename ci/qa-tools/cap-crb-tests.yaml \
+    --filename ci/qa-tools/cap-psp-nonprivileged.yaml \
+    --filename ci/qa-tools/cap-psp-privileged.yaml

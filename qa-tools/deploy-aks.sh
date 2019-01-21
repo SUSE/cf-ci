@@ -124,5 +124,5 @@ Public IP:\t\t${public_ip}\n \
 Private IPs:\t\t\"$(IFS=,; echo "${internal_ips[*]}")\"\n"
 
 docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create configmap -n kube-system cap-values --from-literal=internal-ip=${internal_ips[0]} --from-literal=public-ip=$public_ip --from-literal=garden-rootfs-driver=overlay-xfs
-cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker run --rm -i -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create -f -
+cat persistent-sc.yaml cluster-admin.yaml | docker run --rm -i -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration kubectl create -f -
 docker run --rm -it -v $KUBECONFIG:/root/.kube/config splatform/cf-ci-orchestration helm init
