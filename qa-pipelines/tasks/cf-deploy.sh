@@ -13,6 +13,17 @@ source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
+# Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
+kubectl delete psp --ignore-not-found suse.cap.psp
+kubectl delete clusterrolebinding --ignore-not-found cap:clusterrole
+kubectl replace --force --filename=ci/qa-tools/{cap-psp-privileged,cap-psp-nonprivileged,cap-cr-privileged,cap-crb-tests}.yaml
+
+if semver_is_gte $(helm_chart_version) 2.14.5; then
+    kubectl delete --ignore-not-found --filename ci/qa-tools/cap-crb-2.13.3.yaml
+else
+    kubectl replace --filename ci/qa-tools/cap-crb-2.13.3.yaml
+fi
+
 echo UAA customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 

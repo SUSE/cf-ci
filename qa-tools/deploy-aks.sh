@@ -168,5 +168,5 @@ docker exec -it aks-deploy kubectl create configmap -n kube-system cap-values \
   --from-literal=platform=azure \
   --from-literal="node-ssh-access=$(cat $AZ_SSH_KEY)"
 rm -rf "/tmp/tmp.${AZ_SSH_KEY_PATH##/tmp/tmp.}"
-cat persistent-sc.yaml cap-psp-rbac.yaml cluster-admin.yaml | docker exec -i aks-deploy kubectl create -f -
+cat persistent-sc.yaml cluster-admin.yaml | docker exec -i aks-deploy kubectl create -f -
 docker exec -it aks-deploy helm init

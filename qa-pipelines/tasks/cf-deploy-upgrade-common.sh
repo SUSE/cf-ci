@@ -128,16 +128,18 @@ get_internal_ca_cert() (
 )
 
 set_psp() {
-    HELM_PARAMS+=(--set "kube.psp.nonprivileged=suse.cap.psp")
-    HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp")
+    HELM_PARAMS+=(--set "kube.psp.nonprivileged=suse.cap.psp.nonprivileged")
+    HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp.privileged")
 }
 
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "kube.external_ips[0]=${external_ip}"
                  --set "sizing.credhub_user.count=1")
 
+    for (( i=0; i < ${#external_ips[@]}; i++ )); do
+        HELM_PARAMS+=(--set "kube.external_ips[$i]=${external_ips[$i]}")
+    done
     if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi
@@ -186,7 +188,10 @@ set -o allexport
 # The internal/external and public IP addresses are now taken from the configmap set by prep-new-cluster
 # The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
-external_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]')
+external_ips=($(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]'))
+if [[ $(kubectl get configmap -o json -n kube-system cap-values  | jq -r .data.platform) == openstack ]]; then
+  external_ips+=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
+fi
 public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
