@@ -127,11 +127,6 @@ get_internal_ca_cert() (
       | base64 -d
 )
 
-set_psp() {
-    HELM_PARAMS+=(--set "kube.psp.nonprivileged=suse.cap.psp.nonprivileged")
-    HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp.privileged")
-}
-
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
@@ -153,8 +148,6 @@ set_helm_params() {
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
-
-    set_psp # Sets PSP
 }
 
 set_uaa_sizing_params() {
