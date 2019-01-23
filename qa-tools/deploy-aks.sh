@@ -22,12 +22,13 @@ export AZ_AKS_NODE_COUNT=3
 export AZ_AKS_NODE_VM_SIZE=Standard_D3_v2
 export AZ_SSH_KEY=~/.ssh/id_rsa.pub
 export AZ_ADMIN_USER=scf-admin
+export KUBE_VERSION=1.11.5
 
 az group create --name $AZ_RG_NAME --location $AZ_REGION
 az aks create --resource-group $AZ_RG_NAME --name $AZ_AKS_NAME \
               --node-count $AZ_AKS_NODE_COUNT --admin-username $AZ_ADMIN_USER \
               --ssh-key-value $AZ_SSH_KEY --node-vm-size $AZ_AKS_NODE_VM_SIZE \
-              --node-osdisk-size 60
+              --kubernetes-version $KUBE_VERSION --node-osdisk-size 60
 
 export KUBECONFIG=$(mktemp -d)/config
 
