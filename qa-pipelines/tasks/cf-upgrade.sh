@@ -55,6 +55,7 @@ set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
+    --recreate-pods \
     --namespace "${UAA_NAMESPACE}" \
     --timeout 2400 \
     --wait \
