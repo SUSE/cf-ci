@@ -57,6 +57,7 @@ set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
     --timeout 600 \
+    --wait \
     "${HELM_PARAMS[@]}"
 
 # Wait for UAA release
@@ -76,6 +77,7 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
+    --wait \
     "${HELM_PARAMS[@]}"
 
 # Wait for CF release
