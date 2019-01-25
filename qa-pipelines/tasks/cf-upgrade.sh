@@ -1,5 +1,6 @@
 #!/bin/bash
 set -o errexit -o nounset
+set -x
 
 if [[ $ENABLE_CF_UPGRADE != true ]]; then
   echo "cf-upgrade.sh: Flag not set. Skipping upgrade"
