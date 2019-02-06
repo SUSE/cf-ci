@@ -98,6 +98,7 @@ Dir.chdir('../cloudfoundry/ci/pipelines') do
     pipeline-suse-os-image-stemcell-builder
     pipeline-suse-packages
     pipeline-update-handling
+    pipeline-update-cflinuxfs
     pipeline-final-releases
   ].each do |target|
     status "deploying #{target}"
