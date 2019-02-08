@@ -1,11 +1,12 @@
 #Base image for kube yaml installer
-FROM opensuse:42.3
+FROM opensuse/leap:42.3
 
 # Install: ruby, unzip, openssh, sshpass, vim, nano, curl, kubectl
 # Install: wget, tar, helm, direnv
 # NOTE: The `utilities` repo is added for access to `direnv`.
 #
 RUN true \
+    && zypper removerepo "OSS Update" \
     && zypper --non-interactive addrepo http://download.opensuse.org/repositories/utilities/openSUSE_Leap_42.3/utilities.repo \
     && zypper --non-interactive --gpg-auto-import-keys refresh \
     && zypper --non-interactive install ruby \
@@ -19,6 +20,10 @@ RUN true \
     tar \
     direnv \
     bash-completion docker-bash-completion systemd-bash-completion \
+    python-xml python-pyOpenSSL python-devel \
+    && rpm --import https://packages.microsoft.com/keys/microsoft.asc \
+    && zypper addrepo --name 'Azure CLI' --check https://packages.microsoft.com/yumrepos/azure-cli azure-cli \
+    && zypper --non-interactive install --from azure-cli azure-cli \
     && helm_version=v2.8.2 \
     && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
     && chmod a+x /usr/local/bin/helm \

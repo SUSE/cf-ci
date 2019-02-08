@@ -32,6 +32,11 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
     done
 done
 
+if [[ $(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform) == azure ]]; then
+    source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
+    azure_dns_clear
+fi
+
 kubectl delete --ignore-not-found \
     --filename ci/qa-tools/cap-cr-privileged.yaml \
     --filename ci/qa-tools/cap-crb-2.13.3.yaml \
