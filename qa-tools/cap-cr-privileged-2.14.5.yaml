@@ -8,4 +8,3 @@ rules:
     resources: ['podsecuritypolicies']
     verbs: ['use']
     resourceNames: ['suse.cap.psp.privileged']
-

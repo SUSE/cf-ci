@@ -153,8 +153,9 @@ set_helm_params() {
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
-
-    set_psp # Sets PSP
+    if semver_is_gte 2.15.1 $(helm_chart_version); then
+        set_psp # Sets PSP
+    fi
 }
 
 set_uaa_sizing_params() {

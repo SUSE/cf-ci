@@ -33,7 +33,8 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
 done
 
 kubectl delete --ignore-not-found \
-    --filename ci/qa-tools/cap-cr-privileged.yaml \
+    --filename ci/qa-tools/cap-cr-privileged-2.14.5.yaml \
+    --filename ci/qa-tools/cap-cr-privileged-2.15.1.yaml \
     --filename ci/qa-tools/cap-crb-2.13.3.yaml \
     --filename ci/qa-tools/cap-crb-tests.yaml \
     --filename ci/qa-tools/cap-psp-nonprivileged.yaml \
