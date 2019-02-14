@@ -92,9 +92,9 @@ Dir.chdir('../cloudfoundry/ci/pipelines') do
     pipeline-helm-charts-sync
     pipeline-helm-charts-sync-container
     pipeline-network-test
-    pipeline-opensuse-rootfs-publish
+    pipeline-rootfs-publish
+    pipeline-sle15-rootfs-publish
     pipeline-publish-release-notes
-    pipeline-sle-rootfs-publish
     pipeline-suse-os-image-stemcell-builder
     pipeline-suse-packages
     pipeline-update-handling
