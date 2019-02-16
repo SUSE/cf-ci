@@ -56,7 +56,7 @@ set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
-    --timeout 600 \
+    --timeout 3600 \
     --wait \
     "${HELM_PARAMS[@]}"
 
@@ -72,7 +72,7 @@ set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --recreate-pods \
     --namespace "${CF_NAMESPACE}" \
-    --timeout 600 \
+    --timeout 3600 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
