@@ -1,15 +1,17 @@
 #!/bin/bash
 set -o errexit
 
+# Set kube config from pool
+#mkdir -p /root/.kube/
+#cp pool.kube-hosts/metadata /root/.kube/config
+
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
     TEST_NAME=smoke-tests
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
     TEST_NAME=acceptance-tests-brain
-    if ! kubectl get clusterrolebinding -o json cap:clusterrole | jq -e  '.subjects[] | select(.name=="test-brain")' > /dev/null; then
-        kubectl apply -f ci/qa-tools/cap-psp-rbac.yaml
-    fi
+    #kubectl apply -f cf-ci/qa-tools/cap-crb-tests.yaml
 elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
      [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
     TEST_NAME=acceptance-tests
