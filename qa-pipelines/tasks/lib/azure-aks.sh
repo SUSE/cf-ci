@@ -2,8 +2,6 @@
 
 set -eu # errexit, nounset
 
-set -x # trace for wip, remove before merging
-
 az_login_error_msg() {
     cat << 'EOF' >& 2
     kubectl create secret generic -n kube-system aks-dns-sp \
