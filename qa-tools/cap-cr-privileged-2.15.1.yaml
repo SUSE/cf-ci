@@ -7,5 +7,4 @@ rules:
   - apiGroups: ['extensions']
     resources: ['podsecuritypolicies']
     verbs: ['use']
-    resourceNames: ['suse.cap.psp.privileged']
-
+    resourceNames: ['scf-psp-privileged']

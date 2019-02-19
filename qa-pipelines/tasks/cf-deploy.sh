@@ -16,7 +16,14 @@ set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 # Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
 kubectl delete psp --ignore-not-found suse.cap.psp
 kubectl delete clusterrolebinding --ignore-not-found cap:clusterrole
-kubectl replace --force --filename=ci/qa-tools/{cap-psp-privileged,cap-psp-nonprivileged,cap-cr-privileged,cap-crb-tests}.yaml
+if semver_is_gte $(helm_chart_version) 2.15.1; then
+    kubectl delete --ignore-not-found --filename=ci/qa-tools/cap-{psp-{,non}privileged,cr-privileged-2.14.5}.yaml
+    kubectl apply --filename ci/qa-tools/cap-cr-privileged-2.15.1.yaml
+else
+    kubectl replace --force --filename=ci/qa-tools/cap-{psp-privileged,psp-nonprivileged,cr-privileged-2.14.5,crb-tests}.yaml
+fi
+
+kubectl replace --force --filename=ci/qa-tools/cap-crb-tests.yaml
 
 if semver_is_gte $(helm_chart_version) 2.14.5; then
     kubectl delete --ignore-not-found --filename ci/qa-tools/cap-crb-2.13.3.yaml
