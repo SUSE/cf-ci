@@ -23,7 +23,7 @@ fi
 set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 011
-EXCLUDE_BRAINS_PREFIX=011
+EXCLUDE_BRAINS_PREFIX=01[012]
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
 CF_NAMESPACE=scf
