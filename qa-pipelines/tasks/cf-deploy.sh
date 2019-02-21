@@ -33,7 +33,7 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
 fi
 
-helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
+helm install "${UAA_PATH}" \
     --namespace "${UAA_NAMESPACE}" \
     --name uaa \
     --timeout 600 \
@@ -63,7 +63,7 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
-helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
+helm install "${SCF_PATH}" \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
     --timeout 600 \

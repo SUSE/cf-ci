@@ -239,6 +239,7 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         CAP_INSTALL_VERSION: ((cap-sle-url))
+        CAP_INSTALL_HELM_REPO: https://kubernetes-charts.suse.com/
         ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -278,6 +279,7 @@ jobs:
         KUBE_REGISTRY_PASSWORD: ((registry-password))
         KUBE_ORGANIZATION: ((organization))
         CAP_CHART: ""
+        CAP_INSTALL_HELM_REPO: https://kubernetes-charts.suse.com/
         HA: false
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))

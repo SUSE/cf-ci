@@ -10,6 +10,16 @@ CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 CAP_DIRECTORY=s3.scf-config
 
+if [[ -z "${CAP_INSTALL_HELM_REPO:-}" ]]; then
+    echo "CAP_INSTALL_HELM_REPO not set"
+    CAP_INSTALL_HELM_REPO=https://kubernetes-charts.suse.com/
+fi
+if [ -n "${CAP_INSTALL_HELM_REPO:-}" ]; then
+    helm init --client-only
+    helm repo add cap "${CAP_INSTALL_HELM_REPO}"
+    SCF_PATH=cap/cf
+    UAA_PATH=cap/uaa
+fi
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
     # For pre-upgrade deploys
     echo "Using CAP ${CAP_INSTALL_VERSION}"
