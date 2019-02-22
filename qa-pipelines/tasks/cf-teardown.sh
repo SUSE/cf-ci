@@ -34,6 +34,7 @@ done
 
 if [[ $(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform) == azure ]]; then
     source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
+    az_login
     azure_dns_clear
 fi
 
