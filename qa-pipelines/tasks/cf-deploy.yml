@@ -4,6 +4,7 @@ image_resource:
   type: docker-image
   source:
     repository: splatform/cf-ci-orchestration
+    tag: services-loadbalanced
 
 inputs:
 - name: ci

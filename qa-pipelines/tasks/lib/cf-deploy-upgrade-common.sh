@@ -137,9 +137,13 @@ set_helm_params() {
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "sizing.credhub_user.count=1")
 
-    for (( i=0; i < ${#external_ips[@]}; i++ )); do
-        HELM_PARAMS+=(--set "kube.external_ips[$i]=${external_ips[$i]}")
-    done
+    if [[ ${cap_platform} == "azure" ]]; then
+        HELM_PARAMS+=(--set "services.loadbalanced=true")
+    else
+        for (( i=0; i < ${#external_ips[@]}; i++ )); do
+            HELM_PARAMS+=(--set "kube.external_ips[$i]=${external_ips[$i]}")
+        done
+    fi
     if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi
@@ -190,15 +194,21 @@ set -o allexport
 # The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 external_ips=($(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]'))
-if [[ $(kubectl get configmap -o json -n kube-system cap-values  | jq -r .data.platform) == openstack ]]; then
+cap_platform=$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)
+if [[ ${cap_platform} == openstack ]]; then
   external_ips+=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
 fi
 public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
-# Domain for SCF. DNS for *.DOMAIN must point to the same kube node
-# referenced by external_ip.
-DOMAIN=${public_ip}.${MAGIC_DNS_SERVICE}
+if [[ ${cap_platform} == "azure" ]]; then
+    source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
+    DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
+else
+    # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
+    # referenced by external_ip.
+    DOMAIN=${public_ip}.${MAGIC_DNS_SERVICE}
+fi
 
 # UAA host/port that SCF will talk to.
 UAA_HOST=uaa.${DOMAIN}

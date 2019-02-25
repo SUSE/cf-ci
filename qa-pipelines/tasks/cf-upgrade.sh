@@ -6,7 +6,7 @@ if [[ $ENABLE_CF_UPGRADE != true ]]; then
   exit 0
 fi
 
-source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
+source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 
 # monitor_url takes a URL argument and a path to a log file
 # This will time out after 3 hours. Until then, repeatedly curl the URL with a 1-second wait period, and log the response
@@ -56,7 +56,7 @@ set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
     --namespace "${UAA_NAMESPACE}" \
-    --timeout 600 \
+    --timeout 3600 \
     --wait \
     "${HELM_PARAMS[@]}"
 
@@ -71,7 +71,7 @@ set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
     --namespace "${CF_NAMESPACE}" \
-    --timeout 600 \
+    --timeout 3600 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
