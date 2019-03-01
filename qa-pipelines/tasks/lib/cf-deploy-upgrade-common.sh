@@ -188,6 +188,16 @@ set_scf_sizing_params() {
     fi
 }
 
+set_pz_labels_on_workers() {
+    # Sets 'testpzlabel' to 'pz0' or 'pz1' on each worker node, based on mod2 of each worker's index when sorted
+    # Worker nodes 'node0', 'node1', and 'node2' would get labels 'pz0', 'pz1', and 'pz0' respectively
+    set -- $(kubectl get nodes --no-headers | grep -v '\bmaster\b' | awk '{ print $1 }' | sort -r)
+    while [[ -n $@ ]]; do
+        kubectl label node --overwrite $1  testpzlabel="pz$((($#-1)%2))"
+        shift
+    done
+}
+
 set -o allexport
 
 # The internal/external and public IP addresses are now taken from the configmap set by prep-new-cluster

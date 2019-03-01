@@ -59,6 +59,7 @@ fi
 # Deploy CF
 CA_CERT="$(get_internal_ca_cert)"
 
+set_pz_labels_on_workers # Ensures each worker has a placement label set
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
@@ -77,6 +78,7 @@ helm install ${CAP_DIRECTORY}/helm/cf/ \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
+    --set "env.PZ_LABEL_NAME=testpzlabel" \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
     "${HELM_PARAMS[@]}"
 
