@@ -2,6 +2,10 @@
 
 This repository contains various continuous integration related things.
 
+Master Branch: [qa-pipeline](qa-pipelines/) is compatible with [scf master](https://github.com/SUSE/scf/tree/master) builds (RCs)
+
+Develop Branch: [qa-pipeline](qa-pipelines/) is compatible with [scf develop](https://github.com/SUSE/scf) builds (Nightly Builds)
+
 To deploy all pipelines, use [deploy-all](deploy-all).
 
 ## [automation-scripts](automation-scripts/)
