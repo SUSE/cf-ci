@@ -12,7 +12,7 @@ Table of Contents
     * [Deploy a pipeline which does a non-upgrade test of a custom bundle (which is neither an RC or a release)](#deploy-a-pipeline-which-does-a-non-upgrade-test-of-a-custom-bundle-not-an-rc-or-a-release)
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
   * [Dev Nightly Upgrades CI](
-  #dev-nightly-upgrades)
+  #dev-nightly-upgrades-ci)
 
 # Pipeline deployment overview
 
@@ -117,12 +117,15 @@ Sometimes running tests may fail for timing-related reasons which may be intermi
 
 Nightly Builds are builds which happen every night from develop branch of scf. The build lands in s3://cap-release-archives/nightly/
 The idea here is to test bare minimum of these nightly builds, i.e.
-1. we want to make sure `helm install` and `helm upgrades` are not broken due to any changes
-2. Also, catch well in advance, if any changes to scf has broken qa-pipelines.
+1. We want to make sure `helm install` and `helm upgrades` are not broken due to any changes
+2. Also, catch well in advance, if any changes to scf have broken qa-pipelines
 
 Dev ECP pool: https://github.com/SUSE/cf-ci-pools/tree/cap-ci-kube-hosts
+
 Concourse config for Dev ECP pool: [config-capci.yml](config-capci.yml)
+
 Example command to deploy CI on concourse:
+
 `./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci pipeline-presets/cap-qa-upgrades-lite.yml`
 
 [cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
