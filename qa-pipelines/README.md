@@ -11,6 +11,8 @@ Table of Contents
   * [Additional considerations](#additional-considerations)
     * [Deploy a pipeline which does a non-upgrade test of a custom bundle (which is neither an RC or a release)](#deploy-a-pipeline-which-does-a-non-upgrade-test-of-a-custom-bundle-not-an-rc-or-a-release)
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
+  * [Dev Nightly Upgrades CI](
+  #dev-nightly-upgrades)
 
 # Pipeline deployment overview
 
@@ -19,7 +21,7 @@ Pipelines are deployed to a concourse installation with the [set-pipeline](qa-pi
 ## Pipeline deployment prerequisites
 
 - A pool-specific config file in the directory of the `set-pipeline` script. `set-pipeline` will look for a file containing various configurable values in the current working directory named `config-${POOL_NAME}.yml`. See [config-provo.yml](config-provo.yml) for an example.
-  
+
 - A cloneable git repository with kube configs which also serve as lock files, as well as a pool-specific config following the `config-${POOL_NAME}.yml` naming convention. See [Pool requirements](#pool-requirements) for more details.
 
 - A concourse CI deployment, a `fly` CLI in your PATH, and a [logged in fly target](https://concourse-ci.org/fly.html#fly-login) with a name which is passed to the `-t` option of `set-pipeline`
@@ -34,7 +36,7 @@ The configuration file "config-<config variant>.yml" must exist.
 Available options:
     -h, --help          Print this help and exit
     -p, --prefix=       Set additional pipeline prefix
-    --pool=provo        Pool to take pool config and kube config from. Default is 'provo' 
+    --pool=provo        Pool to take pool config and kube config from. Default is 'provo'
     -t, --target=       Set fly target concourse
     -b, --branch=       Use a specific branch or tag. Defaults to the current branch
 ```
@@ -72,7 +74,7 @@ This setting hould be public, or accessible via the `kube-pool-key` also include
         └── pool-resource-2
 ```
 
-The files placed in the `claimed/` and `unclaimed/` are the *lock files* in terms of [the concourse pool resource](https://github.com/concourse/pool-resource#git-repository-structure), but are also expected to be valid kubernetes configs for pipeline access of kubernetes hosts to deploy CAP to. 
+The files placed in the `claimed/` and `unclaimed/` are the *lock files* in terms of [the concourse pool resource](https://github.com/concourse/pool-resource#git-repository-structure), but are also expected to be valid kubernetes configs for pipeline access of kubernetes hosts to deploy CAP to.
 
 For QA purposes, we prefer to use config files which will not 'expire', which means when using CaaSP, the configs which can be obtained from velum or the caasp-cli are generally not used. Instead, we create a `cap-qa` namespace and appropriate bindings to its service-account, via a [create-qa-config.sh](../qa-tools/create-qa-config.sh) script
 
@@ -98,7 +100,7 @@ enable-cf-acceptance-tests: true
 # tear down CAP deployment
 enable-cf-teardown: true
 ```
-- When running an upgrade test, 'pre-upgrade' tasks will also be enabled. 'pre-upgrade' tasks take the CAP chart bundle from the URL specified in the pipeline config, either `cap-sle-url` or `cap-opensuse-url` depending on the job used 
+- When running an upgrade test, 'pre-upgrade' tasks will also be enabled. 'pre-upgrade' tasks take the CAP chart bundle from the URL specified in the pipeline config, either `cap-sle-url` or `cap-opensuse-url` depending on the job used
 
 
 # Additional considerations
@@ -109,3 +111,18 @@ The composability of the pipeline tasks means there are some interesting things 
 In order to do this, replace the CAP bundle URLs in the pipeline config, enable *only* the pre-upgrade tests, and deploy the pipeline. The deploy will use the bundle from the `cap-sle-url` or `cap-opensuse-url` settings in the pipeline config.
 ## Continue a test suite from where a previous build left off.
 Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline
+
+
+# Dev Nightly Upgrades CI
+
+Nightly Builds are builds which happen every night from develop branch of scf. The build lands in s3://cap-release-archives/nightly/
+The idea here is to test bare minimum of these nightly builds, i.e.
+1. we want to make sure `helm install` and `helm upgrades` are not broken due to any changes
+2. Also, catch well in advance, if any changes to scf has broken qa-pipelines.
+
+Dev ECP pool: https://github.com/SUSE/cf-ci-pools/tree/cap-ci-kube-hosts
+Concourse config for Dev ECP pool: [config-capci.yml](config-capci.yml)
+Example command to deploy CI on concourse:
+`./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci pipeline-presets/cap-qa-upgrades-lite.yml`
+
+[cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
