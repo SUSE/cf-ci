@@ -54,7 +54,7 @@ az group create --name $AZ_RG_NAME --location $AZ_REGION
 az aks create --resource-group $AZ_RG_NAME --name $AZ_AKS_NAME \
               --node-count $AZ_AKS_NODE_COUNT --admin-username $AZ_ADMIN_USER \
               --ssh-key-value ${AZ_SSH_KEY}.pub --node-vm-size $AZ_AKS_NODE_VM_SIZE \
-              --node-osdisk-size 60 --kubernetes-version 1.11.6
+              --node-osdisk-size 60 --kubernetes-version 1.11.8
 
 export KUBECONFIG=$(mktemp -d)/config
 
