@@ -2,14 +2,11 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  annotations:
-    kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"storage.k8s.io/v1beta1","kind":"StorageClass","metadata":{"labels":{"kubernetes.io/cluster-service":"true"},"name":"persistent","namespace":""},"parameters":{"kind":"Managed","storageaccounttype":"Standard_LRS"},"provisioner":"kubernetes.io/azure-disk"}
   labels:
     kubernetes.io/cluster-service: "true"
   name: persistent
 parameters:
   kind: Managed
-  storageaccounttype: Standard_LRS
+  storageaccounttype: Premium_LRS
 provisioner: kubernetes.io/azure-disk
 reclaimPolicy: Delete
