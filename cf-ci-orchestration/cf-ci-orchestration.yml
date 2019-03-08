@@ -5,7 +5,7 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    branch: master
+    branch: develop
     paths:
     - cf-ci-orchestration/*
 

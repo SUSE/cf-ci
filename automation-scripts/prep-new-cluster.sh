@@ -23,7 +23,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: kube-system 
+  namespace: kube-system
 EOF
   fi
 fi
@@ -34,7 +34,7 @@ if ! type k &>/dev/null ; then
   chmod +x /root/bin/k
 fi
 
- 
+
 if ! type klog.sh &>/dev/null ; then
   echo "Installing klog"
   curl -sLo /root/bin/klog.sh "https://raw.githubusercontent.com/SUSE/scf/develop/container-host-files/opt/scf/bin/klog.sh"
@@ -43,7 +43,7 @@ fi
 
 if ! type cf &>/dev/null; then
   echo "Installing cf and cf usb"
-  curl -sL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.36.1&source=github-rel" | tar xz -C /root/bin cf
+  curl -sL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.42.0&source=github-rel" | tar xz -C /root/bin cf
   chmod +x /root/bin/cf
   cf install-plugin -f "https://github.com/SUSE/cf-usb-plugin/releases/download/1.0.0/cf-usb-plugin-1.0.0.0.g47b49cd-linux-amd64 "
 fi
