@@ -60,4 +60,4 @@ fi
 
 echo "Ensure the following config contents are in the lockfile for your concourse pool kube resource:"
 echo "---"
-curl -sL "https://raw.githubusercontent.com/SUSE/cf-ci/develop/qa-tools/create-qa-config.sh" | bash 2>/dev/null | awk '/apiVersion/ { yaml=1 }  yaml { print }'
+curl -sL "https://raw.githubusercontent.com/SUSE/cf-ci/master/qa-tools/create-qa-config.sh" | bash 2>/dev/null | awk '/apiVersion/ { yaml=1 }  yaml { print }'
