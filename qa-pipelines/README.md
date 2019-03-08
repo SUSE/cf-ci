@@ -11,8 +11,7 @@ Table of Contents
   * [Additional considerations](#additional-considerations)
     * [Deploy a pipeline which does a non-upgrade test of a custom bundle (which is neither an RC or a release)](#deploy-a-pipeline-which-does-a-non-upgrade-test-of-a-custom-bundle-not-an-rc-or-a-release)
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
-  * [Dev Nightly Upgrades CI](
-  #dev-nightly-upgrades-ci)
+  * [Dev Nightly Upgrades CI](#dev-nightly-upgrades-ci)
 
 # Pipeline deployment overview
 
@@ -122,10 +121,10 @@ The idea here is to test bare minimum of these nightly builds, i.e.
 
 Dev ECP pool: https://github.com/SUSE/cf-ci-pools/tree/cap-ci-kube-hosts
 
-Concourse config for Dev ECP pool: [config-capci.yml](config-capci.yml)
+Concourse config for Dev ECP pool: [config-capci-nightly.yml](config-capci-nightly.yml)
 
 Example command to deploy CI on concourse:
 
-`./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci pipeline-presets/cap-qa-upgrades-lite.yml`
+`./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci --nightly pipeline-presets/cap-qa-upgrades-lite.yml`
 
 [cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
