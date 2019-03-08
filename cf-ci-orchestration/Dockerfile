@@ -44,7 +44,7 @@ RUN true \
     && chmod +x /usr/local/bin/jq
 
 RUN true \
-    && wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.34.0" -O - | tar xz -C /usr/local/bin cf \
+    && wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.42.0" -O - | tar xz -C /usr/local/bin cf \
     && chmod a+x /usr/local/bin/cf
 
 RUN true \
