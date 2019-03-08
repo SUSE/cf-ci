@@ -8,7 +8,7 @@ fi
 
 set -o nounset
 
-source "ci/qa-pipelines/tasks/cf-deploy-upgrade-common.sh"
+source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
@@ -49,6 +49,13 @@ helm install ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/ \
 # Wait for UAA release
 wait_for_release uaa
 
+if [[ ${cap_platform} == "azure" ]]; then
+    az_login
+    azure_dns_clear
+    azure_wait_for_lbs_in_namespace uaa
+    azure_set_record_sets_for_namespace uaa
+fi
+
 # Deploy CF
 CA_CERT="$(get_internal_ca_cert)"
 
@@ -75,3 +82,8 @@ helm install ${CAP_DIRECTORY}/helm/cf${CAP_CHART}/ \
 
 # Wait for CF release
 wait_for_release scf
+
+if [[ ${cap_platform} == "azure" ]]; then
+    azure_wait_for_lbs_in_namespace scf
+    azure_set_record_sets_for_namespace scf
+fi
