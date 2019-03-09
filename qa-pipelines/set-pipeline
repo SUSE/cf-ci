@@ -13,14 +13,15 @@ The configuration file "config-<config variant>.yml" must exist.
 Available options:
     -h, --help          Print this help and exit
     -p, --prefix=       Set additional pipeline prefix
-    --pool=provo        Pool to take pool config and kube config from. Default is 'provo' 
+    --pool=provo        Pool to take pool config and kube config from. Default is 'provo'
     -t, --target=       Set fly target concourse
     -b, --branch=       Use a specific branch or tag. Defaults to the current branch
+    --nightly           Deploy pipeline that triggers when new nightly builds are released
 
 EOF
 }
 
-OPTS=$(getopt -o hp:t:b: --long help,pool:,prefix:,target:,branch: -- "$@")
+OPTS=$(getopt -o hp:t:b: --long help,nightly,pool:,prefix:,target:,branch: -- "$@")
 eval set -- "${OPTS}"
 
 pool=provo
@@ -28,6 +29,7 @@ src_ci_branch=$(git rev-parse --abbrev-ref HEAD)
 prefix=""
 target=""
 secrets_file=""
+s3_config_prefix=master/
 while true ; do
     case "$1" in
         -h|--help)   usage ; exit 0 ;;
@@ -35,6 +37,7 @@ while true ; do
         -t|--target) target="${2}" ; shift 2 ;;
         --pool)      pool="${2}" ; shift 2 ;;
         -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
+        --nightly)   s3_config_prefix=nightly/ ; shift 1 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
     esac
@@ -81,7 +84,7 @@ if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
 fi
 
 # Branch is assumed to be the current branch if not specified, but the concourse git
-# resource doesn't allow commit references to be used directly. 
+# resource doesn't allow commit references to be used directly.
 if [[ -z $src_ci_branch ]] ||
     [[  $(echo $src_ci_branch | tr '[:upper:]' '[:lower:]') == head ]]; then
   printf "Failed to determine ref for git resource to use.\n" >&2
@@ -141,6 +144,7 @@ fly \
     --var pipeline-name="${pipeline_name}" \
     --config="${pipeline_file}" \
     --var src-ci-branch=${src_ci_branch} \
+    --var s3-config-prefix-sles=${s3_config_prefix} \
     --load-vars-from=<(
         ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
         sed '/^---$/d' < "${vars_file}"                        # Config vars

@@ -14,7 +14,6 @@ s3-config-bucket-opensuse: cap-release-archives
 s3-config-prefix-opensuse: master/
 
 s3-config-bucket-sles: cap-release-archives
-s3-config-prefix-sles: master/
 
 s3-config-prefix-sidecars: brokers/
 
@@ -26,6 +25,5 @@ organization: splatform
 magic-dns-service: omg.howdoi.website
 
 src-repo: SUSE/scf
-cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.14.5%2Bcf2.7.0.0.g6360c016.zip
-cap-opensuse-url: https://s3.amazonaws.com/cap-release-archives/master/scf-opensuse-2.14.5%2Bcf2.7.0.0.g6360c016.zip
-
+cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.15.2%2Bcf3.6.0.0.gde1bd02f.zip
+cap-opensuse-url: https://s3.amazonaws.com/cap-release-archives/master/scf-opensuse-2.15.2%2Bcf3.6.0.0.gde1bd02f.zip
