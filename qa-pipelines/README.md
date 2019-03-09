@@ -114,17 +114,18 @@ Sometimes running tests may fail for timing-related reasons which may be intermi
 
 # Dev Nightly Upgrades CI
 
-Nightly Builds are builds which happen every night from develop branch of scf. The build lands in s3://cap-release-archives/nightly/
+Nightly Builds are builds which happen every night from develop branch of scf. The build lands in s3://cap-release-archives/nightly/ and will be picked up by any unpaused pipeline deployed with the `--nightly` flag with an available pool resource.
+
 The idea here is to test bare minimum of these nightly builds, i.e.
 1. We want to make sure `helm install` and `helm upgrades` are not broken due to any changes
 2. Also, catch well in advance, if any changes to scf have broken qa-pipelines
 
-Dev ECP pool: https://github.com/SUSE/cf-ci-pools/tree/cap-ci-kube-hosts
+The `cap-ci` pool [here](https://github.com/SUSE/cf-ci-pools/tree/cap-ci-kube-hosts), composed of kube clusters on ECP in `cap-ci` project, will be our dedicated pool for nightly testing.
 
-Concourse config for Dev ECP pool: [config-capci-nightly.yml](config-capci-nightly.yml)
+Concourse config for Dev ECP pool: [config-capci.yml](config-capci.yml)
 
 Example command to deploy CI on concourse:
 
 `./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci --nightly pipeline-presets/cap-qa-upgrades-lite.yml`
 
-[cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
+[pipeline-presets/cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
