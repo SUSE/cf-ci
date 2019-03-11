@@ -14,7 +14,7 @@ resources:
     endpoint: ((s3-config-endpoint))
     access_key_id: ((s3-config-access-key))
     secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-opensuse))
+    bucket: ((s3-config-bucket-sles))
     regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-postgres-(.*)\.tgz$
 
 - name: s3.mysql-sidecar
@@ -23,7 +23,7 @@ resources:
     endpoint: ((s3-config-endpoint))
     access_key_id: ((s3-config-access-key))
     secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-opensuse))
+    bucket: ((s3-config-bucket-sles))
     regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
 
 - name: ci
@@ -34,15 +34,6 @@ resources:
     paths:
     - qa-pipelines/*
     - sample-apps/*
-
-- name: s3.scf-config-opensuse
-  type: s3
-  source:
-    endpoint: ((s3-config-endpoint))
-    access_key_id: ((s3-config-access-key))
-    secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-opensuse))
-    regexp: ((s3-config-prefix-opensuse))scf-opensuse-(.*)\.zip$
 
 - name: s3.scf-config-sles
   type: s3
@@ -68,139 +59,7 @@ resources:
     access_token: ((github-access-token))
 
 jobs:
-- name: ((pipeline-name))-SA-openSUSE
-  plan:
-  - do:
-    - aggregate:
-      - get: ci
-      - get: s3.pg-sidecar
-        trigger: true
-      - get: s3.mysql-sidecar
-        trigger: true
-      - get: s3.scf-config-opensuse
-        trigger: true
-      - put: pool.kube-hosts
-        params: {acquire: true}
-    - task: cf-get-commit-id
-      file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
-      input_mapping:
-        s3.archive: s3.scf-config-opensuse
-    - put: status.src
-      params: &status-params-SA-openSUSE
-        context: ((pipeline-name))-SA-openSUSE
-        description: "QA Pipeline: ((pipeline-name)) (openSUSE non-HA)"
-        path: commit-id/sha
-        state: pending
-    on_failure:
-      put: pool.kube-hosts
-      params: {release: pool.kube-hosts}
-  - do:
-    - task: cf-deploy-pre-upgrade
-      file: ci/qa-pipelines/tasks/cf-deploy.yml
-      params:
-        CAP_CHART: -opensuse
-        HA: false
-        SCALED_HA: false
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: cf-smoke-tests-pre-upgrade
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests-brain-pre-upgrade
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests-pre-upgrade
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: usb-deploy
-      file: ci/qa-pipelines/tasks/usb-deploy.yml
-      params:
-        ENABLE_USB_DEPLOY: ((enable-usb-deploy))
-    - task: cf-upgrade
-      file: ci/qa-pipelines/tasks/cf-upgrade.yml
-      params:
-        CAP_CHART: -opensuse
-        HA: false
-        SCALED_HA: false
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: usb-post-upgrade
-      file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
-      params:
-        ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
-    - task: cf-deploy
-      file: ci/qa-pipelines/tasks/cf-deploy.yml
-      params:
-        CAP_CHART: -opensuse
-        HA: false
-        SCALED_HA: false
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        ENABLE_CF_DEPLOY: ((enable-cf-deploy))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: cf-smoke-tests
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests-brain
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    # We intentionally don't put the teardown and pool release steps in an ensure
-    # block, so that when tests fail we have a chance of examining why things are
-    # failing.
-    - task: cf-teardown
-      file: ci/qa-pipelines/tasks/cf-teardown.yml
-      timeout: 1h
-      params:
-        ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
-    - put: pool.kube-hosts
-      params: {release: pool.kube-hosts}
-    on_success:
-      put: status.src
-      params:
-        <<: *status-params-SA-openSUSE
-        state: success
-    on_failure:
-      put: status.src
-      params:
-        <<: *status-params-SA-openSUSE
-        state: failure
-
-- name: ((pipeline-name))-SA-SLES
+- name: ((pipeline-name))-SA
   plan:
   - do:
     - aggregate:
@@ -218,8 +77,8 @@ jobs:
       input_mapping:
         s3.archive: s3.scf-config-sles
     - put: status.src
-      params: &status-params-SA-SLES
-        context: ((pipeline-name))-SA-SLES
+      params: &status-params-SA
+        context: ((pipeline-name))-SA
         description: "QA Pipeline: ((pipeline-name)) (SLES non-HA)"
         path: commit-id/sha
         state: pending
@@ -336,147 +195,14 @@ jobs:
     on_success:
       put: status.src
       params:
-        <<: *status-params-SA-SLES
+        <<: *status-params-SA
         state: success
     on_failure:
       put: status.src
       params:
-        <<: *status-params-SA-SLES
+        <<: *status-params-SA
         state: failure
-
-- name: ((pipeline-name))-HA-openSUSE
-  plan:
-  - do:
-    - aggregate:
-      - get: ci
-      - get: s3.pg-sidecar
-        trigger: true
-      - get: s3.mysql-sidecar
-        trigger: true
-      - get: s3.scf-config-opensuse
-        trigger: true
-      - put: pool.kube-hosts
-        params: {acquire: true}
-    - task: cf-get-commit-id
-      file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
-      input_mapping:
-        s3.archive: s3.scf-config-opensuse
-    - put: status.src
-      params: &status-params-HA-openSUSE
-        context: ((pipeline-name))-HA-openSUSE
-        description: "QA Pipeline: ((pipeline-name)) (openSUSE HA)"
-        path: commit-id/sha
-        state: pending
-    on_failure:
-      put: pool.kube-hosts
-      params: {release: pool.kube-hosts}
-  - do:
-    - task: cf-deploy-pre-upgrade
-      file: ci/qa-pipelines/tasks/cf-deploy.yml
-      params:
-        CAP_CHART: -opensuse
-        HA: true
-        SCALED_HA: false
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: cf-smoke-tests-pre-upgrade
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests-brain-pre-upgrade
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests-pre-upgrade
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        CAP_INSTALL_VERSION: ((cap-opensuse-url))
-        ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: usb-deploy
-      file: ci/qa-pipelines/tasks/usb-deploy.yml
-      params:
-        ENABLE_USB_DEPLOY: ((enable-usb-deploy))
-    - task: cf-upgrade
-      file: ci/qa-pipelines/tasks/cf-upgrade.yml
-      params:
-        CAP_CHART: -opensuse
-        HA: true
-        SCALED_HA: false
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: usb-post-upgrade
-      file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
-      params:
-        ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
-    - task: cf-deploy
-      file: ci/qa-pipelines/tasks/cf-deploy.yml
-      params:
-        CAP_CHART: -opensuse
-        HA: true
-        SCALED_HA: false
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        ENABLE_CF_DEPLOY: ((enable-cf-deploy))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: cf-smoke-tests
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests-brain
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    - task: acceptance-tests
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        CAP_CHART: -opensuse
-        ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
-      input_mapping:
-        s3.scf-config: s3.scf-config-opensuse
-    # We intentionally don't put the teardown and pool release steps in an ensure
-    # block, so that when tests fail we have a chance of examining why things are
-    # failing.
-    - task: cf-teardown
-      file: ci/qa-pipelines/tasks/cf-teardown.yml
-      timeout: 1h
-      params:
-        ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
-    - put: pool.kube-hosts
-      params: {release: pool.kube-hosts}
-    on_success:
-      put: status.src
-      params:
-        <<: *status-params-HA-openSUSE
-        state: success
-    on_failure:
-      put: status.src
-      params:
-        <<: *status-params-HA-openSUSE
-        state: failure
-
-- name: ((pipeline-name))-HA-SLES
+- name: ((pipeline-name))-HA
   plan:
   - do:
     - aggregate:
@@ -494,8 +220,8 @@ jobs:
       input_mapping:
         s3.archive: s3.scf-config-sles
     - put: status.src
-      params: &status-params-HA-SLES
-        context: ((pipeline-name))-HA-SLES
+      params: &status-params-HA
+        context: ((pipeline-name))-HA
         description: "QA Pipeline: ((pipeline-name)) (SLES HA)"
         path: commit-id/sha
         state: pending
@@ -612,10 +338,10 @@ jobs:
     on_success:
       put: status.src
       params:
-        <<: *status-params-HA-SLES
+        <<: *status-params-HA
         state: success
     on_failure:
       put: status.src
       params:
-        <<: *status-params-HA-SLES
+        <<: *status-params-HA
         state: failure
