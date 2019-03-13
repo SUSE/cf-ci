@@ -40,7 +40,7 @@ else
 fi
 
 # Replace the generated monit password with the name of the generated secrets secret
-helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
+helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 function semver_is_gte() {
   # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
   # lexical comparison doesn't work on semvers, e.g. 10.0.0 > 2.0.0
@@ -91,12 +91,12 @@ container_status() {
     | jq '.status.containerStatuses[0].state.terminated.exitCode | tonumber' 2>/dev/null
 }
 
-image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
+image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")
 
-test_pod_yml="${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml"
+test_pod_yml="${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml"
 test_non_pods_yml=
 if [[ ${TEST_NAME} == "acceptance-tests-brain" ]]; then
-    test_non_pods_yml="${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}-non-pods.yaml"
+    test_non_pods_yml="${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}-non-pods.yaml"
     ruby <<EOF
         require 'yaml'
         yml = YAML.load_stream(File.read "${test_pod_yml}")
@@ -177,7 +177,7 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
                 --attach \
                 --restart=Never \
                 --image="${image}" \
-                --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+                --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")" \
                 "${TEST_NAME}" ||:
 
             while [[ -z $(container_status ${TEST_NAME}) ]]; do

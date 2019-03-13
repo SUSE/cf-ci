@@ -54,7 +54,7 @@ In our usage of [concourse pools](https://github.com/concourse/pool-resource), t
 The pool-specific config file follows a `config-${POOL_NAME}.yml` naming convention, and is expected to contain some settings worth noting ([config-provo.yml](config-provo.yml) may be useful as a reference):
 
 ## s3 bucket location and path specifications, and access credentials.
-These are used for fetching the latest release. Depending on the (sles or opensuse) job a build is generated from, either `s3-config-(bucket|prefix)-opensuse` or `s3-config-(bucket|prefix)-sles` variables will be used. The appropriate path is used to determine the latest CAP config bundle for the `s3.scf-config-sles` and `s3.s3.scf-config-opensuse` resources defined in `qa-pipeline.yml`
+These are used for fetching the latest release of `s3-config-(bucket|prefix)-sles`. The appropriate path is used to determine the latest CAP config bundle for the `s3.scf-config-sles` resource defined in `qa-pipeline.yml`
 ## docker registry specification and access credentials.
 These are used for fetching the images referenced from the determined charts.
 ## a `src-ci-repo` setting
@@ -99,7 +99,7 @@ enable-cf-acceptance-tests: true
 # tear down CAP deployment
 enable-cf-teardown: true
 ```
-- When running an upgrade test, 'pre-upgrade' tasks will also be enabled. 'pre-upgrade' tasks take the CAP chart bundle from the URL specified in the pipeline config, either `cap-sle-url` or `cap-opensuse-url` depending on the job used
+- When running an upgrade test, 'pre-upgrade' tasks will also be enabled. 'pre-upgrade' tasks take the CAP chart bundle from the `cap-sle-url` specified in the pipeline config.
 
 
 # Additional considerations
@@ -107,7 +107,7 @@ enable-cf-teardown: true
 The composability of the pipeline tasks means there are some interesting things you can do, besides just running the full upgrade pipeline in a linear way. In addition to what's supported by the tracked preset files, you may want to do something like the following:
 
 ## Deploy a pipeline which does a non-upgrade test of a custom bundle (not an RC or a release).
-In order to do this, replace the CAP bundle URLs in the pipeline config, enable *only* the pre-upgrade tests, and deploy the pipeline. The deploy will use the bundle from the `cap-sle-url` or `cap-opensuse-url` settings in the pipeline config.
+In order to do this, replace the CAP bundle URLs in the pipeline config, enable *only* the pre-upgrade tests, and deploy the pipeline. The deploy will use the bundle from the `cap-sle-url` setting in the pipeline config.
 ## Continue a test suite from where a previous build left off.
 Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline
 
