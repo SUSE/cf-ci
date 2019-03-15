@@ -27,8 +27,6 @@ RUN true \
     && zypper addrepo --name 'Azure CLI' --check https://packages.microsoft.com/yumrepos/azure-cli azure-cli \
     && zypper --non-interactive install --from azure-cli azure-cli \
     && zypper refresh \
-    && curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
-    
     && helm_version=v2.8.2 \
     && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
     && chmod a+x /usr/local/bin/helm \
@@ -42,7 +40,8 @@ RUN true \
     && zypper clean -a \
     && true
 
-    RUN  true \
+RUN true \
+    && curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
     && mkdir -p /usr/local/gcloud \
     && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
     && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet 
@@ -59,4 +58,5 @@ RUN true \
     && curl -L https://github.com/SUSE/stampy/releases/download/0.0.0/stampy-0.0.0.22.gbb93bf3.linux-amd64.tgz | tar xz stampy \
     && mv stampy /usr/local/bin/stampy \
     && chmod +x /usr/local/bin/stampy
+
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin

@@ -1,16 +1,15 @@
 usage() {
   cat << 'EOF'
   Usage:
-  deploy-gke.sh [SA_NAME] [KEY_FILE] [PROJ_ID] (optional)
+  deploy-gke.sh [SERVICE_ACCOUNT_NAME] [KEY_FILE] [PROJ_ID] (optional)
   Requirements:
-  * Your GKE user/service account user needs the following roles:
+  * The GKE user/service account user needs the following roles:
     container.admin compute.admin iam.serviceAccountUser
-    You can grant roles to a service account via the following, for a service account sa for project 
-    proj-id:
+    Roles can be granted to a service account via the following :
     `gcloud projects add-iam-policy-binding <proj-id> --member \ 
      serviceAccount:sa@proj-id.iam.gserviceaccount.com --role \ 
      roles/container.admin --role roles/compute.admin --role roles/iam.serviceAccountUser`
-    etc.
+    etc. *
 EOF
 }
 
@@ -59,29 +58,25 @@ export NODE_COUNT=3
 export SA_USER=$1
 export KEY_FILE=$2
 export PROJECT=${3-suse-css-platform}
-# Log in with the GKE service account
-gcloud auth activate-service-account $1 --key-file $2 --project=$3
+# Log out from any existing context and log in with the GKE service account
+
+gcloud auth revoke
+gcloud auth activate-service-account $SA_USER --key-file $KEY_FILE --project=$PROJECT
 
 # Create GKE cluster 
 
 gcloud container clusters create ${CLUSTER_NAME} --image-type=UBUNTU --machine-type=n1-standard-4 --zone \
 ${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --node-locations ${NODE_LOCATIONS}
 
-if [ "$(uname)" == "Darwin" ]; then
-        export KUBECONFIG=/tmp/config
-else
-	export KUBECONFIG=$(mktemp -d)/config
-fi
-
 # All future kubectl commands will be run in this container. This ensures the
 # correct version of kubectl is used, and that it matches the version used by CI
 docker container run \
   --name gke-deploy \
   --detach \
-  --volume $2:/root/.kube/sa-key \
-  cf-ci-orchestration:local tail -f /dev/null
+  --volume $KEY_FILE:/root/.kube/sa-key \
+  splatform/ci-orchestration tail -f /dev/null
 
-docker container exec gke-deploy gcloud auth activate-service-account $1 --key-file /root/.kube/sa-key --project=$3
+docker container exec gke-deploy gcloud auth activate-service-account $SA_USER --key-file /root/.kube/sa-key --project=$PROJECT
 docker container exec gke-deploy gcloud container clusters get-credentials  ${CLUSTER_NAME} --zone ${CLUSTER_ZONE:?required}
 
 checkready() {
@@ -121,8 +116,9 @@ echo "$instance_names" | xargs gcloud compute instances reset
 checkready
 
 # TODO: check if -i and -it are really needed in the following 3 commands
-docker exec -it gke-deploy kubectl create configmap -n kube-system cap-values \
+# Is this really required in the context of GKE?
+docker container exec -it gke-deploy kubectl create configmap -n kube-system cap-values \
   --from-literal=garden-rootfs-driver=overlay-xfs \
   --from-literal=platform=gke 
 cat gke-helm-sa.yaml | docker exec -i gke-deploy kubectl create -f -
-docker exec -it gke-deploy helm init
+docker container exec -it gke-deploy helm init
