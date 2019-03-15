@@ -63,22 +63,29 @@ export PROJECT=${3-suse-css-platform}
 gcloud auth revoke
 gcloud auth activate-service-account $SA_USER --key-file $KEY_FILE --project=$PROJECT
 
+# Clusters on k8s 1.10 and above will no longer get compute-rw and storage-ro scopes
+gcloud config set container/new_scopes_behavior true
+
 # Create GKE cluster 
 
 gcloud container clusters create ${CLUSTER_NAME} --image-type=UBUNTU --machine-type=n1-standard-4 --zone \
-${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --node-locations ${NODE_LOCATIONS}
+${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --node-locations ${NODE_LOCATIONS} --no-enable-basic-auth --no-issue-client-certificate \
+--metadata disable-legacy-endpoints=true 
+
 
 # All future kubectl commands will be run in this container. This ensures the
 # correct version of kubectl is used, and that it matches the version used by CI
 docker container run \
   --name gke-deploy \
   --detach \
-  --volume $KEY_FILE:/root/.kube/sa-key \
-  splatform/ci-orchestration tail -f /dev/null
+  --volume $KEY_FILE:/.kube/sa-key \
+  --env KUBECONFIG=/.kube/kubecfg \
+  splatform/cf-ci-orchestration:latest tail -f /dev/null
 
-docker container exec gke-deploy gcloud auth activate-service-account $SA_USER --key-file /root/.kube/sa-key --project=$PROJECT
+docker container exec gke-deploy gcloud auth activate-service-account $SA_USER --key-file /.kube/sa-key --project=$PROJECT
 docker container exec gke-deploy gcloud container clusters get-credentials  ${CLUSTER_NAME} --zone ${CLUSTER_ZONE:?required}
-
+echo "running kubectl from within container"
+docker container exec gke-deploy kubectl get no -o wide
 checkready() {
 	while [[ $node_readiness != "$NODE_COUNT True" ]]; do
 		sleep 10
@@ -97,6 +104,7 @@ if [ "$(uname)" == "Darwin" ]; then
 else
 	args=i
 fi
+echo "Setting swap accounting"
 
 #Grab node instance names
 instance_names=$(gcloud compute instances list --filter=name~${CLUSTER_NAME:?required} --format json | jq --raw-output '.[].name')
@@ -112,13 +120,15 @@ echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo update-
 
 # Restart VMs
 echo "$instance_names" | xargs gcloud compute instances reset
-
+echo "restarted the VMs"
 checkready
 
 # TODO: check if -i and -it are really needed in the following 3 commands
 # Is this really required in the context of GKE?
-docker container exec -it gke-deploy kubectl create configmap -n kube-system cap-values \
-  --from-literal=garden-rootfs-driver=overlay-xfs \
-  --from-literal=platform=gke 
-cat gke-helm-sa.yaml | docker exec -i gke-deploy kubectl create -f -
-docker container exec -it gke-deploy helm init
+#docker container exec -it gke-deploy kubectl create configmap -n kube-system cap-values \
+#  --from-literal=garden-rootfs-driver=overlay-xfs \
+#  --from-literal=platform=gke 
+
+#Set up Helm
+cat gke-helm-sa.yaml | docker container exec -i gke-deploy kubectl create -f -
+docker container exec -i gke-deploy helm init --service-account helm
