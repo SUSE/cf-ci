@@ -23,7 +23,7 @@ fi
 set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 011
-EXCLUDE_BRAINS_PREFIX=011
+EXCLUDE_BRAINS_PREFIX=''
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
 CF_NAMESPACE=scf
@@ -70,7 +70,7 @@ kube_overrides() {
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
                 env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
                 if env['name'] == "MONIT_PASSWORD"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
             end
             if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
@@ -106,7 +106,7 @@ if [[ ${TEST_NAME} == "acceptance-tests-brain" ]]; then
             if doc["kind"] == "Pod"
                 File.open("${test_pod_yml}", 'w') { |file| file.write(doc.to_yaml) }
             else
-                File.open("${test_non_pods_yml}", 'a') { |file| file.write(doc.to_yaml) } 
+                File.open("${test_non_pods_yml}", 'a') { |file| file.write(doc.to_yaml) }
             end
         end
 EOF
