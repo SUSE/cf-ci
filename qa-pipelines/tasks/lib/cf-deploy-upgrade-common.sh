@@ -10,6 +10,10 @@ CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 CAP_DIRECTORY=s3.scf-config
 
+# Set SCF_LOG_HOST for sys log brain tests
+log_uid=$(hexdump -n 8 -e '2/4 "%08x"' /dev/urandom)
+SCF_LOG_HOST="log-${log_uid}.${CF_NAMESPACE}.svc.cluster.local"
+
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
     # For pre-upgrade deploys
     echo "Using CAP ${CAP_INSTALL_VERSION}"
