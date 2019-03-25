@@ -54,6 +54,9 @@ monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
+echo UAA customization ...
+echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
     --namespace "${UAA_NAMESPACE}" \
     --timeout 3600 \
@@ -69,6 +72,9 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
+echo SCF customization ...
+echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
     --timeout 3600 \
@@ -76,6 +82,7 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
+    --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
     --wait \
     "${HELM_PARAMS[@]}"
 
