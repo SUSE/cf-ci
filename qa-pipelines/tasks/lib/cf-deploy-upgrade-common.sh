@@ -70,7 +70,7 @@ wait_for_jobs() {
     start=$(date +%s)
     for (( i = 0 ; i < 480 ; i ++ )); do
         # Get the list of all jobs in the helm release, and subtract the value of 'completed' from 'desired'
-        # It would be better to parse this from `helm get manifest`, but since that command is broken in helm 
+        # It would be better to parse this from `helm get manifest`, but since that command is broken in helm
         # v2.8.2 (https://github.com/helm/helm/issues/3833) for now we'll parse it from the human-readable status
         jobs_desired_remaining=$(helm status $release | awk '/==> v1\/Job/ { getline; getline; while (NF>0) { print $2 - $3; getline } }')
         now=$(date +%s)
@@ -136,6 +136,7 @@ set_psp() {
     HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp.privileged")
 }
 
+# Helm parameters common to UAA and SCF, for helm install and upgrades
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
