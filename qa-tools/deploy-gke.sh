@@ -46,14 +46,11 @@ trap cleanup EXIT
 
 set -o errexit
 postfix=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-z0-9' | fold -w 16 | head -n 1)
-export CLUSTER_NAME=${CLUSTER_NAME-cap-gke-${postfix}}
+export CLUSTER_NAME=${CLUSTER_NAME-cap-${postfix}}
 export CLUSTER_ZONE=${CLUSTER_ZONE-us-west1-a}
 
-#  We are setting up a zonal cluster, not a regional one  and therefore we're setting the cluster zone
-# and node location to be the same to avoid spinning up 9 nodes (default behaviour of GKE container cluster
-# create
+#  We are setting up a zonal cluster, not a regional one  
 
-export NODE_LOCATIONS=${CLUSTER_ZONE}
 export NODE_COUNT=3
 export SA_USER=$1
 export KEY_FILE=$2
@@ -67,11 +64,9 @@ gcloud auth activate-service-account $SA_USER --key-file $KEY_FILE --project=$PR
 gcloud config set container/new_scopes_behavior true
 
 # Create GKE cluster 
-
 gcloud container clusters create ${CLUSTER_NAME} --image-type=UBUNTU --machine-type=n1-standard-4 --zone \
-${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --node-locations ${NODE_LOCATIONS} --no-enable-basic-auth --no-issue-client-certificate \
---metadata disable-legacy-endpoints=true 
-
+${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --no-enable-basic-auth --no-issue-client-certificate \
+--no-enable-autoupgrade --metadata disable-legacy-endpoints=true 
 
 # All future kubectl commands will be run in this container. This ensures the
 # correct version of kubectl is used, and that it matches the version used by CI
@@ -84,8 +79,7 @@ docker container run \
 
 docker container exec gke-deploy gcloud auth activate-service-account $SA_USER --key-file /.kube/sa-key --project=$PROJECT
 docker container exec gke-deploy gcloud container clusters get-credentials  ${CLUSTER_NAME} --zone ${CLUSTER_ZONE:?required}
-echo "running kubectl from within container"
-docker container exec gke-deploy kubectl get no -o wide
+
 checkready() {
 	while [[ $node_readiness != "$NODE_COUNT True" ]]; do
 		sleep 10
@@ -113,7 +107,7 @@ instance_names=$(gcloud compute instances list --filter=name~${CLUSTER_NAME:?req
 gcloud config set compute/zone ${CLUSTER_ZONE:?required}
 
 # Update kernel command line
-echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0\"/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0 swapaccount=1\"/g' /etc/default/grub.d/50-cloudimg-settings.cfg"
+echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0\"/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0 cgroup_enable=memory swapaccount=1\"/g' /etc/default/grub.d/50-cloudimg-settings.cfg"
 
 # Update grub
 echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo update-grub"
@@ -123,12 +117,11 @@ echo "$instance_names" | xargs gcloud compute instances reset
 echo "restarted the VMs"
 checkready
 
-# TODO: check if -i and -it are really needed in the following 3 commands
-# Is this really required in the context of GKE?
+# Is this really required in the context of GKE? What should be in the configmap?
 #docker container exec -it gke-deploy kubectl create configmap -n kube-system cap-values \
 #  --from-literal=garden-rootfs-driver=overlay-xfs \
 #  --from-literal=platform=gke 
 
 #Set up Helm
 cat gke-helm-sa.yaml | docker container exec -i gke-deploy kubectl create -f -
-docker container exec -i gke-deploy helm init --service-account helm
+docker container exec -i gke-deploy helm init --service-account tiller
