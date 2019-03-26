@@ -36,15 +36,7 @@ RUN true \
     && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.8/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl \
-    && echo "source <(kubectl completion bash)" >> ~/.bashrc \
-    && zypper clean -a \
-    && true
-
-RUN true \
-    && curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
-    && mkdir -p /usr/local/gcloud \
-    && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
-    && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet 
+    && echo "source <(kubectl completion bash)" >> ~/.bashrc
 
 RUN true \
     && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O /usr/local/bin/jq \
@@ -59,4 +51,15 @@ RUN true \
     && mv stampy /usr/local/bin/stampy \
     && chmod +x /usr/local/bin/stampy
 
+# Add gcloud CLI
+RUN true \
+    && curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
+    && mkdir -p /usr/local/gcloud \
+    && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
+    && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet
+
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
+
+# Leave this at the end in case new packages are needed. Packages can always go into the first run command, but that would trigger all layers to be
+# rebuilt, so placing package installation after previous layers would save a lot of time when building the new image.
+RUN zypper clean -a
