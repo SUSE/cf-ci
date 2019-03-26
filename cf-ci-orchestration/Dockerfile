@@ -35,9 +35,7 @@ RUN true \
     && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.8/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl \
-    && echo "source <(kubectl completion bash)" >> ~/.bashrc \
-    && zypper clean -a \
-    && true
+    && echo "source <(kubectl completion bash)" >> ~/.bashrc
 
 RUN true \
     && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O /usr/local/bin/jq \
@@ -51,3 +49,12 @@ RUN true \
     && curl -L https://github.com/SUSE/stampy/releases/download/0.0.0/stampy-0.0.0.22.gbb93bf3.linux-amd64.tgz | tar xz stampy \
     && mv stampy /usr/local/bin/stampy \
     && chmod +x /usr/local/bin/stampy
+
+RUN true \
+    && ruby-devel gcc gcc-c++ make \
+    && gem install cf-uaac \
+    && ln -s /usr/lib64/ruby/gems/2.1.0/gems/cf-uaac-4.1.0/bin/uaac /usr/local/bin/uaac
+
+# Leave this at the end in case new packages are needed. Packages can always go into the first run command, but that would trigger all layers to be
+# rebuilt, so placing package installation after previous layers would save a lot of time when building the new image.
+RUN zypper clean -a
