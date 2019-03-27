@@ -94,6 +94,7 @@ azure_set_record_sets_for_namespace() {
             azure_set_a_record ssh.$AZURE_AKS_RESOURCE_GROUP $lb_ip
         elif [[ ${lb_svc} == tcp-router-tcp-router-public ]]; then
             azure_set_a_record tcp.$AZURE_AKS_RESOURCE_GROUP $lb_ip
+            azure_set_a_record *.tcp.$AZURE_AKS_RESOURCE_GROUP $lb_ip
         elif [[ ${lb_svc} == router-gorouter-public ]]; then
             azure_set_a_record $AZURE_AKS_RESOURCE_GROUP $lb_ip
             azure_set_a_record *.$AZURE_AKS_RESOURCE_GROUP $lb_ip
