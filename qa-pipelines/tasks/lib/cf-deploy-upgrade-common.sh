@@ -216,7 +216,7 @@ else
 fi
 
 #Set INSECURE_DOCKER_REGISTRIES for brain test
-INSECURE_DOCKER_REGISTRIES=insecure-registry.${DOMAIN}:20005
+INSECURE_DOCKER_REGISTRIES=\"insecure-registry.${DOMAIN}:20005\"
 
 # UAA host/port that SCF will talk to.
 UAA_HOST=uaa.${DOMAIN}
