@@ -7,9 +7,7 @@ if [[ $ENABLE_CF_TEARDOWN != true ]]; then
 fi
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
-
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 set -o allexport
 CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa

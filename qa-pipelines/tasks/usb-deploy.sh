@@ -7,8 +7,7 @@ if [[ $ENABLE_USB_DEPLOY != true ]]; then
 fi
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 if kubectl get pod --namespace scf api-0 2>/dev/null; then
     api_pod_name=api-0

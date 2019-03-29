@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 UAA_PORT=2793
 
