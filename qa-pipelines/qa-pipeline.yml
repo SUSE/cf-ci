@@ -114,6 +114,13 @@ jobs:
         ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+    - task: qa-tests-pre-upgrade
+      file: ci/qa-pipelines/tasks/qa-tests.yml
+      params:
+        CAP_INSTALL_VERSION: ((cap-sle-url))
+        ENABLE_CF_QA_TESTS_PRE_UPGRADE: ((enable-cf-qa-tests-pre-upgrade))
+      input_mapping:
+        s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests-pre-upgrade
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
@@ -165,6 +172,12 @@ jobs:
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
+      input_mapping:
+        s3.scf-config: s3.scf-config-sles
+    - task: qa-tests
+      file: ci/qa-pipelines/tasks/qa-tests.yml
+      params:
+        ENABLE_CF_QA_TESTS: ((enable-cf-qa-tests))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests

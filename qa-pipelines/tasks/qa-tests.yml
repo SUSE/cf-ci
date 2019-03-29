@@ -1,0 +1,12 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/cf-ci-orchestration
+    tag: testbrain
+inputs:
+- name: ci
+- name: pool.kube-hosts
+run:
+  path: ci/qa-pipelines/tasks/qa-tests.sh

@@ -4,8 +4,10 @@ enable-cf-deploy-pre-upgrade: true
 
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true
+enable-cf-qa-tests-pre-upgrade: true
 
 enable-cf-upgrade: true
+enable-cf-qa-tests: true
 
 enable-cf-smoke-tests: true
 enable-cf-brain-tests: true

@@ -10,6 +10,7 @@ enable-cf-deploy-pre-upgrade: true
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true
+enable-cf-qa-tests-pre-upgrade: true
 
 # This should *only* ever be true when running a *full* pre-upgrade pipeline. The only reason to do this is
 # when you want to deploy a pipeline which uses a custom config URL instead of determining it from the
@@ -34,6 +35,7 @@ enable-cf-deploy: false
 # run tests for non-upgrade pipelines, and post-upgrade tests for upgrade pipelines
 enable-cf-smoke-tests: true
 enable-cf-brain-tests: true
+enable-cf-qa-tests: true
 enable-cf-acceptance-tests: true
 
 # tear down CAP deployment

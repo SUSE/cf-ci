@@ -35,9 +35,7 @@ RUN true \
     && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.8/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl \
-    && echo "source <(kubectl completion bash)" >> ~/.bashrc \
-    && zypper clean -a \
-    && true
+    && echo "source <(kubectl completion bash)" >> ~/.bashrc
 
 RUN true \
     && wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -O /usr/local/bin/jq \
@@ -59,3 +57,15 @@ RUN true \
     && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet 
 
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
+ENV GOPATH /go
+
+RUN true \
+    && zypper --non-interactive install ruby-devel go go-doc gcc gcc-c++ make \
+    && go get github.com/SUSE/testbrain \
+    && cd /go/src/github.com/SUSE/testbrain \
+    && make build \
+    && ln -s /go/src/github.com/SUSE/testbrain/build/linux-amd64/testbrain /usr/local/bin/testbrain
+
+# Leave this at the end in case new packages are needed. Packages can always go into the first run command, but that would trigger all layers to be
+# rebuilt, so placing package installation after previous layers would save a lot of time when building the new image.
+RUN zypper clean -a
