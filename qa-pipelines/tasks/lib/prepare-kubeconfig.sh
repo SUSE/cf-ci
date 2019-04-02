@@ -12,11 +12,9 @@ elif [[ $(read_yaml_key ${pool_file} platform) == "gke" ]]; then
     export CLOUDSDK_PYTHON_SITEPACKAGES=1
     export GKE_CLUSTER_NAME=$(read_yaml_key ${pool_file} cluster-name)
     export GKE_CLUSTER_ZONE=$(read_yaml_key ${pool_file} cluster-zone)
-    # export GKE_SERVICE_ACCOUNT_EMAIL=$(read_yaml_key ${} gke-service-account-email)
-    # export GKE_PROJECT_ID=$(read_yaml_key ${} gke-project-id)
-    # read_yaml_key ${} gke-private-key > gke.key
-    echo -e "${GKE_PRIVATE_KEY}" > gke.key
-    chmod 400 gke.key
-    gcloud auth activate-service-account ${GKE_SERVICE_ACCOUNT_EMAIL} --project=${GKE_PROJECT_ID} --key-file gke.key
+    base64 -d <<< "${GKE_PRIVATE_KEY_BASE64}" > gke-key.json
+    export GKE_SERVICE_ACCOUNT_EMAIL=$(jq -r .client_email gke-key.json)
+    export GKE_PROJECT_ID=$(jq -r .project_id gke-key.json)
+    gcloud auth activate-service-account ${GKE_SERVICE_ACCOUNT_EMAIL} --project=${GKE_PROJECT_ID} --key-file gke-key.json
     gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_CLUSTER_ZONE}
 fi

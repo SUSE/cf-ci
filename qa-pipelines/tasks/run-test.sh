@@ -1,9 +1,6 @@
 #!/bin/bash
 set -o errexit
 
-# Set kube config from pool
-source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
-
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
     TEST_NAME=smoke-tests
@@ -18,6 +15,9 @@ else
     echo "run-tests.sh: No test flag set. Skipping tests"
     exit 0
 fi
+
+# Set kube config from pool
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 set -o nounset
 set -o allexport
