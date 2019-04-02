@@ -1,7 +1,7 @@
 usage() {
   cat << 'EOF'
   Usage:
-  deploy-gke.sh [SERVICE_ACCOUNT_NAME] [KEY_FILE] [PROJ_ID] (optional)
+  deploy-gke.sh [SERVICE_ACCOUNT_EMAIL] [KEY_FILE] [PROJ_ID] (optional)
   Requirements:
   * The GKE user/service account user needs the following roles:
     container.admin compute.admin iam.serviceAccountUser
@@ -46,18 +46,18 @@ trap cleanup EXIT
 
 set -o errexit
 postfix=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-z0-9' | fold -w 16 | head -n 1)
-export CLUSTER_NAME=${CLUSTER_NAME-cap-${postfix}}
-export CLUSTER_ZONE=${CLUSTER_ZONE-us-west1-a}
+export CLUSTER_NAME=${CLUSTER_NAME:-cap-${postfix}}
+export CLUSTER_ZONE=${CLUSTER_ZONE:-us-west1-a}
 
 #  We are setting up a zonal cluster, not a regional one  
 
 export NODE_COUNT=3
 export SA_USER=$1
 export KEY_FILE=$2
-export PROJECT=${3-suse-css-platform}
+export PROJECT=${3:-suse-css-platform}
 # Log out from any existing context and log in with the GKE service account
 
-gcloud auth revoke
+gcloud auth revoke || true
 gcloud auth activate-service-account $SA_USER --key-file $KEY_FILE --project=$PROJECT
 
 # Clusters on k8s 1.10 and above will no longer get compute-rw and storage-ro scopes
@@ -66,7 +66,8 @@ gcloud config set container/new_scopes_behavior true
 # Create GKE cluster 
 gcloud container clusters create ${CLUSTER_NAME} --image-type=UBUNTU --machine-type=n1-standard-4 --zone \
 ${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --no-enable-basic-auth --no-issue-client-certificate \
---no-enable-autoupgrade --metadata disable-legacy-endpoints=true 
+--no-enable-autoupgrade --metadata disable-legacy-endpoints=true \
+--labels=owner=$(gcloud config get-value account | tr [:upper:] [:lower:] | tr -c a-z0-9_- _ )
 
 # All future kubectl commands will be run in this container. This ensures the
 # correct version of kubectl is used, and that it matches the version used by CI
@@ -118,9 +119,9 @@ echo "restarted the VMs"
 checkready
 
 # Is this really required in the context of GKE? What should be in the configmap?
-#docker container exec -it gke-deploy kubectl create configmap -n kube-system cap-values \
-#  --from-literal=garden-rootfs-driver=overlay-xfs \
-#  --from-literal=platform=gke 
+docker container exec -it gke-deploy kubectl create configmap -n kube-system cap-values \
+  --from-literal=garden-rootfs-driver=overlay-xfs \
+  --from-literal=platform=gke 
 
 #Set up Helm
 cat gke-helm-sa.yaml | docker container exec -i gke-deploy kubectl create -f -
