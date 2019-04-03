@@ -74,7 +74,7 @@ ${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --no-enable-basic-auth --no-issue-client
 docker container run \
   --name gke-deploy \
   --detach \
-  --volume $KEY_FILE:/.kube/sa-key \
+  --volume $(realpath $KEY_FILE):/.kube/sa-key \
   --env KUBECONFIG=/.kube/kubecfg \
   splatform/cf-ci-orchestration:latest tail -f /dev/null
 
