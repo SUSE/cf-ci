@@ -140,7 +140,7 @@ set_psp() {
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "sizing.credhub_user.count=1")
+                 --set "enable.credhub=true")
 
     if [[ ${cap_platform} == "azure" ]]; then
         HELM_PARAMS+=(--set "services.loadbalanced=true")
