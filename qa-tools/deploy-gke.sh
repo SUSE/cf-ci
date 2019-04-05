@@ -124,5 +124,5 @@ docker container exec -it gke-deploy kubectl create configmap -n kube-system cap
   --from-literal=platform=gke 
 
 #Set up Helm
-cat gke-helm-sa.yaml | docker container exec -i gke-deploy kubectl create -f -
+cat gke-persistent-sc.yaml gke-helm-sa.yaml | docker container exec -i gke-deploy kubectl create -f -
 docker container exec -i gke-deploy helm init --service-account tiller

@@ -17,4 +17,9 @@ elif [[ $(read_yaml_key ${pool_file} platform) == "gke" ]]; then
     export GKE_PROJECT_ID=$(jq -r .project_id gke-key.json)
     gcloud auth activate-service-account ${GKE_SERVICE_ACCOUNT_EMAIL} --project=${GKE_PROJECT_ID} --key-file gke-key.json
     gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_CLUSTER_ZONE}
+    if ! kubectl get clusterrolebinding cluster-admin-binding &>/dev/null; then
+        kubectl create clusterrolebinding cluster-admin-binding \
+            --clusterrole cluster-admin \
+            --user $(gcloud config get-value account)
+    fi
 fi
