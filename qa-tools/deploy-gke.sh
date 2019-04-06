@@ -108,14 +108,9 @@ instance_names=$(gcloud compute instances list --filter=name~${CLUSTER_NAME:?req
 gcloud config set compute/zone ${CLUSTER_ZONE:?required}
 
 # Update kernel command line
-echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0\"/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0 cgroup_enable=memory swapaccount=1\"/g' /etc/default/grub.d/50-cloudimg-settings.cfg"
+echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0\"/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0 cgroup_enable=memory swapaccount=1\"/g' /etc/default/grub.d/50-cloudimg-settings.cfg && sudo update-grub && reboot"
 
-# Update grub
-echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo update-grub"
-
-# Restart VMs
-echo "$instance_names" | xargs gcloud compute instances reset
-echo "restarted the VMs"
+echo "Added swapaccounting and restarted the VMs"
 checkready
 
 # Is this really required in the context of GKE? What should be in the configmap?
