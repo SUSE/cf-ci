@@ -79,6 +79,7 @@ helm install ${CAP_DIRECTORY}/helm/cf/ \
     --set "env.UAA_PORT=${UAA_PORT}" \
     --set "secrets.UAA_CA_CERT=${CA_CERT}" \
     --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
+    --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
     "${HELM_PARAMS[@]}"
 
 # Wait for CF release

@@ -215,6 +215,9 @@ else
     DOMAIN=${public_ip}.${MAGIC_DNS_SERVICE}
 fi
 
+#Set INSECURE_DOCKER_REGISTRIES for brain test
+INSECURE_DOCKER_REGISTRIES=\"insecure-registry.tcp.${DOMAIN}:20005\"
+
 # UAA host/port that SCF will talk to.
 UAA_HOST=uaa.${DOMAIN}
 
