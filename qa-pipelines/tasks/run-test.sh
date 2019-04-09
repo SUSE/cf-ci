@@ -23,7 +23,7 @@ fi
 set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 011
-EXCLUDE_BRAINS_PREFIX=011
+EXCLUDE_BRAINS_PREFIX=''
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
 CF_NAMESPACE=scf
@@ -40,7 +40,7 @@ else
 fi
 
 # Replace the generated monit password with the name of the generated secrets secret
-helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
+helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 function semver_is_gte() {
   # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
   # lexical comparison doesn't work on semvers, e.g. 10.0.0 > 2.0.0
@@ -56,6 +56,7 @@ else
 fi
 DOMAIN=$(kubectl get pods -o json --namespace "${CF_NAMESPACE}" ${api_pod_name} | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 generated_secrets_secret="$(kubectl get pod ${api_pod_name} --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
+SCF_LOG_HOST=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "SCF_LOG_HOST").value')
 
 kube_overrides() {
     ruby <<EOF
@@ -68,9 +69,13 @@ kube_overrides() {
             container['env'].each do |env|
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
+                env['value'] = '$SCF_LOG_HOST' if env['name'] == 'SCF_LOG_HOST'
                 env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
                 if env['name'] == "MONIT_PASSWORD"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret' 
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
+                end
+                if env['name'] == "AUTOSCALER_SERVICE_BROKER_PASSWORD"
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
             end
             if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
@@ -91,12 +96,12 @@ container_status() {
     | jq '.status.containerStatuses[0].state.terminated.exitCode | tonumber' 2>/dev/null
 }
 
-image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")
+image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")
 
-test_pod_yml="${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml"
+test_pod_yml="${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml"
 test_non_pods_yml=
 if [[ ${TEST_NAME} == "acceptance-tests-brain" ]]; then
-    test_non_pods_yml="${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}-non-pods.yaml"
+    test_non_pods_yml="${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}-non-pods.yaml"
     ruby <<EOF
         require 'yaml'
         yml = YAML.load_stream(File.read "${test_pod_yml}")
@@ -106,7 +111,7 @@ if [[ ${TEST_NAME} == "acceptance-tests-brain" ]]; then
             if doc["kind"] == "Pod"
                 File.open("${test_pod_yml}", 'w') { |file| file.write(doc.to_yaml) }
             else
-                File.open("${test_non_pods_yml}", 'a') { |file| file.write(doc.to_yaml) } 
+                File.open("${test_non_pods_yml}", 'a') { |file| file.write(doc.to_yaml) }
             end
         end
 EOF
@@ -177,7 +182,7 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
                 --attach \
                 --restart=Never \
                 --image="${image}" \
-                --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf${CAP_CHART}/bosh-task/${TEST_NAME}.yaml")" \
+                --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")" \
                 "${TEST_NAME}" ||:
 
             while [[ -z $(container_status ${TEST_NAME}) ]]; do

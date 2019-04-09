@@ -51,3 +51,11 @@ RUN true \
     && curl -L https://github.com/SUSE/stampy/releases/download/0.0.0/stampy-0.0.0.22.gbb93bf3.linux-amd64.tgz | tar xz stampy \
     && mv stampy /usr/local/bin/stampy \
     && chmod +x /usr/local/bin/stampy
+
+RUN true \
+    && curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
+    && mkdir -p /usr/local/gcloud \
+    && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
+    && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet 
+
+ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin

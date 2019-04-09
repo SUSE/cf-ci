@@ -10,6 +10,10 @@ CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 CAP_DIRECTORY=s3.scf-config
 
+# Set SCF_LOG_HOST for sys log brain tests
+log_uid=$(hexdump -n 8 -e '2/4 "%08x"' /dev/urandom)
+SCF_LOG_HOST="log-${log_uid}.${CF_NAMESPACE}.svc.cluster.local"
+
 if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
     # For pre-upgrade deploys
     echo "Using CAP ${CAP_INSTALL_VERSION}"
@@ -66,7 +70,7 @@ wait_for_jobs() {
     start=$(date +%s)
     for (( i = 0 ; i < 480 ; i ++ )); do
         # Get the list of all jobs in the helm release, and subtract the value of 'completed' from 'desired'
-        # It would be better to parse this from `helm get manifest`, but since that command is broken in helm 
+        # It would be better to parse this from `helm get manifest`, but since that command is broken in helm
         # v2.8.2 (https://github.com/helm/helm/issues/3833) for now we'll parse it from the human-readable status
         jobs_desired_remaining=$(helm status $release | awk '/==> v1\/Job/ { getline; getline; while (NF>0) { print $2 - $3; getline } }')
         now=$(date +%s)
@@ -114,7 +118,7 @@ function semver_is_gte() {
 }
 
 # Get the version of the helm chart for uaa
-helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa${CAP_CHART}/Chart.yaml  | sed 's/version: *//g' ; }
+helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 
 generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
 
@@ -132,10 +136,11 @@ set_psp() {
     HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp.privileged")
 }
 
+# Helm parameters common to UAA and SCF, for helm install and upgrades
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "sizing.credhub_user.count=1")
+                 --set "enable.credhub=true")
 
     if [[ ${cap_platform} == "azure" ]]; then
         HELM_PARAMS+=(--set "services.loadbalanced=true")
@@ -209,6 +214,9 @@ else
     # referenced by external_ip.
     DOMAIN=${public_ip}.${MAGIC_DNS_SERVICE}
 fi
+
+#Set INSECURE_DOCKER_REGISTRIES for brain test
+INSECURE_DOCKER_REGISTRIES=\"insecure-registry.tcp.${DOMAIN}:20005\"
 
 # UAA host/port that SCF will talk to.
 UAA_HOST=uaa.${DOMAIN}
