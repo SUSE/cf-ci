@@ -3,7 +3,7 @@
 # This script captures CPU, Memory and INode usage metrics from Prometheus and calculates their mean.
 # Prometheus queries are based on Kubernetes/Nodes and Kubernetes/Pods Grafana dashboards
 # It assumes you have a prometheus operator running in your Kube Cluster,
-# Instructions: https://github.com/SUSE/cloudfoundry/wiki/Resource-metrics-collection
+# Instructions for installing Prometheus: https://github.com/SUSE/cloudfoundry/wiki/Resource-metrics-collection
 #
 
 #set -x
@@ -49,7 +49,7 @@ CYAN='\033[0;36m'
 printf "${GREEN}Retrieving node level metrics...${NC}\n"
 
 for NODE in "${NODES[@]}"; do
-    printf "${CYAN}NODE:${NC} ${NODE} --> "
+    printf "${CYAN}NODE:${NC} ${NODE} \n "
 
     QUERY="avg(sum by (cpu) (irate(node_cpu_seconds_total{job=\"node-exporter\", mode!=\"idle\", 
             instance=\"${NODE}:9100\"}[2m]))) * 100"
@@ -84,7 +84,7 @@ for NS in "${NAMESPACES[@]}"; do
     PODS=($(kubectl get pods --namespace ${NS} -o jsonpath='{.items[*].metadata.name}'))
     for PO in "${PODS[@]}"; do
 
-        printf "${CYAN}NAMESPACE:${NC} ${NS}, ${CYAN}POD:${NC} ${PO} ---> "
+        printf "${CYAN}NAMESPACE:${NC} ${NS}, ${CYAN}POD:${NC} ${PO} \n "
 
         QUERY="sum by (container_name) (rate(container_cpu_usage_seconds_total{job=\"kubelet\", 
                namespace=\"${NS}\", image!=\"\", container_name!=\"POD\", pod_name=\"${PO}\"}[1m]))"
