@@ -5,9 +5,10 @@ read_yaml_key() {
     ruby -r yaml -e "puts YAML.load_file('$1')[\"$2\"]"
 }
 
-pool_file=pool.kube-hosts/metadata
+pool_file=${pool_file:-pool.kube-hosts/metadata}
+mkdir -p /root/.kube
 if [[ $(read_yaml_key ${pool_file} kind) == "Config" ]]; then
-    cp ${pool_file} /root/.kube
+    cp ${pool_file} /root/.kube/config
 elif [[ $(read_yaml_key ${pool_file} platform) == "gke" ]]; then
     export CLOUDSDK_PYTHON_SITEPACKAGES=1
     export GKE_CLUSTER_NAME=$(read_yaml_key ${pool_file} cluster-name)
