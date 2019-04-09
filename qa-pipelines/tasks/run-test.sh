@@ -74,6 +74,9 @@ kube_overrides() {
                 if env['name'] == "MONIT_PASSWORD"
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
+                if env['name'] == "AUTOSCALER_SERVICE_BROKER_PASSWORD"
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
+                end
             end
             if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
                 container['env'].push name: "EXCLUDE", value: exclude_brains_prefix
