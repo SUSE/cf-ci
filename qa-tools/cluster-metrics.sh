@@ -50,7 +50,7 @@ CYAN='\033[0;36m'
 printf "${GREEN}Retrieving node level metrics...${NC}\n"
 
 for NODE in "${NODES[@]}"; do
-    printf "${CYAN}NODE:${NC} ${NODE} \n "
+    printf "\n${CYAN}NODE:${NC} ${NODE} \n "
 
     QUERY="avg(sum by (cpu) (irate(node_cpu_seconds_total{job=\"node-exporter\", mode!=\"idle\", 
             instance=\"${NODE}:9100\"}[2m]))) * 100"
@@ -66,12 +66,16 @@ for NODE in "${NODES[@]}"; do
 
     printf " ${CYAN}MEM(%%):${NC} $(make_request "${QUERY}")"
 
-    QUERY="max(((node_filesystem_files{job=\"node-exporter\", 
-            instance=\"${NODE}:9100\"} - node_filesystem_files_free{job=\"node-exporter\", 
-            instance=\"${NODE}:9100\"}) / node_filesystem_files{job=\"node-exporter\", 
-            instance=\"${NODE}:9100\"}) * 100)"
+    QUERY="max(node_memory_MemTotal_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"} 
+            - node_memory_MemFree_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"} 
+            - node_memory_Buffers_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"} 
+            - node_memory_Cached_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"})"
 
-    printf " ${CYAN}INODE(%%):${NC} $(make_request "${QUERY}")\n"
+    printf " ${CYAN}MEM(MiB):${NC} $(make_request "${QUERY}"/1000000)"
+
+    QUERY="node:node_filesystem_usage:"
+
+    printf " ${CYAN}DISK SPACE USAGE(%%):${NC} $(make_request "${QUERY}"*100)\n"
 
 done
 
