@@ -70,6 +70,7 @@ kube_overrides() {
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
                 env['value'] = '$SCF_LOG_HOST' if env['name'] == 'SCF_LOG_HOST'
+                env['value'] = 'gp2' if env['name'] == 'KUBERNETES_STORAGE_CLASS_PERSISTENT'
                 env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
                 if env['name'] == "MONIT_PASSWORD"
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
