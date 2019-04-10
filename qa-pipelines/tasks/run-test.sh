@@ -11,7 +11,7 @@ if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
     TEST_NAME=acceptance-tests-brain
-    kubectl apply -f ci/qa-tools/cap-crb-tests.yaml
+    kubectl apply -f cf-ci/qa-tools/cap-crb-tests.yaml
 elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
      [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
     TEST_NAME=acceptance-tests
