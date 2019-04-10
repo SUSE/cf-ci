@@ -83,12 +83,14 @@ done
 
 printf "\n${GREEN}Retrieving pod level metrics...${NC}\n"
 
-NAMESPACES=($(kubectl get namespace -o jsonpath='{.items[*].metadata.name}'))
+# Uncomment to run for all namespaces.
+#NAMESPACES=($(kubectl get namespace -o jsonpath='{.items[*].metadata.name}'))
+NAMESPACES=(uaa scf)
 
 for NS in "${NAMESPACES[@]}"; do
     printf "\n${CYAN}NAMESPACE:${NC}${NS}\n"
-
-    PODS=($(kubectl get pods --namespace ${NS} -o jsonpath='{.items[*].metadata.name}'))
+    
+    PODS=($(kubectl get pods --namespace ${NS} --field-selector=status.phase=Running -o jsonpath='{.items[*].metadata.name}'))
 
     for PO in "${PODS[@]}"; do
 
