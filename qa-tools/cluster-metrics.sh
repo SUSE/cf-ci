@@ -5,6 +5,10 @@
 # It assumes you have a prometheus operator running in your Kube Cluster,
 # Instructions for installing Prometheus: https://github.com/SUSE/cloudfoundry/wiki/Resource-metrics-collection
 #
+# NOTE:
+#   Wait for atleast 10 mins after installing prometheus operator for metrics data to be collected 
+#   Make sure port 9100 is whitelisted in your Kube deployment for master and worker nodes
+#
 
 #set -x
 
