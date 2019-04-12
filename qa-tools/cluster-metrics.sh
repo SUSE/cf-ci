@@ -6,7 +6,7 @@
 # Instructions for installing Prometheus: https://github.com/SUSE/cloudfoundry/wiki/Resource-metrics-collection
 #
 # NOTE:
-#   Wait for atleast 10 mins after installing prometheus operator for metrics data to be collected 
+#   Wait for atleast 10 mins after installing prometheus operator for metrics data to be collected
 #   Make sure port 9100 is whitelisted in your Kube deployment for master and worker nodes
 #
 
@@ -51,15 +51,20 @@ make_request() {
 NC='\033[0m' # No Color
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
-printf "${GREEN}Retrieving node level metrics...${NC}\n"
+
+print_with_label() {
+    printf "${CYAN}$1${NC} ${2:+"$2"}"
+}
+
+print_with_label "Retrieving node level metrics...\n"
 
 for NODE in "${NODES[@]}"; do
-    printf "\n${CYAN}NODE:${NC} ${NODE} \n "
+    print_with_label "NODE:" "${NODE}\n"
 
     QUERY="avg(sum by (cpu) (irate(node_cpu_seconds_total{job=\"node-exporter\", mode!=\"idle\", 
             instance=\"${NODE}:9100\"}[2m]))) * 100"
 
-    printf " ${CYAN}CPU(%%):${NC} $(make_request "${QUERY}")"
+    print_with_label "  CPU(%%)" "$(make_request "${QUERY}")"
 
     QUERY="max(((node_memory_MemTotal_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"}
            - node_memory_MemFree_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"}
@@ -68,52 +73,52 @@ for NODE in "${NODES[@]}"; do
            ) / node_memory_MemTotal_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"}
            ) * 100)"
 
-    printf " ${CYAN}MEM(%%):${NC} $(make_request "${QUERY}")"
+    print_with_label " MEM(%%)" "$(make_request "${QUERY}")"
 
     QUERY="max(node_memory_MemTotal_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"} 
             - node_memory_MemFree_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"} 
             - node_memory_Buffers_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"} 
             - node_memory_Cached_bytes{job=\"node-exporter\", instance=\"${NODE}:9100\"})"
 
-    printf " ${CYAN}MEM(MiB):${NC} $(make_request "${QUERY}"/1000000)"
+    print_with_label " MEM(MiB)" "$(make_request "${QUERY}"/1000000)"
 
     QUERY="node:node_filesystem_usage:"
 
-    printf " ${CYAN}DISK SPACE USAGE(%%):${NC} $(make_request "${QUERY}"*100)\n"
+    print_with_label " DISK SPACE USAGE(%%)" "$(make_request "${QUERY}"*100)\n"
 
 done
 
 # ---For monitoring pod-level resource usage---
 
-printf "\n${GREEN}Retrieving pod level metrics...${NC}\n"
+print_with_label "\nRetrieving pod level metrics...\n"
 
 # Uncomment to run for all namespaces.
 #NAMESPACES=($(kubectl get namespace -o jsonpath='{.items[*].metadata.name}'))
 NAMESPACES=(uaa scf)
 
 for NS in "${NAMESPACES[@]}"; do
-    printf "\n${CYAN}NAMESPACE:${NC}${NS}\n"
-    
+    print_with_label "NAMESPACE:" "${NS}\n"
+
     PODS=($(kubectl get pods --namespace ${NS} --field-selector=status.phase=Running -o jsonpath='{.items[*].metadata.name}'))
 
     for PO in "${PODS[@]}"; do
 
-        printf " ${CYAN}POD:${NC} ${PO} \n "
+        print_with_label "  POD:" "${PO}\n"
 
         QUERY="sum by (container_name) (rate(container_cpu_usage_seconds_total{job=\"kubelet\", 
                namespace=\"${NS}\", image!=\"\", container_name!=\"POD\", pod_name=\"${PO}\"}[1m]))"
 
-        printf "  ${CYAN}CPU(%%):${NC} $(make_request "${QUERY}")"
+        print_with_label "   CPU(%%):" "$(make_request "${QUERY}")"
 
         QUERY="sum by(container_name) (container_memory_usage_bytes{job=\"kubelet\", 
                namespace=\"${NS}\", pod_name=\"${PO}\", container_name!=\"POD\"})"
 
-        printf " ${CYAN}MEMORY(MiB):${NC} $(make_request "${QUERY}"/1000000)"
+        print_with_label " MEMORY(MiB):" "$(make_request "${QUERY}"/1000000)"
 
         QUERY="sort_desc(sum by (pod_name) (rate(container_network_receive_bytes_total{job=\"kubelet\", 
                namespace=\"${NS}\", pod_name=\"${PO}\"}[1m])))"
 
-        printf " ${CYAN}NETWORK IO(KiB):${NC} $(make_request "${QUERY}"/1000)\n"
+        print_with_label " NETWORK IO(KiB):" "$(make_request "${QUERY}"/1000)\n"
     done
 done
 
