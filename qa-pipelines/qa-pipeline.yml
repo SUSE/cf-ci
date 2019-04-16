@@ -95,7 +95,6 @@ jobs:
         KUBE_ORGANIZATION: ((organization))
         HA: false
         SCALED_HA: false
-        AUTOSCALER: true
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
@@ -135,7 +134,6 @@ jobs:
         KUBE_ORGANIZATION: ((organization))
         HA: false
         SCALED_HA: false
-        AUTOSCALER: true
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
       input_mapping:
@@ -153,7 +151,6 @@ jobs:
         KUBE_ORGANIZATION: ((organization))
         HA: false
         SCALED_HA: false
-        AUTOSCALER: true
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_DEPLOY: ((enable-cf-deploy))
       input_mapping:
@@ -232,7 +229,6 @@ jobs:
         KUBE_ORGANIZATION: ((organization))
         HA: true
         SCALED_HA: false
-        AUTOSCALER: true
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
@@ -272,7 +268,6 @@ jobs:
         KUBE_ORGANIZATION: ((organization))
         HA: true
         SCALED_HA: false
-        AUTOSCALER: true
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
       input_mapping:
@@ -290,7 +285,6 @@ jobs:
         KUBE_ORGANIZATION: ((organization))
         HA: true
         SCALED_HA: false
-        AUTOSCALER: true
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_DEPLOY: ((enable-cf-deploy))
       input_mapping:
