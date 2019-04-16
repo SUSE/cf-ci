@@ -89,24 +89,3 @@ if [[ ${cap_platform} == "azure" ]]; then
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
 fi
-
-# APP AUTOSCALER can only be enabled after SCF is up and running
-if [[ ${AUTOSCALER} == true ]]; then
-    HELM_PARAMS+=(--set "enable.autoscaler=true")
-    echo SCF customization for APP AUTOSCALER ...
-    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
-        --namespace "${CF_NAMESPACE}" \
-        --timeout 3600 \
-        --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
-        --set "env.UAA_HOST=${UAA_HOST}" \
-        --set "env.UAA_PORT=${UAA_PORT}" \
-        --set "secrets.UAA_CA_CERT=${CA_CERT}" \
-        --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
-        --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
-        --wait \
-        "${HELM_PARAMS[@]}"
-
-    wait_for_release scf
-fi
-
