@@ -12,6 +12,7 @@ Table of Contents
     * [Deploy a pipeline which does a non-upgrade test of a custom bundle (which is neither an RC or a release)](#deploy-a-pipeline-which-does-a-non-upgrade-test-of-a-custom-bundle-not-an-rc-or-a-release)
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
   * [Dev Nightly Upgrades CI](#dev-nightly-upgrades-ci)
+  * [PR pipeline](#pr-pipeline)
 
 # Pipeline deployment overview
 
@@ -111,7 +112,6 @@ In order to do this, replace the CAP bundle URLs in the pipeline config, enable 
 ## Continue a test suite from where a previous build left off.
 Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline
 
-
 # Dev Nightly Upgrades CI
 
 Nightly Builds are builds which happen every night from develop branch of scf. The build lands in s3://cap-release-archives/nightly/ and will be picked up by any unpaused pipeline deployed with the `--nightly` flag with an available pool resource.
@@ -129,3 +129,7 @@ Example command to deploy CI on concourse:
 `./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci --nightly pipeline-presets/cap-qa-upgrades-lite.yml`
 
 [pipeline-presets/cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
+
+# PR pipeline
+
+Similar to the nightly build deployment, a pipeline can also be deployed which will use the helm charts generated for a given PR, which end up in s3://cap-release-archives/prs/ . In order to deploy such a pipeline, use the `--pr` flag with the number of the PR. For example, to deploy a pipeline which would use s3://cap-release-archives/prs/PR-2327-scf-sle-2.16.0+cf6.10.0.90.gdd77c7c3.zip, you can use the parameter `--pr 2327` when running the `set-pipeline` script
