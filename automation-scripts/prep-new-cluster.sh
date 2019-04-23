@@ -2,16 +2,7 @@
 
 set -o errexit
 
-if ! type helm &>/dev/null ; then
-  curl -sL "https://storage.googleapis.com/kubernetes-helm/helm-v2.6.1-linux-amd64.tar.gz" | tar xz -C /root/bin --strip-components=1 linux-amd64/helm
-  chmod +x /root/bin/helm
-  if kubectl get pods --all-namespaces 2>/dev/null | grep -qi tiller; then
-    echo "Installing helm client"
-    helm init --client-only
-  else
-    echo "Installing helm client and tiller"
-    helm init
-    kubectl create -f - << EOF
+kubectl apply -f - << EOF
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
@@ -25,8 +16,12 @@ subjects:
   name: default
   namespace: kube-system
 EOF
-  fi
-fi
+curl -sL "https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-amd64.tar.gz" | tar xz -C /root/bin --strip-components=1 linux-amd64/helm
+chmod +x /root/bin/helm
+# Remove potential cache reference to lower-precedence helm executable
+hash -d helm 2>/dev/null || true
+echo "Installing helm client and tiller"
+helm init --upgrade
 
 if ! type k &>/dev/null ; then
   echo "Installing k"
@@ -60,4 +55,4 @@ fi
 
 echo "Ensure the following config contents are in the lockfile for your concourse pool kube resource:"
 echo "---"
-curl -sL "https://raw.githubusercontent.com/SUSE/cf-ci/master/qa-tools/create-qa-config.sh" | bash 2>/dev/null | awk '/apiVersion/ { yaml=1 }  yaml { print }'
+curl -sL "https://raw.githubusercontent.com/SUSE/cf-ci/master/qa-tools/create-qa-config.sh" | bash 2>/dev/null | awk '/apiVersion/ { yaml=1 }  yaml { print }' | sed 's/:6444$/:6443/g'

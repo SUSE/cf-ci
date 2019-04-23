@@ -202,7 +202,7 @@ set -o allexport
 external_ips=($(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]'))
 cap_platform=$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)
 if [[ ${cap_platform} == openstack ]]; then
-  external_ips+=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
+    external_ips+=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
 fi
 public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
