@@ -72,6 +72,10 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
+if semver_is_gte $(helm_chart_version) 2.16.0; then
+    HELM_PARAMS+=(--set "enable.autoscaler=true")
+fi
+
 echo SCF customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 

@@ -62,6 +62,10 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
+if semver_is_gte $(helm_chart_version) 2.16.0; then
+    HELM_PARAMS+=(--set "enable.autoscaler=true")
+fi
+
 echo SCF customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
@@ -88,4 +92,24 @@ wait_for_release scf
 if [[ ${cap_platform} == "azure" ]]; then
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
+fi
+
+# APP AUTOSCALER can only be enabled after SCF is up and running on CAP 1.3.1
+if [[ $(helm_chart_version) == "2.15.2" ]]; then
+    HELM_PARAMS+=(--set=sizing.{autoscaler_actors,autoscaler_api,autoscaler_metrics,autoscaler_postgres}.count=1)
+    echo SCF customization for APP AUTOSCALER ...
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+    helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+        --namespace "${CF_NAMESPACE}" \
+        --timeout 3600 \
+        --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+        --set "env.UAA_HOST=${UAA_HOST}" \
+        --set "env.UAA_PORT=${UAA_PORT}" \
+        --set "secrets.UAA_CA_CERT=${CA_CERT}" \
+        --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
+        --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
+        --wait \
+        "${HELM_PARAMS[@]}"
+
+    wait_for_release scf
 fi
