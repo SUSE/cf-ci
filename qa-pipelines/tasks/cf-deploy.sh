@@ -96,7 +96,11 @@ fi
 
 # APP AUTOSCALER can only be enabled after SCF is up and running on CAP 1.3.1
 if [[ $(helm_chart_version) == "2.15.2" ]]; then
-    HELM_PARAMS+=(--set=sizing.{autoscaler_actors,autoscaler_api,autoscaler_metrics,autoscaler_postgres}.count=1)
+    for f in ${CAP_DIRECTORY}/helm/cf/templates/autoscaler-* ; do
+        f="${f##*/}" # strip leading directories
+        f="${f%.*}"  # strip file extension
+        HELM_PARAMS+=( --set "sizing.${f//-/_}.count=1" )
+    done
     echo SCF customization for APP AUTOSCALER ...
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
     helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
