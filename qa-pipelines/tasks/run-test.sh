@@ -25,7 +25,7 @@ set -o allexport
 # Set this to skip a test, e.g. 011
 EXCLUDE_BRAINS_PREFIX=
 # Set this to run only one test. If EXCLUDE and INCLUDE are both specified, EXCLUDE is applied after INCLUDE
-INCLUDE_BRAINS_PREFIX=
+INCLUDE_BRAINS_PREFIX=${INCLUDE_BRAINS_PREFIX:-}
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
 CF_NAMESPACE=scf
