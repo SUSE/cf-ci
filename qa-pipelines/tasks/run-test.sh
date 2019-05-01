@@ -64,8 +64,8 @@ kube_overrides() {
     ruby <<EOF
         require 'yaml'
         require 'json'
-        exclude_brains_prefix = ENV["EXCLUDE_BRAINS_REGEX"]
-        include_brains_prefix = ENV["INCLUDE_BRAINS_REGEX"]
+        exclude_brains_regex = ENV["EXCLUDE_BRAINS_REGEX"]
+        include_brains_regex = ENV["INCLUDE_BRAINS_REGEX"]
 
         obj = YAML.load_file('$1')
         obj['spec']['containers'].each do |container|
@@ -82,11 +82,11 @@ kube_overrides() {
                 end
             end
             if obj['metadata']['name'] == "acceptance-tests-brain"
-                unless exclude_brains_prefix.empty?
-                    container['env'].push name: "EXCLUDE", value: exclude_brains_prefix
+                unless exclude_brains_regex.empty?
+                    container['env'].push name: "EXCLUDE", value: exclude_brains_regex
                 end
-                unless include_brains_prefix.empty?
-                    container['env'].push name: "INCLUDE", value: include_brains_prefix
+                unless include_brains_regex.empty?
+                    container['env'].push name: "INCLUDE", value: include_brains_regex
                 end
             end
             if obj['metadata']['name'] == "acceptance-tests"
