@@ -12,6 +12,7 @@ Table of Contents
     * [Deploy a pipeline which does a non-upgrade test of a custom bundle (which is neither an RC or a release)](#deploy-a-pipeline-which-does-a-non-upgrade-test-of-a-custom-bundle-not-an-rc-or-a-release)
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
   * [Dev Nightly Upgrades CI](#dev-nightly-upgrades-ci)
+  * [Single Brain Pipeline](#single-brain-pipeline)
 
 # Pipeline deployment overview
 
@@ -129,3 +130,11 @@ Example command to deploy CI on concourse:
 `./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci --nightly pipeline-presets/cap-qa-upgrades-lite.yml`
 
 [pipeline-presets/cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
+
+
+# Single Brain Pipeline
+
+You can deploy a pipeline which will skip the normal series of tasks, and instead run one individual brain test, by replacing the name of the preset file argument with the word "single brain"
+
+Such a pipeline will show one job for each brain test, which you can trigger a build from to run the corresponding brain test with the first available pool resource.
+
