@@ -45,6 +45,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "001"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -67,6 +68,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "002"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -89,6 +91,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "003"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -111,6 +114,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "004"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -133,6 +137,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "005"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -155,6 +160,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "006"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -177,6 +183,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "007"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -199,6 +206,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "008"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -221,6 +229,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "009"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -243,6 +252,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "010"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -265,6 +275,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "011"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -287,6 +298,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "012"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -309,6 +321,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "013"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -331,6 +344,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "014"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -353,6 +367,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "015"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -375,6 +390,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "016"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -397,6 +413,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "017"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
@@ -419,6 +436,7 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "018"
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts
