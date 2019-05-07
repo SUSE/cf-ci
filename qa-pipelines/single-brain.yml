@@ -36,6 +36,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -58,6 +59,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -80,6 +82,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -102,6 +105,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -124,6 +128,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -146,6 +151,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -168,6 +174,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -190,6 +197,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -212,6 +220,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -234,6 +243,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -256,6 +266,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -278,6 +289,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -300,6 +312,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -322,6 +335,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -344,6 +358,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -366,6 +381,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -388,6 +404,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -410,6 +427,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     on_failure:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
