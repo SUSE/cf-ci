@@ -72,6 +72,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     - task: cf-get-commit-id
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
       input_mapping:
@@ -218,6 +219,7 @@ jobs:
         trigger: true
       - put: pool.kube-hosts
         params: {acquire: true}
+        timeout: 2m
     - task: cf-get-commit-id
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
       input_mapping:

@@ -139,8 +139,13 @@ set_psp() {
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "enable.credhub=true"
                  --set "enable.autoscaler=true")
+
+    if [[ $(helm_chart_version) == "2.15.2" ]]; then
+        HELM_PARAMS+=(--set "sizing.credhub_user.count=1")
+    else
+        HELM_PARAMS+=(--set "enable.credhub=true")
+    fi
 
     if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]]; then
         HELM_PARAMS+=(--set "services.loadbalanced=true")
