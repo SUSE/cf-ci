@@ -1,54 +1,72 @@
 #!/usr/bin/env python
 
 # Script to extract working versions of minibroker database charts from helm stable repo's index.yaml.
-# Make sure the YAML parsing lib is installed: `pip install ruamel.yaml`.
+# Make sure the ruamel.yaml and requests is installed: `pip install ruamel.yaml/requests`.
 # 
 # Usage:
 # 1. Update the versions.yaml with the minibroker DB versions known to be working with current CAP release.
-# 2. Run `python extractor.py`
+# 2. Run `python extractor.py <path/to/versions.yaml> <path/to/output/index.yaml>`
+#
 
-import os
+import requests
+from sys import argv
 from ruamel.yaml import YAML
 
-os.system("curl -s https://kubernetes-charts.storage.googleapis.com/index.yaml > helm_stable_index.yaml")
+HELM_REPO_URL="https://kubernetes-charts.storage.googleapis.com/index.yaml"
 
-def read_yaml(file):
+def process_needles():
+    """
+    Method to load and process known working versions in versions.yaml.
+    """
     try:
-        with open(file, 'r') as stream:
-            yaml = YAML()
+        with open(argv[1], 'r') as stream:
+            yaml = YAML(typ='safe')
             return yaml.load(stream)
     except yaml.YAMLError as exc:
         print(exc)
 
-all_versions = read_yaml("helm_stable_index.yaml")
+def process_haystack(databases):
+    """
+    Method to load and process helm stable repo index.yaml.
+    """
+    req = requests.get(HELM_REPO_URL)
+    yaml = YAML()
+    data = yaml.load(req.content)
+    haystack = {}
+    
+    for db in databases:
+        for item in data["entries"][db]:
+            if "appVersion" in item and "version" in item:
+                key = db+item["appVersion"]+item["version"]
+                haystack[key] = item
+
+    return haystack
 
 def dump_yaml(data):
-    with open('index.yaml', 'w') as outfile:
+    """
+    Method to dump output index.yaml file.
+    """
+    with open(argv[2], 'w') as outfile:
         yaml = YAML()
-        data = {"apiVersion": all_versions["apiVersion"], "entries": data}
         yaml.dump(data, outfile)
 
-def exists(db_working_versions, db_version):
-    for dwv in db_working_versions:
-        if "version" in db_version and "appVersion" in db_version:
-            if dwv["appVersion"] == db_version["appVersion"] \
-                and dwv["version"] == db_version["version"]:
-                    return True
-
 def main():
-    entries = {}
-    working_versions = read_yaml("versions.yaml")
+    needles = process_needles()
+    databases = needles.keys()
+    haystack = process_haystack(databases)
+    output = {}
+    for db in databases:
+        for item in needles[db]:
+            needle = db+item["appVersion"]+item["version"]
+            # Check if provided version exists in helm stable repo.
+            if needle in haystack:
+                if db not in output:
+                    output[db] = [haystack[needle]]
+                else:
+                    output[db].append(haystack[needle])
 
-    for db in working_versions:
-        temp_list = []
-        db_working_versions = working_versions[db]
-        for db_version in all_versions["entries"][db]:
-            if exists(db_working_versions, db_version):
-                temp_list.append(db_version)
-        entries[db] = temp_list
-    
-    dump_yaml(entries)
+    data = {"apiVersion": "v1", "entries": output}
+    dump_yaml(data)
 
 if __name__ == "__main__":
     main()
-    
