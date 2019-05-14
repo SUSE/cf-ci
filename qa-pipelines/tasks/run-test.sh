@@ -1,17 +1,12 @@
 #!/bin/bash
 set -o errexit
 
-# Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
-
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
     TEST_NAME=smoke-tests
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
     TEST_NAME=acceptance-tests-brain
-    kubectl apply -f ci/qa-tools/cap-crb-tests.yaml
 elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
      [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
     TEST_NAME=acceptance-tests
@@ -19,6 +14,9 @@ else
     echo "run-tests.sh: No test flag set. Skipping tests"
     exit 0
 fi
+
+# Set kube config from pool
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 set -o nounset
 set -o allexport

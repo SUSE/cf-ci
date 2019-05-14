@@ -99,6 +99,7 @@ jobs:
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: cf-smoke-tests-pre-upgrade
@@ -106,6 +107,7 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests-brain-pre-upgrade
@@ -113,6 +115,7 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests-pre-upgrade
@@ -120,12 +123,14 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: usb-deploy
       file: ci/qa-pipelines/tasks/usb-deploy.yml
       params:
         ENABLE_USB_DEPLOY: ((enable-usb-deploy))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-upgrade
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
       params:
@@ -137,12 +142,14 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: usb-post-upgrade
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
       params:
         ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-deploy
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
@@ -154,24 +161,28 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_DEPLOY: ((enable-cf-deploy))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: cf-smoke-tests
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests-brain
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     # We intentionally don't put the teardown and pool release steps in an ensure
@@ -182,6 +193,7 @@ jobs:
       timeout: 1h
       params:
         ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
     on_success:
@@ -234,6 +246,7 @@ jobs:
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: cf-smoke-tests-pre-upgrade
@@ -241,6 +254,7 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests-brain-pre-upgrade
@@ -248,6 +262,7 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests-pre-upgrade
@@ -255,12 +270,14 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: usb-deploy
       file: ci/qa-pipelines/tasks/usb-deploy.yml
       params:
         ENABLE_USB_DEPLOY: ((enable-usb-deploy))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-upgrade
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
       params:
@@ -272,12 +289,14 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: usb-post-upgrade
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
       params:
         ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-deploy
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
@@ -289,24 +308,28 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_DEPLOY: ((enable-cf-deploy))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: cf-smoke-tests
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests-brain
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - task: acceptance-tests
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     # We intentionally don't put the teardown and pool release steps in an ensure
@@ -317,6 +340,7 @@ jobs:
       timeout: 1h
       params:
         ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
+        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
     on_success:

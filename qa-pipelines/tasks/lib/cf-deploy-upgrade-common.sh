@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 UAA_PORT=2793
 
@@ -148,7 +147,7 @@ set_helm_params() {
         HELM_PARAMS+=(--set "enable.credhub=true")
     fi
 
-    if [[ ${cap_platform} == "azure" ]]; then
+    if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]]; then
         HELM_PARAMS+=(--set "services.loadbalanced=true")
     else
         for (( i=0; i < ${#external_ips[@]}; i++ )); do
@@ -212,7 +211,7 @@ fi
 public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
-if [[ ${cap_platform} == "azure" ]]; then
+if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]]; then
     source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
     DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
 else
