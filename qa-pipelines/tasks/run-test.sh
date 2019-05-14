@@ -1,17 +1,12 @@
 #!/bin/bash
 set -o errexit
 
-# Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
-
 if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
     TEST_NAME=smoke-tests
 elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
      [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
     TEST_NAME=acceptance-tests-brain
-    kubectl apply -f ci/qa-tools/cap-crb-tests.yaml
 elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
      [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
     TEST_NAME=acceptance-tests
@@ -20,10 +15,15 @@ else
     exit 0
 fi
 
+# Set kube config from pool
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
+
 set -o nounset
 set -o allexport
-# Set this to skip a test, e.g. 011
-EXCLUDE_BRAINS_PREFIX=''
+# Set this to skip a test, e.g. 01[12] to skip tests 011 and 012
+EXCLUDE_BRAINS_REGEX=
+# Set this to run only one test. If EXCLUDE and INCLUDE are both specified, EXCLUDE is applied after INCLUDE
+INCLUDE_BRAINS_REGEX=${INCLUDE_BRAINS_REGEX:-}
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
 CF_NAMESPACE=scf
@@ -62,7 +62,8 @@ kube_overrides() {
     ruby <<EOF
         require 'yaml'
         require 'json'
-        exclude_brains_prefix = ENV["EXCLUDE_BRAINS_PREFIX"]
+        exclude_brains_regex = ENV["EXCLUDE_BRAINS_REGEX"]
+        include_brains_regex = ENV["INCLUDE_BRAINS_REGEX"]
 
         obj = YAML.load_file('$1')
         obj['spec']['containers'].each do |container|
@@ -78,8 +79,13 @@ kube_overrides() {
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
             end
-            if obj['metadata']['name'] == "acceptance-tests-brain" and exclude_brains_prefix
-                container['env'].push name: "EXCLUDE", value: exclude_brains_prefix
+            if obj['metadata']['name'] == "acceptance-tests-brain"
+                unless exclude_brains_regex.empty?
+                    container['env'].push name: "EXCLUDE", value: exclude_brains_regex
+                end
+                unless include_brains_regex.empty?
+                    container['env'].push name: "INCLUDE", value: include_brains_regex
+                end
             end
             if obj['metadata']['name'] == "acceptance-tests"
                 container['env'].push name: "CATS_SUITES", value: '${CATS_SUITES:-}'

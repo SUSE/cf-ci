@@ -59,6 +59,7 @@ echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.re
 
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
     --namespace "${UAA_NAMESPACE}" \
+    --recreate-pods \
     --timeout 3600 \
     --wait \
     "${HELM_PARAMS[@]}"
@@ -72,15 +73,12 @@ CA_CERT="$(get_internal_ca_cert)"
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
-if [[ ${AUTOSCALER} == true ]]; then
-    HELM_PARAMS+=(--set "enable.autoscaler=true")
-fi
-
 echo SCF customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
+    --recreate-pods \
     --timeout 3600 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \

@@ -13,6 +13,7 @@ Table of Contents
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
   * [Dev Nightly Upgrades CI](#dev-nightly-upgrades-ci)
   * [PR pipeline](#pr-pipeline)
+  * [Single Brain Pipeline](#single-brain-pipeline)
 
 # Pipeline deployment overview
 
@@ -130,6 +131,15 @@ Example command to deploy CI on concourse:
 
 [pipeline-presets/cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
 
+
 # PR pipeline
 
 Similar to the nightly build deployment, a pipeline can also be deployed which will use the helm charts generated for a given PR, which end up in s3://cap-release-archives/prs/ . In order to deploy such a pipeline, use the `--pr` flag with the number of the PR. For example, to deploy a pipeline which would use s3://cap-release-archives/prs/PR-2327-scf-sle-2.16.0+cf6.10.0.90.gdd77c7c3.zip, you can use the parameter `--pr 2327` when running the `set-pipeline` script
+
+
+# Single Brain Pipeline
+
+You can deploy a pipeline which will skip the normal series of tasks, and instead run one individual brain test, by replacing the name of the preset file argument with the word "single brain"
+
+Such a pipeline will show one job for each brain test, which you can trigger a build from to run the corresponding brain test with the first available pool resource.
+

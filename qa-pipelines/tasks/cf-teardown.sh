@@ -7,9 +7,7 @@ if [[ $ENABLE_CF_TEARDOWN != true ]]; then
 fi
 
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
-
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 set -o allexport
 CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
@@ -32,7 +30,8 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
     done
 done
 
-if [[ $(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform) == azure ]]; then
+cap_platform=$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)
+if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]]; then
     source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
     az_login
     azure_dns_clear

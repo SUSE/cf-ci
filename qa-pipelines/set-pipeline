@@ -21,6 +21,8 @@ Available options:
 
 Note: --pr and --nightly flags cannot be used together
 
+Note: Instead of using an existing preset file, you can instead use the argument, "single-brain"
+to deploy a pipeline which will allow you to select an individual brain test.
 EOF
 }
 
@@ -51,18 +53,11 @@ if test -z "${1:-}" ; then
     usage
     exit 1
 fi
-pipeline_file="qa-pipeline.yml"
 vars_file="config-${pool}.yml"
 preset_file=${1}
 pipeline_name=$(basename ${preset_file})
 pipeline_name="${prefix}${pipeline_name%.yml}"
 
-
-if ! test -r "${pipeline_file}" ; then
-    usage >&2
-    printf "Failed to read pipeline configuration %s\n" "${pipeline_file}" >&2
-    exit 1
-fi
 
 if ! test -r "${vars_file}" ; then
     usage >&2
@@ -72,9 +67,23 @@ if ! test -r "${vars_file}" ; then
     exit 1
 fi
 
+if [[ ${preset_file} == "single-brain" ]]; then
+    pipeline_file="single-brain.yml"
+    # Set preset file to some existing yml file to not break substitution later; this won't be used
+    preset_file=pipeline-presets/single-brain.yml
+else
+    pipeline_file="qa-pipeline.yml"
+fi
+
 if ! test -r "${preset_file}" ; then
     usage >&2
     printf "Failed to read preset file %s\n" "${preset_file}" >&2
+    exit 1
+fi
+
+if ! test -r "${pipeline_file}" ; then
+    usage >&2
+    printf "Failed to read pipeline configuration %s\n" "${pipeline_file}" >&2
     exit 1
 fi
 

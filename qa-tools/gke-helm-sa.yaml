@@ -1,9 +1,12 @@
+---
+# A serviceaccount for use by tiller, in order for helm/tiller to work on GKE
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: tiller
   namespace: kube-system
 ---
+# A clusterrolebinding of the tiller service-account to the cluster-admin role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
