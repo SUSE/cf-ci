@@ -35,30 +35,10 @@ UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 is_namespace_ready() {
     local namespace="$1"
 
-    if [[ $(helm_chart_version) == "2.10.1" ]]; then
-        # Create regular expression to match active_passive_pods
-        # These are scaled services which were expected to only have one pod listed as ready prior to 2.11.0
-        local active_passive_pod_regex='^diego-api$|^diego-brain$|^routing-api$'
-        local active_passive_role_count=$(awk -F '|' '{ print NF }' <<< "${active_passive_pod_regex}")
-    else
-        local active_passive_pod_regex='$a' # A regex that will never match anything
-        local active_passive_role_count=0
-    fi
-
-    # Get the container name and status for each pod in two columns
-    # The name here will be the role name, not the pod name, e.g. 'diego-brain' not 'diego-brain-1'
-    local active_passive_pod_status=$(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-        | awk '$1 ~ '"/${active_passive_pod_regex}/")
-
-    # Check that the number of containers which are ready is equal to the number of active passive roles
-    if [[ -n $active_passive_pod_status ]] && [[ $(echo "$active_passive_pod_status" | grep true | wc -l) -ne ${active_passive_role_count} ]]; then
-        return 1
-    fi
-
-    # Finally, check that all pods which do not match the active_passive_pod_regex are ready
+    # Check that all pods which were not created by jobs are ready
     [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
         | grep -vE 'secret-generation|post-deployment' \
-        | awk '$1 !~ '"/${active_passive_pod_regex}/ { print \$2 }" \
+        | awk '{ print $2 }' \
         | sed '/^ *$/d' \
         | sort \
         | uniq) ]]
@@ -101,8 +81,8 @@ wait_for_release() {
     now=$(date +%s)
     printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
     kubectl get pods --namespace="${namespace}"
-    if ! is_namespace_ready "${namespace}" ; then
-        printf "%s pods are still pending\n" "${release}"
+    if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
+        printf "%s pods are still pending after 80 minutes \n" "${release}"
         exit 1
     fi
 }
