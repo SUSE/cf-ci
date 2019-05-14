@@ -17,13 +17,16 @@ Available options:
     -t, --target=       Set fly target concourse
     -b, --branch=       Use a specific branch or tag. Defaults to the current branch
     --nightly           Deploy pipeline that triggers when new nightly builds are released
+    --pr=               Deploy pipeline that tests a build from a specific PR
+
+Note: --pr and --nightly flags cannot be used together
 
 Note: Instead of using an existing preset file, you can instead use the argument, "single-brain"
 to deploy a pipeline which will allow you to select an individual brain test.
 EOF
 }
 
-OPTS=$(getopt -o hp:t:b: --long help,nightly,pool:,prefix:,target:,branch: -- "$@")
+OPTS=$(getopt -o hp:t:b: --long help,nightly,pr:,pool:,prefix:,target:,branch: -- "$@")
 eval set -- "${OPTS}"
 
 pool=provo
@@ -31,7 +34,6 @@ src_ci_branch=$(git rev-parse --abbrev-ref HEAD)
 prefix=""
 target=""
 secrets_file=""
-s3_config_prefix=master/
 while true ; do
     case "$1" in
         -h|--help)   usage ; exit 0 ;;
@@ -39,11 +41,13 @@ while true ; do
         -t|--target) target="${2}" ; shift 2 ;;
         --pool)      pool="${2}" ; shift 2 ;;
         -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
-        --nightly)   s3_config_prefix=nightly/ ; shift 1 ;;
+        --nightly)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=nightly/ ; shift 1 ;;
+        --pr)        [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=prs/PR-${2}- ; shift 2 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
     esac
 done
+s3_config_prefix=${s3_config_prefix:-master/}
 
 if test -z "${1:-}" ; then
     usage

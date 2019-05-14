@@ -36,7 +36,7 @@ if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
     export CAP_DIRECTORY=cap-install-version
     unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
 else
-    unzip ${CAP_DIRECTORY}/scf-*.zip -d ${CAP_DIRECTORY}/
+    unzip ${CAP_DIRECTORY}/*scf-*.zip -d ${CAP_DIRECTORY}/
 fi
 
 # Replace the generated monit password with the name of the generated secrets secret
