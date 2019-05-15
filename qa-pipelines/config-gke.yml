@@ -23,4 +23,4 @@ organization: splatform
 magic-dns-service: omg.howdoi.website
 
 src-repo: SUSE/scf
-cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.15.2%2Bcf3.6.0.0.gde1bd02f.zip
+cap-sle-url: https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.16.4%2Bcf6.10.0.2.g5abdb16f.zip
