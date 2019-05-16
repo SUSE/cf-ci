@@ -4,37 +4,45 @@
 # The settings in this file will also be valid for our most complete pipeline
 # (which performs an upgrade and all tests)
 
-# deploy cf for upgrade pipelines
-enable-cf-deploy-pre-upgrade: true
+# Enable HA and non-HA pipelines
+ha: true
+sa: true
+
+# Report status as steps complete
+status-reporting: true
+
+# version to upgrade from; if null, upgrade is not performed.
+upgrade-from-version: scf-sle-2.15.2+cf3.6.0.0.gde1bd02f
+
+# Deploy CF USB before upgrading
+enable-cf-usb-deploy-pre-upgrade: true
 
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true
 
-# This should *only* ever be true when running a *full* pre-upgrade pipeline. The only reason to do this is
-# when you want to deploy a pipeline which uses a custom config URL instead of determining it from the
-# s3.scf-config-* resources. A typical upgrade pipeline only runs cats post-upgrade, and a typical deploy
-# pipeline has all the 'pre-upgrade' flags set to false
-enable-cf-acceptance-tests-pre-upgrade: false
+# This should *only* ever be true when running a *full* pre-upgrade pipeline.
+# The only reason to do this is when you want to deploy a pipeline which uses a
+# custom config URL instead of determining it from the s3.scf-config-*
+# resources. A typical upgrade pipeline only runs cats post-upgrade, and a
+# typical deploy pipeline has all the 'pre-upgrade' flags set to false
+enable-cf-acceptance-tests-pre-upgrade: true
 
 # deploy mysql and postgres services, sidecars, and sample apps before an upgrade
 enable-usb-deploy: true
 
-
-# upgrade cf deployment to latest. When this is set to true, URLs for the pre-upgrade charts should be provide
-enable-cf-upgrade: true
+# Deploy CF for pipelines.  If upgrade-from-version is set, this triggers an
+# upgrade instead.  This may be `true` (use the latest in the bucket), `false`
+# (don't deploy), or a string (in which case use given bundle URL)
+enable-cf-deploy: true
 
 # test apps which use services, and tear down apps, services, and sidecars
-enable-usb-post-upgrade: true
-
-# NON-UPGRADE PIPELINES START HERE
-# deploy for non-upgrade pipelines
-enable-cf-deploy: false
+enable-cf-usb: true
 
 # run tests for non-upgrade pipelines, and post-upgrade tests for upgrade pipelines
 enable-cf-smoke-tests: true
 enable-cf-brain-tests: true
 enable-cf-acceptance-tests: true
 
-# tear down CAP deployment
+# tear down CAP deployment when all tasks are successful
 enable-cf-teardown: true

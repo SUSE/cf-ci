@@ -1,5 +1,6 @@
 ---
 
+sa: true
 enable-cf-deploy: true
 enable-cf-smoke-tests: true
 enable-cf-teardown: true

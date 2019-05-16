@@ -54,9 +54,9 @@ if test -z "${1:-}" ; then
     exit 1
 fi
 vars_file="config-${pool}.yml"
-preset_file=${1}
-pipeline_name=$(basename ${preset_file})
-pipeline_name="${prefix}${pipeline_name%.yml}"
+preset_file="${1}"
+preset_name="$(basename ${preset_file} .yml)"
+pipeline_name="${prefix}${preset_name}"
 
 
 if ! test -r "${vars_file}" ; then
@@ -85,6 +85,11 @@ if ! test -r "${pipeline_file}" ; then
     usage >&2
     printf "Failed to read pipeline configuration %s\n" "${pipeline_file}" >&2
     exit 1
+fi
+
+alt_secrets_file="CONCOURSE_SECRETS_FILE_${pool//-/_}"
+if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
+    CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
 fi
 
 if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
@@ -155,7 +160,7 @@ fly \
     --non-interactive \
     --pipeline="${pipeline_name}" \
     --var pipeline-name="${pipeline_name}" \
-    --config="${pipeline_file}" \
+    --config=<(ruby generate.rb "${preset_file}" flags.yml) \
     --var src-ci-branch=${src_ci_branch} \
     --var s3-config-prefix-sles=${s3_config_prefix} \
     --load-vars-from=<(
