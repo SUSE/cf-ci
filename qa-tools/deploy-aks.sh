@@ -56,7 +56,11 @@ az aks create --resource-group $AZ_RG_NAME --name $AZ_AKS_NAME \
               --ssh-key-value ${AZ_SSH_KEY}.pub --node-vm-size $AZ_AKS_NODE_VM_SIZE \
               --node-osdisk-size 60 --kubernetes-version 1.11.8
 
-export KUBECONFIG=$(mktemp -d)/config
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  export KUBECONFIG="/private"$(mktemp -d)/config
+else
+  export KUBECONFIG=$(mktemp -d)/config
+fi
 
 while ! az aks get-credentials --admin --resource-group $AZ_RG_NAME --name $AZ_AKS_NAME --file $KUBECONFIG; do
   sleep 10
@@ -105,5 +109,5 @@ docker exec -it aks-deploy kubectl create configmap -n kube-system cap-values \
   --from-literal=resource-group=$AZ_RG_NAME \
   --from-literal="node-ssh-access=$(cat $AZ_SSH_KEY)"
 rm -rf "/tmp/tmp.${AZ_SSH_KEY_PATH##/tmp/tmp.}"
-cat persistent-sc.yaml cluster-admin.yaml | docker exec -i aks-deploy kubectl create -f -
+cat persistent-sc.yaml | docker exec -i aks-deploy kubectl create -f -
 docker exec -it aks-deploy helm init
