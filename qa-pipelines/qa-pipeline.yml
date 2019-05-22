@@ -99,6 +99,11 @@ jobs:
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -107,6 +112,11 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -115,6 +125,11 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -123,6 +138,11 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -130,6 +150,11 @@ jobs:
       file: ci/qa-pipelines/tasks/usb-deploy.yml
       params:
         ENABLE_USB_DEPLOY: ((enable-usb-deploy))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-upgrade
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
@@ -142,6 +167,11 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -149,6 +179,11 @@ jobs:
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
       params:
         ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-deploy
       file: ci/qa-pipelines/tasks/cf-deploy.yml
@@ -161,6 +196,11 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_DEPLOY: ((enable-cf-deploy))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -168,6 +208,11 @@ jobs:
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -175,6 +220,11 @@ jobs:
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -182,6 +232,11 @@ jobs:
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -193,6 +248,11 @@ jobs:
       timeout: 1h
       params:
         ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -246,6 +306,11 @@ jobs:
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_DEPLOY_PRE_UPGRADE: ((enable-cf-deploy-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -254,6 +319,11 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE: ((enable-cf-smoke-tests-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -262,6 +332,11 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE: ((enable-cf-brain-tests-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -270,6 +345,11 @@ jobs:
       params:
         CAP_INSTALL_VERSION: ((cap-sle-url))
         ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE: ((enable-cf-acceptance-tests-pre-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -277,6 +357,11 @@ jobs:
       file: ci/qa-pipelines/tasks/usb-deploy.yml
       params:
         ENABLE_USB_DEPLOY: ((enable-usb-deploy))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-upgrade
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
@@ -289,6 +374,11 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_UPGRADE: ((enable-cf-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -296,6 +386,11 @@ jobs:
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
       params:
         ENABLE_USB_POST_UPGRADE: ((enable-usb-post-upgrade))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - task: cf-deploy
       file: ci/qa-pipelines/tasks/cf-deploy.yml
@@ -308,6 +403,11 @@ jobs:
         SCALED_HA: false
         MAGIC_DNS_SERVICE: ((magic-dns-service))
         ENABLE_CF_DEPLOY: ((enable-cf-deploy))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -315,6 +415,11 @@ jobs:
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_SMOKE_TESTS: ((enable-cf-smoke-tests))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -322,6 +427,11 @@ jobs:
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_BRAIN_TESTS: ((enable-cf-brain-tests))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -329,6 +439,11 @@ jobs:
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
         ENABLE_CF_ACCEPTANCE_TESTS: ((enable-cf-acceptance-tests))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -340,6 +455,11 @@ jobs:
       timeout: 1h
       params:
         ENABLE_CF_TEARDOWN: ((enable-cf-teardown))
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}

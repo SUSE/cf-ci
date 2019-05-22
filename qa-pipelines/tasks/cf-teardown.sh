@@ -30,8 +30,12 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
     done
 done
 
-cap_platform=$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)
-if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]]; then
+if [[ ${cap_platform} != "eks" ]]; then
+  cap_platform=$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)
+fi
+
+if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
+ [[ ${cap_platform} == "eks" ]]; then
     source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
     az_login
     azure_dns_clear
