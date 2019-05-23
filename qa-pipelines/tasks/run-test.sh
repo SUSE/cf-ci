@@ -75,6 +75,9 @@ kube_overrides() {
                 if env['name'] == "MONIT_PASSWORD"
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
+                if env['name'] == "UAA_CLIENTS_CF_SMOKE_TESTS_CLIENT_SECRET"
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
+                end
                 if env['name'] == "AUTOSCALER_SERVICE_BROKER_PASSWORD"
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
