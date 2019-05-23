@@ -26,7 +26,7 @@ enable-cf-brain-tests-pre-upgrade: true
 # custom config URL instead of determining it from the s3.scf-config-*
 # resources. A typical upgrade pipeline only runs cats post-upgrade, and a
 # typical deploy pipeline has all the 'pre-upgrade' flags set to false
-enable-cf-acceptance-tests-pre-upgrade: true
+enable-cf-acceptance-tests-pre-upgrade: false
 
 # deploy mysql and postgres services, sidecars, and sample apps before an upgrade
 enable-usb-deploy: true

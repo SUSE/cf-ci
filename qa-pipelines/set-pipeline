@@ -87,6 +87,8 @@ if ! test -r "${pipeline_file}" ; then
     exit 1
 fi
 
+# If a concourse secrets file named after the pool exists, use that instead.
+# This is useful for local testing (for alternative pool / s3 storage / etc.)
 alt_secrets_file="CONCOURSE_SECRETS_FILE_${pool//-/_}"
 if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
     CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"

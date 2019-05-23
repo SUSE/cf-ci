@@ -81,6 +81,21 @@ resources:
     access_token: ((github-access-token))
 <% end %>
 
+aliases:
+  # This section is only used for anchor targets; this is not a real concourse
+  # pipeline definition section.
+  common-task-params: &common-task-params
+    KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+    KUBE_REGISTRY_USERNAME: ((registry-username))
+    KUBE_REGISTRY_PASSWORD: ((registry-password))
+    KUBE_ORGANIZATION: ((organization))
+    MAGIC_DNS_SERVICE: ((magic-dns-service))
+    GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
+  upgrade-task-params: &upgrade-task-params
+    << : *common-task-params
+    CAP_BUNDLE_URL: <%= bundle_url_from_version(upgrade_from_version) %>
+
 jobs:
 <% %w(SA HA).each do |avail| %>
 <% next if avail == 'HA' and not ha %>
@@ -116,17 +131,13 @@ jobs:
       params: {release: pool.kube-hosts}
   - do:
     <% if upgrade_from_version %>
+    # This section only exists for upgrade pipelines; it determines how to set
+    # up the pre-upgrade deployment.
     - task: cf-deploy-pre-upgrade
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
-        KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
-        KUBE_REGISTRY_USERNAME: ((registry-username))
-        KUBE_REGISTRY_PASSWORD: ((registry-password))
-        KUBE_ORGANIZATION: ((organization))
+        << : *upgrade-task-params
         HA: <%= avail == 'HA' %>
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(upgrade_from_version) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% if enable_cf_usb_deploy_pre_upgrade %>
@@ -139,8 +150,7 @@ jobs:
     - task: cf-smoke-tests-pre-upgrade
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(upgrade_from_version) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+        << : *upgrade-task-params
         TEST_NAME: smoke-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -149,8 +159,7 @@ jobs:
     - task: acceptance-tests-brain-pre-upgrade
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(upgrade_from_version) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+        << : *upgrade-task-params
         TEST_NAME: acceptance-tests-brain
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -159,8 +168,7 @@ jobs:
     - task: acceptance-tests-pre-upgrade
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(upgrade_from_version) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+        << : *upgrade-task-params
         TEST_NAME: acceptance-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -169,53 +177,40 @@ jobs:
     - task: cf-upgrade
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
       params:
-        KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
-        KUBE_REGISTRY_USERNAME: ((registry-username))
-        KUBE_REGISTRY_PASSWORD: ((registry-password))
-        KUBE_ORGANIZATION: ((organization))
+        << : *common-task-params
         HA: <%= avail == 'HA' %>
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_deploy
     <% if enable_cf_usb_deploy_pre_upgrade %>
     - task: usb-post-upgrade
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
-      params:
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+      params: *common-task-params
     <% end %> # enable_cf_usb_deploy_pre_upgrade
     <% else %> # upgrade_from_version
+    # When this is _not_ an upgrade pipeline, we may wish to deploy CF before
+    # running the tests.
     <% if enable_cf_deploy %>
     - task: cf-deploy
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
-        KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
-        KUBE_REGISTRY_USERNAME: ((registry-username))
-        KUBE_REGISTRY_PASSWORD: ((registry-password))
-        KUBE_ORGANIZATION: ((organization))
+        << : *common-task-params
         HA: <%= avail == 'HA' %>
-        MAGIC_DNS_SERVICE: ((magic-dns-service))
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_deploy
     <% if enable_cf_usb %>
     - task: usb-deploy-pre-upgrade
       file: ci/qa-pipelines/tasks/usb-deploy.yml
-      params:
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+      params: *common-task-params
     <% end %>
     <% end %> # upgrade_from_version
     <% if enable_cf_smoke_tests %>
     - task: cf-smoke-tests
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
+        << : *common-task-params
         TEST_NAME: smoke-tests
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_smoke_tests
@@ -223,9 +218,8 @@ jobs:
     - task: acceptance-tests-brain
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
+        << : *common-task-params
         TEST_NAME: acceptance-tests-brain
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_brain_tests
@@ -233,9 +227,8 @@ jobs:
     - task: acceptance-tests
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
+        << : *common-task-params
         TEST_NAME: acceptance-tests
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_acceptance_tests
@@ -246,8 +239,7 @@ jobs:
     - task: cf-teardown
       file: ci/qa-pipelines/tasks/cf-teardown.yml
       timeout: 1h
-      params:
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+      params: *common-task-params
     <% end %> # enable_cf_teardown
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
