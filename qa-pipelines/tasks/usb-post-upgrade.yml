@@ -1,3 +1,5 @@
+# The usb-post-upgrade task checks that applications deployed via the earlier
+# usb-deploy task is still functioning correctly after an upgrade.
 ---
 platform: linux
 image_resource:

@@ -14,8 +14,9 @@ status-reporting: true
 # version to upgrade from; if null, upgrade is not performed.
 upgrade-from-version: scf-sle-2.15.2+cf3.6.0.0.gde1bd02f
 
-# Deploy CF USB before upgrading
-enable-cf-usb-deploy-pre-upgrade: true
+# When upgrading, deploy cf-usb (and an app using it) pre-upgrade, and ensure
+# that it remains working post-upgrade
+enable-cf-usb-upgrade-tests: true
 
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
@@ -27,9 +28,6 @@ enable-cf-brain-tests-pre-upgrade: true
 # resources. A typical upgrade pipeline only runs cats post-upgrade, and a
 # typical deploy pipeline has all the 'pre-upgrade' flags set to false
 enable-cf-acceptance-tests-pre-upgrade: false
-
-# deploy mysql and postgres services, sidecars, and sample apps before an upgrade
-enable-usb-deploy: true
 
 # Deploy CF for pipelines.  If upgrade-from-version is set, this triggers an
 # upgrade instead.  This may be `true` (use the latest in the bucket), `false`

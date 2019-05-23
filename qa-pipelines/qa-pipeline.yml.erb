@@ -140,12 +140,12 @@ jobs:
         HA: <%= avail == 'HA' %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
-    <% if enable_cf_usb_deploy_pre_upgrade %>
+    <% if enable_cf_usb_upgrade_tests %>
     - task: usb-deploy-pre-upgrade
       file: ci/qa-pipelines/tasks/usb-deploy.yml
       params:
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
-    <% end %> # enable_cf_usb_deploy_pre_upgrade
+    <% end %> # enable_cf_usb_upgrade_tests
     <% if enable_cf_smoke_tests_pre_upgrade %>
     - task: cf-smoke-tests-pre-upgrade
       file: ci/qa-pipelines/tasks/run-test.yml
@@ -182,11 +182,11 @@ jobs:
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_deploy
-    <% if enable_cf_usb_deploy_pre_upgrade %>
+    <% if enable_cf_usb_upgrade_tests %>
     - task: usb-post-upgrade
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
       params: *common-task-params
-    <% end %> # enable_cf_usb_deploy_pre_upgrade
+    <% end %> # enable_cf_usb_upgrade_tests
     <% else %> # upgrade_from_version
     # When this is _not_ an upgrade pipeline, we may wish to deploy CF before
     # running the tests.
@@ -199,11 +199,6 @@ jobs:
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_deploy
-    <% if enable_cf_usb %>
-    - task: usb-deploy-pre-upgrade
-      file: ci/qa-pipelines/tasks/usb-deploy.yml
-      params: *common-task-params
-    <% end %>
     <% end %> # upgrade_from_version
     <% if enable_cf_smoke_tests %>
     - task: cf-smoke-tests
