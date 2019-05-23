@@ -6,8 +6,6 @@ require 'ostruct'
 require 'yaml'
 
 class PipelineDeployer
-    TEMPLATE_NAME = 'qa-pipeline.yml.erb'
-
     # fix_key converts the key into something that can be a ruby variable name
     def fix_key(k)
         k.tr('-', '_').to_sym
@@ -31,19 +29,20 @@ class PipelineDeployer
         # Load the configuration file
         @eval_context ||= binding.dup.tap do |context|
             flags = open(File.join(__dir__, all_flags_file), 'r', &YAML.method(:load))
+            flags ||= Hash.new
             flags.each do |k, v|
                 context.local_variable_set fix_key(k), false
             end
-            flags = open(File.join(__dir__, flags_file), 'r', &YAML.method(:load))
+            flags = open(File.join(__dir__, flags_file), 'r', &YAML.method(:load)) || Hash.new
             flags.each do |k, v|
                 context.local_variable_set fix_key(k), make_open_struct(v)
             end
         end
     end
 
-    def render(flags_file, all_flags_file)
+    def render(template_file, flags_file, all_flags_file)
         # Render the template
-        filename = File.join(__dir__, TEMPLATE_NAME)
+        filename = File.join(__dir__, template_file)
         template = ERB.new(File.read(filename))
         template.filename = filename
         result = YAML.load template.result(eval_context(flags_file, all_flags_file))
@@ -51,4 +50,4 @@ class PipelineDeployer
     end
 end
 
-PipelineDeployer.new.render *ARGV.first(2)
+PipelineDeployer.new.render *ARGV.first(3)

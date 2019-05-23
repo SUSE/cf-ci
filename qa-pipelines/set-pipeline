@@ -67,25 +67,19 @@ if ! test -r "${vars_file}" ; then
     exit 1
 fi
 
-if [[ ${preset_file} == "single-brain" ]]; then
-    pipeline_file="single-brain.yml"
-    # Set preset file to some existing yml file to not break substitution later; this won't be used
-    preset_file=pipeline-presets/single-brain.yml
-else
-    pipeline_file="qa-pipeline.yml"
-fi
-
-if ! test -r "${preset_file}" ; then
-    usage >&2
-    printf "Failed to read preset file %s\n" "${preset_file}" >&2
-    exit 1
-fi
-
-if ! test -r "${pipeline_file}" ; then
-    usage >&2
-    printf "Failed to read pipeline configuration %s\n" "${pipeline_file}" >&2
-    exit 1
-fi
+# generate_pipeline will emit the pipeline definition on STDOUT; this deals with
+# the single-brain special case.
+generate_pipeline() {
+  local pipeline_template='qa-pipeline.yml.erb'
+  local preset_template="${preset_file}"
+  local flags='flags.yml'
+  if [[ "${preset_file}" == "pipeline-presets/single-brain.yml" ]]; then
+    pipeline_template='single-brain.yml.erb'
+    preset_template='pipeline-presets/single-brain.yml'
+    flags='pipeline-presets/single-brain.yml'
+  fi
+  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}"
+}
 
 # If a concourse secrets file named after the pool exists, use that instead.
 # This is useful for local testing (for alternative pool / s3 storage / etc.)
@@ -162,7 +156,7 @@ fly \
     --non-interactive \
     --pipeline="${pipeline_name}" \
     --var pipeline-name="${pipeline_name}" \
-    --config=<(ruby generate.rb "${preset_file}" flags.yml) \
+    --config=<(generate_pipeline) \
     --var src-ci-branch=${src_ci_branch} \
     --var s3-config-prefix-sles=${s3_config_prefix} \
     --load-vars-from=<(
