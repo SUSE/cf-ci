@@ -98,8 +98,6 @@ aliases:
 
 jobs:
 <% %w(SA HA).each do |avail| %>
-<% next if avail == 'HA' and not ha %>
-<% next if avail == 'SA' and not sa %>
 - name: ((pipeline-name))-<%= avail %>
   plan:
   - do:

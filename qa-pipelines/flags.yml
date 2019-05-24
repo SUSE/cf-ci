@@ -4,10 +4,6 @@
 # The settings in this file will also be valid for our most complete pipeline
 # (which performs an upgrade and all tests)
 
-# Enable HA and non-HA pipelines
-ha: true
-sa: true
-
 # Report status as steps complete
 status-reporting: true
 

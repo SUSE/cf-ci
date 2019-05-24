@@ -1,5 +1,4 @@
 ---
-sa: true
 
 enable-cf-deploy-pre-upgrade: true
 
