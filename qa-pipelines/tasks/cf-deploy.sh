@@ -51,12 +51,11 @@ helm install ${CAP_DIRECTORY}/helm/uaa/ \
 # Wait for UAA release
 wait_for_release uaa
 
-if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
- [[ ${cap_platform} == "eks" ]]; then
+if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     az_login
     azure_dns_clear
-    azure_wait_for_lbs_in_namespace uaa ${cap_platform}
-    azure_set_record_sets_for_namespace uaa ${cap_platform}
+    azure_wait_for_lbs_in_namespace uaa
+    azure_set_record_sets_for_namespace uaa
 fi
 
 # Deploy CF
@@ -88,8 +87,7 @@ helm install ${CAP_DIRECTORY}/helm/cf/ \
 # Wait for CF release
 wait_for_release scf
 
-if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
- [[ ${cap_platform} == "eks" ]]; then
-    azure_wait_for_lbs_in_namespace scf ${cap_platform}
-    azure_set_record_sets_for_namespace scf ${cap_platform}
+if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
+    azure_wait_for_lbs_in_namespace scf
+    azure_set_record_sets_for_namespace scf
 fi

@@ -26,12 +26,19 @@ fi
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
-if kubectl get sc | grep "persistent" > /dev/null ; then
+cap_platform=${cap_platform:-$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)}
+
+# kube-system configmap exits only for non eks clusters
+if [[ ${cap_platform} != "eks" ]] ; then
+    garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
+fi
+
+# Storage class named persistent
+if kubectl get storageclass | grep "persistent" > /dev/null ; then
     STORAGECLASS="persistent"
     PROVISIONER=$(kubectl get storageclasses ${STORAGECLASS} -o "jsonpath={.provisioner}")
-    cap_platform=$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)
-    garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
-elif [[ ${cap_platform} == "eks" ]] && kubectl get sc | grep gp2 > /dev/null ; then
+# Storage class for eks cluster not using persistent name for sc
+elif [[ ${cap_platform} == "eks" ]] && kubectl get storageclass | grep gp2 > /dev/null ; then
     STORAGECLASS="gp2"
     PROVISIONER=$(kubectl get storageclasses ${STORAGECLASS} -o "jsonpath={.provisioner}")
     garden_rootfs_driver="overlay-xfs"
@@ -176,13 +183,7 @@ set_uaa_sizing_params() {
 
 set_scf_sizing_params() {
     if [[ ${cap_platform} == "eks" ]] ; then
-        HELM_PARAMS+=(--set sizing.cc_uploader.capabilities={"SYS_RESOURCE"})
-        HELM_PARAMS+=(--set sizing.nats.capabilities={"SYS_RESOURCE"})
-        HELM_PARAMS+=(--set sizing.routing_api.capabilities={"SYS_RESOURCE"})
-        HELM_PARAMS+=(--set sizing.router.capabilities={"SYS_RESOURCE"})
-        HELM_PARAMS+=(--set sizing.diego_brain.capabilities={"SYS_RESOURCE"})
-        HELM_PARAMS+=(--set sizing.diego_api.capabilities={"SYS_RESOURCE"})
-        HELM_PARAMS+=(--set sizing.diego_ssh.capabilities={"SYS_RESOURCE"})
+        HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
     fi
     if [[ ${HA} == true ]]; then
         if semver_is_gte $(helm_chart_version) 2.11.0; then
@@ -209,8 +210,7 @@ if [[ ${cap_platform} == openstack ]]; then
 fi
 
 
-if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
- [[ ${cap_platform} == "eks" ]]; then
+if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
     DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
 else

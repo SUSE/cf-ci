@@ -2,6 +2,7 @@
 
 set -eu # errexit, nounset
 
+# Outputs a json representation of a yml document. For multi-document files, only the first document will be converted
 y2j() {
     ruby -r json/ext -r yaml -e "puts YAML.load_file('$1').to_json"
 }
@@ -15,8 +16,8 @@ az_login() {
 
 AZURE_DNS_ZONE_NAME=susecap.net
 AZURE_DNS_RESOURCE_GROUP=susecap-domain
-if cat ~/.kube/config | grep "eks.amazonaws.com" > /dev/null ; then
-    AZURE_AKS_RESOURCE_GROUP=$(y2j ~/.kube/config clusters | jq -r .clusters[0].name | cut -d / -f 2)
+if grep "eks.amazonaws.com" ~/.kube/config; then
+    AZURE_AKS_RESOURCE_GROUP=$(y2j ~/.kube/config | jq -r .clusters[0].name | cut -d / -f 2)
 else
     AZURE_AKS_RESOURCE_GROUP=$(kubectl get configmap -n kube-system -o json cap-values | jq -r '.data["resource-group"]')
 fi
@@ -43,23 +44,31 @@ azure_dns_clear() {
 azure_check_lbs_ready_in_namespace() {
     # checks that all LoadBalancer type services in namespace have an ingress IP
     local namespace=$1
-    local cap_platform=$2
     local lb_info lb_count lb_ready_count
-    if [[ ${cap_platform} == "eks" ]]; then
-        lb_info=$(kubectl get svc -n $namespace -o json | jq -c '[.items[] | select(.spec.type == "LoadBalancer") | {"svc": .metadata.name, "ip": .status.loadBalancer.ingress[0].hostname}]')
-    else
-        lb_info=$(kubectl get svc -n $namespace -o json | jq -c '[.items[] | select(.spec.type == "LoadBalancer") | {"svc": .metadata.name, "ip": .status.loadBalancer.ingress[0].ip}]')
-    fi
+    lb_info=$(
+      kubectl get svc -n $namespace -o json |
+      jq -c '
+        [
+          .items[] | select(.spec.type == "LoadBalancer") | {
+            "svc": .metadata.name,
+            "ip": .status.loadBalancer.ingress[0].ip,
+            "hostname": .status.loadBalancer.ingress[0].hostname
+           }
+        ]'
+    )
     lb_count=$(echo "${lb_info}" | jq length)
-    lb_ready_count=$(echo "${lb_info}" | jq -r '[.[] | select(.ip)] | length')
+    if [[ ${cap_platform} == "eks" ]]; then
+        lb_ready_count=$(echo "${lb_info}" | jq -r '[.[] | select(.hostname)] | length')
+    else
+        lb_ready_count=$(echo "${lb_info}" | jq -r '[.[] | select(.ip)] | length')
+    fi
     [[ ${lb_count} -eq ${lb_ready_count} ]]
 }
 
 azure_wait_for_lbs_in_namespace() {
     local namespace=$1
-    local cap_platform=$2
     local count=0
-    while ! azure_check_lbs_ready_in_namespace $namespace $cap_platform; do
+    while ! azure_check_lbs_ready_in_namespace $namespace; do
         sleep 30
         ((count++))
         if [[ $count -eq 10 ]]; then
@@ -69,60 +78,67 @@ azure_wait_for_lbs_in_namespace() {
     done
 }
 
-azure_set_a_record() {
-    az network dns record-set a create \
-        --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
-        --zone-name ${AZURE_DNS_ZONE_NAME} \
-        --name $1 \
-        --ttl 300
-    az network dns record-set a add-record \
-        --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
-        --zone-name ${AZURE_DNS_ZONE_NAME} \
-        --record-set-name $1 \
-        --ipv4-address $2
-}
+azure_set_record() {
+    local lb_hostname=$(jq .hostname <<< $2)
+    local lb_ip=$(jq .ip <<< $2)
+    if [[ ${cap_platform} == "eks" ]]; then
+        az network dns record-set cname create \
+            --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
+            --zone-name ${AZURE_DNS_ZONE_NAME} \
+            --name $1 \
+            --ttl 300
 
-azure_set_cname_record() {
-    az network dns record-set cname create \
-        --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
-        --zone-name ${AZURE_DNS_ZONE_NAME} \
-        --name $1 \
-        --ttl 300
-    az network dns record-set cname set-record \
-        --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
-        --zone-name ${AZURE_DNS_ZONE_NAME} \
-        --record-set-name $1 \
-        --cname $2
+        az network dns record-set cname set-record \
+            --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
+            --zone-name ${AZURE_DNS_ZONE_NAME} \
+            --record-set-name $1 \
+            --cname $lb_hostname
+    else
+        az network dns record-set a create \
+            --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
+            --zone-name ${AZURE_DNS_ZONE_NAME} \
+            --name $1 \
+            --ttl 300
+
+        az network dns record-set a add-record \
+            --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
+            --zone-name ${AZURE_DNS_ZONE_NAME} \
+            --record-set-name $1 \
+            --ipv4-address $lb_ip
+    fi
 }
 
 azure_set_record_sets_for_namespace() {
     local namespace=$1
-    local cap_platform=$2
     local lb_info lb_ip
-    if [[ ${cap_platform} == "eks" ]]; then
-        lb_info=$(kubectl get svc -n $namespace -o json | jq -c '[.items[] | select(.spec.type == "LoadBalancer") | {"svc": .metadata.name, "ip": .status.loadBalancer.ingress[0].hostname}]')
-        azure_set_record="azure_set_cname_record"
-    else
-        lb_info=$(kubectl get svc -n $namespace -o json | jq -c '[.items[] | select(.spec.type == "LoadBalancer") | {"svc": .metadata.name, "ip": .status.loadBalancer.ingress[0].ip}]')
-        azure_set_record="azure_set_a_record"
-    fi
-    for lb_svc in $(echo "${lb_info}" | jq -r '.[] | .svc'); do
-        lb_ip=$(echo "${lb_info}" | jq -r '.[] | select(.svc == "'${lb_svc}'").ip')
+    lb_info=$(
+      kubectl get svc -n $namespace -o json |
+      jq -c '
+        [
+          .items[] | select(.spec.type == "LoadBalancer") | {
+            "svc": .metadata.name,
+            "ip": .status.loadBalancer.ingress[0].ip,
+            "hostname": .status.loadBalancer.ingress[0].hostname
+           }
+        ]'
+    )
+    for lb_svc_obj in $(echo "${lb_info}" | jq -c '.[]'); do
+        lb_svc=$(jq -r .svc <<< "${lb_svc_obj}")
         if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
-            ${azure_set_record} uaa.$AZURE_AKS_RESOURCE_GROUP $lb_ip
-            ${azure_set_record} *.uaa.$AZURE_AKS_RESOURCE_GROUP $lb_ip
+            azure_set_record uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+            azure_set_record *.uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
         elif [[ ${lb_svc} == diego-ssh-ssh-proxy-public ]]; then
-            ${azure_set_record} ssh.$AZURE_AKS_RESOURCE_GROUP $lb_ip
+            azure_set_record ssh.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
         elif [[ ${lb_svc} == tcp-router-tcp-router-public ]]; then
-            ${azure_set_record} tcp.$AZURE_AKS_RESOURCE_GROUP $lb_ip
-            ${azure_set_record} *.tcp.$AZURE_AKS_RESOURCE_GROUP $lb_ip
+            azure_set_record tcp.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+            azure_set_record *.tcp.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
         elif [[ ${lb_svc} == router-gorouter-public ]]; then
-            ${azure_set_record} $AZURE_AKS_RESOURCE_GROUP $lb_ip
-            ${azure_set_record} *.$AZURE_AKS_RESOURCE_GROUP $lb_ip
+            azure_set_record $AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+            azure_set_record *.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
         elif [[ ${lb_svc} == autoscaler-api-apiserver-public ]]; then
-            echo "Skipping record-set for autoscaler.$AZURE_AKS_RESOURCE_GROUP $lb_ip"
+            echo "Skipping record-set for autoscaler.$AZURE_AKS_RESOURCE_GROUP"
         elif [[ ${lb_svc} == autoscaler-servicebroker-servicebroker-public ]]; then
-            echo "Skipping record-set for autoscalerservicebroker.$AZURE_AKS_RESOURCE_GROUP $lb_ip"
+            echo "Skipping record-set for autoscalerservicebroker.$AZURE_AKS_RESOURCE_GROUP"
         else
             echo "Unrecognized service name $lb_svc"
             return 1
