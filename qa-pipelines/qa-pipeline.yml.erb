@@ -162,15 +162,6 @@ jobs:
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_brain_tests_pre_upgrade
-    <% if enable_cf_acceptance_tests_pre_upgrade %>
-    - task: acceptance-tests-pre-upgrade
-      file: ci/qa-pipelines/tasks/run-test.yml
-      params:
-        << : *upgrade-task-params
-        TEST_NAME: acceptance-tests
-      input_mapping:
-        s3.scf-config: s3.scf-config-sles
-    <% end %> # enable_cf_acceptance_tests_pre_upgrade
     <% if enable_cf_deploy %>
     - task: cf-upgrade
       file: ci/qa-pipelines/tasks/cf-upgrade.yml

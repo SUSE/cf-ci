@@ -18,13 +18,6 @@ enable-cf-usb-upgrade-tests: true
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true
 
-# This should *only* ever be true when running a *full* pre-upgrade pipeline.
-# The only reason to do this is when you want to deploy a pipeline which uses a
-# custom config URL instead of determining it from the s3.scf-config-*
-# resources. A typical upgrade pipeline only runs cats post-upgrade, and a
-# typical deploy pipeline has all the 'pre-upgrade' flags set to false
-enable-cf-acceptance-tests-pre-upgrade: false
-
 # Deploy CF for pipelines.  If upgrade-from-version is set, this triggers an
 # upgrade instead.  This may be `true` (use the latest in the bucket), `false`
 # (don't deploy), or a string (in which case use given bundle URL)
