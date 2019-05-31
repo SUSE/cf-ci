@@ -5,7 +5,7 @@
 def bundle_url_from_version(version)
   case version
     when true    then ''      # Use bucket version
-    when false   then ''      # Don't install (should not be reached)
+    when false   then ''      # Don't install (non-upgrade pipelines, for example)
     when /:\/\// then version # URL
     else "https://((s3-config-bucket-sles)).s3.amazonaws.com/((s3-config-prefix-sles))#{ERB::Util.url_encode(version)}.zip"
   end
@@ -94,7 +94,7 @@ aliases:
     CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params
-    CAP_BUNDLE_URL: <%= bundle_url_from_version(upgrade_from_version) %>
+    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
 
 jobs:
 <% %w(SA HA).each do |avail| %>
@@ -128,7 +128,7 @@ jobs:
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
   - do:
-    <% if upgrade_from_version %>
+    <% if enable_cf_deploy_pre_upgrade %>
     # This section only exists for upgrade pipelines; it determines how to set
     # up the pre-upgrade deployment.
     - task: cf-deploy-pre-upgrade
@@ -176,7 +176,7 @@ jobs:
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
       params: *common-task-params
     <% end %> # enable_cf_usb_upgrade_tests
-    <% else %> # upgrade_from_version
+    <% else %> # enable_cf_deploy_pre_upgrade
     # When this is _not_ an upgrade pipeline, we may wish to deploy CF before
     # running the tests.
     <% if enable_cf_deploy %>
@@ -188,7 +188,7 @@ jobs:
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_deploy
-    <% end %> # upgrade_from_version
+    <% end %> # enable_cf_deploy_pre_upgrade
     <% if enable_cf_smoke_tests %>
     - task: cf-smoke-tests
       file: ci/qa-pipelines/tasks/run-test.yml
