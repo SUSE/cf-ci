@@ -30,9 +30,6 @@ enable-cf-acceptance-tests-pre-upgrade: false
 # (don't deploy), or a string (in which case use given bundle URL)
 enable-cf-deploy: true
 
-# test apps which use services, and tear down apps, services, and sidecars
-enable-cf-usb: true
-
 # run tests for non-upgrade pipelines, and post-upgrade tests for upgrade pipelines
 enable-cf-smoke-tests: true
 enable-cf-brain-tests: true
