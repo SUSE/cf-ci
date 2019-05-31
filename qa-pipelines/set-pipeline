@@ -160,11 +160,14 @@ fly \
     --var src-ci-branch=${src_ci_branch} \
     --var s3-config-prefix-sles=${s3_config_prefix} \
     --load-vars-from=<(
-        ruby generate-vars.rb \
-          ${secrets_file:+--secrets "${secrets_file}"} \
-          --vars-file "${vars_file}" \
-          --preset-file "${preset_file}" \
-          --flags-file "flags.yml"
+        ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
+        sed '/^---$/d' < "${vars_file}"                        # Config vars
+        sed '/^---$/d' < "${preset_file}"
+        ruby -r yaml << EOF | tail -n+2
+          pipeline_flags=YAML.load_file('${preset_file}').keys
+          all_flags=YAML.load_file('flags.yml').keys
+          puts YAML.dump((all_flags - pipeline_flags).zip([false].cycle).to_h)
+EOF
     )
 
 fly \
