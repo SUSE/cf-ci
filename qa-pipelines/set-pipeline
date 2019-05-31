@@ -21,8 +21,8 @@ Available options:
 
 Note: --pr and --nightly flags cannot be used together
 
-Note: Instead of using an existing preset file, you can instead use the argument, "single-brain"
-to deploy a pipeline which will allow you to select an individual brain test.
+Note: Using the special preset file "pipeline-presets/single-brain.yml" will
+deploy a pipeline which will allow you to select an individual brain test.
 EOF
 }
 
