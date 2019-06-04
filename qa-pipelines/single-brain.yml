@@ -46,6 +46,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "001"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -70,6 +75,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "002"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -94,6 +104,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "003"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -118,6 +133,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "004"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -142,6 +162,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "005"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -166,6 +191,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "006"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -190,6 +220,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "007"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -214,6 +249,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "008"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -238,6 +278,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "009"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -262,6 +307,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "010"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -286,6 +336,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "011"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -310,6 +365,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "012"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -334,6 +394,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "013"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -358,6 +423,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "014"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -382,6 +452,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "015"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -406,6 +481,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "016"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -430,6 +510,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "017"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
@@ -454,6 +539,11 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "018"
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles

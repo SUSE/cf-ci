@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+helm_version=${helm_version:-v2.11.0}
+if [[ ${helm_version} == "v2.8.2" || ${helm_version} == "v2.11.0" ]]; then
+    /usr/local/bin/helm_${helm_version} "${@}"
+elif ! [[ -f /usr/local/bin/helm_${helm_version} ]]; then
+    >&2 echo "Your helm server version: ${helm_version}, might not be compatible with our installed helm clients. CI will use helm client version: 2.11.0"
+    /usr/local/bin/helm_v2.11.0 "${@}"
+fi

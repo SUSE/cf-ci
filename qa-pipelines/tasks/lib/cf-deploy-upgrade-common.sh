@@ -26,7 +26,26 @@ fi
 # Check that the kube of the cluster is reasonable
 bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
-PROVISIONER=$(kubectl get storageclasses persistent -o "jsonpath={.provisioner}")
+cap_platform=${cap_platform:-$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)}
+
+# kube-system configmap exits only for non eks clusters
+if [[ ${cap_platform} != "eks" ]] ; then
+    garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
+fi
+
+# Storage class named persistent
+if kubectl get storageclass | grep "persistent" > /dev/null ; then
+    STORAGECLASS="persistent"
+    PROVISIONER=$(kubectl get storageclasses ${STORAGECLASS} -o "jsonpath={.provisioner}")
+# Storage class for eks cluster not using persistent name for sc
+elif [[ ${cap_platform} == "eks" ]] && kubectl get storageclass | grep gp2 > /dev/null ; then
+    STORAGECLASS="gp2"
+    PROVISIONER=$(kubectl get storageclasses ${STORAGECLASS} -o "jsonpath={.provisioner}")
+    garden_rootfs_driver="overlay-xfs"
+else
+    echo "Your k8s cluster must have a SC named persitent or gp2"
+    exit 1
+fi
 
 # Password for SCF to authenticate with UAA
 UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
@@ -110,16 +129,16 @@ get_internal_ca_cert() (
       | base64 -d
 )
 
-set_psp() {
-    HELM_PARAMS+=(--set "kube.psp.nonprivileged=suse.cap.psp.nonprivileged")
-    HELM_PARAMS+=(--set "kube.psp.privileged=suse.cap.psp.privileged")
-}
-
 # Helm parameters common to UAA and SCF, for helm install and upgrades
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "enable.autoscaler=true")
+                 --set "enable.autoscaler=true"
+                 --set "kube.storage_class.persistent=${STORAGECLASS}")
+    if [[ ${cap_platform} == "eks" ]] ; then
+        HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
+        HELM_PARAMS+=(--set "env.GARDEN_APPARMOR_PROFILE=")
+    fi
 
     if [[ $(helm_chart_version) == "2.15.2" ]]; then
         HELM_PARAMS+=(--set "sizing.credhub_user.count=1")
@@ -127,7 +146,8 @@ set_helm_params() {
         HELM_PARAMS+=(--set "enable.credhub=true")
     fi
 
-    if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]]; then
+    if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
+     [[ ${cap_platform} == "eks" ]]; then
         HELM_PARAMS+=(--set "services.loadbalanced=true")
     else
         for (( i=0; i < ${#external_ips[@]}; i++ )); do
@@ -147,9 +167,6 @@ set_helm_params() {
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
-    if semver_is_gte 2.15.1 $(helm_chart_version); then
-        set_psp # Sets PSP
-    fi
 }
 
 set_uaa_sizing_params() {
@@ -165,6 +182,9 @@ set_uaa_sizing_params() {
 }
 
 set_scf_sizing_params() {
+    if [[ ${cap_platform} == "eks" ]] ; then
+        HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
+    fi
     if [[ ${HA} == true ]]; then
         if semver_is_gte $(helm_chart_version) 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)
@@ -183,15 +203,14 @@ set -o allexport
 # The internal/external and public IP addresses are now taken from the configmap set by prep-new-cluster
 # The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
-external_ips=($(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["internal-ip"]'))
-cap_platform=$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)
-if [[ ${cap_platform} == openstack ]]; then
-  external_ips+=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
-fi
-public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
-garden_rootfs_driver=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["garden-rootfs-driver"] // "btrfs"')
 
-if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]]; then
+if [[ ${cap_platform} == openstack ]]; then
+  external_ips=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
+  public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
+fi
+
+
+if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
     DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
 else
