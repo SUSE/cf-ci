@@ -6,9 +6,6 @@ if [[ -z "${TEST_NAME:-}" ]] ; then
     exit 0
 fi
 
-# Set kube config from pool
-source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
-
 set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 01[12] to skip tests 011 and 012
@@ -30,6 +27,13 @@ else
     unzip "${CAP_DIRECTORY}"/*scf-*.zip -d "${CAP_DIRECTORY}/"
 fi
 
+# Pre-set PSPs
+case "${TEST_NAME}" in
+    acceptance-tests-brain)
+        kubectl apply -f ci/qa-tools/cap-crb-tests.yaml
+        ;;
+esac
+
 # Replace the generated monit password with the name of the generated secrets secret
 helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 function semver_is_gte() {
@@ -48,6 +52,11 @@ fi
 DOMAIN=$(kubectl get pods -o json --namespace "${CF_NAMESPACE}" ${api_pod_name} | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 generated_secrets_secret="$(kubectl get pod ${api_pod_name} --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
 SCF_LOG_HOST=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "SCF_LOG_HOST").value')
+if kubectl get storageclass | grep "persistent" > /dev/null ; then
+    STORAGECLASS="persistent"
+elif kubectl get storageclass | grep gp2 > /dev/null ; then
+    STORAGECLASS="gp2"
+fi
 
 kube_overrides() {
     ruby <<EOF
@@ -62,8 +71,12 @@ kube_overrides() {
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
                 env['value'] = 'tcp.$DOMAIN' if env['name'] == 'TCP_DOMAIN'
                 env['value'] = '$SCF_LOG_HOST' if env['name'] == 'SCF_LOG_HOST'
+                env['value'] = '$STORAGECLASS' if env['name'] == 'KUBERNETES_STORAGE_CLASS_PERSISTENT'
                 env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
                 if env['name'] == "MONIT_PASSWORD"
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
+                end
+                if env['name'] == "UAA_CLIENTS_CF_SMOKE_TESTS_CLIENT_SECRET"
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
                 if env['name'] == "AUTOSCALER_SERVICE_BROKER_PASSWORD"

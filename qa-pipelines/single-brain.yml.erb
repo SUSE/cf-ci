@@ -48,6 +48,15 @@ jobs:
       params:
         ENABLE_CF_BRAIN_TESTS: true
         INCLUDE_BRAINS_REGEX: "<%= test_name %>"
+
+        # AWS/EKS configuration
+        AZ_SP_APPID: ((az-sp-app-id))
+        AZ_SP_PASSWORD: ((az-sp-password))
+        AZ_SP_TENANT: ((az-sp-tenant))
+        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
+
+        # GCP/GKE configuration
         GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
       input_mapping:
         s3.scf-config: s3.scf-config-sles

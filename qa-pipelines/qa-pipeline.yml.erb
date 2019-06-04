@@ -90,7 +90,17 @@ aliases:
     KUBE_REGISTRY_PASSWORD: ((registry-password))
     KUBE_ORGANIZATION: ((organization))
     MAGIC_DNS_SERVICE: ((magic-dns-service))
+
+    # AWS/EKS configuration
+    AZ_SP_APPID: ((az-sp-app-id))
+    AZ_SP_PASSWORD: ((az-sp-password))
+    AZ_SP_TENANT: ((az-sp-tenant))
+    AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+    AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
+
+    # GCP/GKE configuration
     GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+
     CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params
