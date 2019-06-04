@@ -204,7 +204,7 @@ set -o allexport
 # The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 
-if [[ ${cap_platform} == openstack ]]; then
+if [[ ${cap_platform} == openstack || ${cap_platform} == bare ]]; then
   external_ips=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
   public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
 fi
