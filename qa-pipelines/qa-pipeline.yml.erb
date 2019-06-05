@@ -4,8 +4,8 @@
 
 def bundle_url_from_version(version)
   case version
-    when true    then ''      # Use bucket version
-    when false   then ''      # Don't install (non-upgrade pipelines, for example)
+    when true    then '""'      # Use bucket version
+    when false   then '""'      # Don't install (non-upgrade pipelines, for example)
     when /:\/\// then version # URL
     else "https://((s3-config-bucket-sles)).s3.amazonaws.com/((s3-config-prefix-sles))#{ERB::Util.url_encode(version)}.zip"
   end
