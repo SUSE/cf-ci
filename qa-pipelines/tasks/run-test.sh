@@ -1,23 +1,13 @@
 #!/bin/bash
 set -o errexit
 
-# Set kube config from pool
-source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
-
-if   [[ $ENABLE_CF_SMOKE_TESTS_PRE_UPGRADE == true ]] || \
-     [[ $ENABLE_CF_SMOKE_TESTS == true ]]; then
-    TEST_NAME=smoke-tests
-elif [[ $ENABLE_CF_BRAIN_TESTS_PRE_UPGRADE == true ]] || \
-     [[ $ENABLE_CF_BRAIN_TESTS == true ]]; then
-    TEST_NAME=acceptance-tests-brain
-    kubectl apply -f ci/qa-tools/cap-crb-tests.yaml
-elif [[ $ENABLE_CF_ACCEPTANCE_TESTS == true ]] || \
-     [[ $ENABLE_CF_ACCEPTANCE_TESTS_PRE_UPGRADE == true ]]; then
-    TEST_NAME=acceptance-tests
-else
+if [[ -z "${TEST_NAME:-}" ]] ; then
     echo "run-tests.sh: No test flag set. Skipping tests"
     exit 0
 fi
+
+# Set kube config from pool
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 set -o nounset
 set -o allexport
@@ -32,13 +22,20 @@ CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
 # For upgrade tests
-if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
-    curl ${CAP_INSTALL_VERSION} -Lo cap-install-version.zip
+if [[ -n "${CAP_BUNDLE_URL:-}" ]]; then
+    curl "${CAP_BUNDLE_URL}" -Lo cap-install-version.zip
     export CAP_DIRECTORY=cap-install-version
-    unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
+    unzip "${CAP_DIRECTORY}.zip" -d "${CAP_DIRECTORY}/"
 else
-    unzip ${CAP_DIRECTORY}/*scf-*.zip -d ${CAP_DIRECTORY}/
+    unzip "${CAP_DIRECTORY}"/*scf-*.zip -d "${CAP_DIRECTORY}/"
 fi
+
+# Pre-set PSPs
+case "${TEST_NAME}" in
+    acceptance-tests-brain)
+        kubectl apply -f ci/qa-tools/cap-crb-tests.yaml
+        ;;
+esac
 
 # Replace the generated monit password with the name of the generated secrets secret
 helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }

@@ -1,11 +1,6 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-if [[ $ENABLE_CF_UPGRADE != true ]]; then
-  echo "cf-upgrade.sh: Flag not set. Skipping upgrade"
-  exit 0
-fi
-
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 
 # monitor_url takes a URL argument and a path to a log file

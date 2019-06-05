@@ -9,5 +9,13 @@ inputs:
 - name: ci
 - name: s3.scf-config
 - name: pool.kube-hosts
+params:
+  KUBE_REGISTRY_HOSTNAME: ""
+  KUBE_REGISTRY_USERNAME: ""
+  KUBE_REGISTRY_PASSWORD: ""
+  KUBE_ORGANIZATION: ""
+  HA: false # true, false, or "scaled"
+  MAGIC_DNS_SERVICE: xip.io
+
 run:
   path: ci/qa-pipelines/tasks/cf-upgrade.sh

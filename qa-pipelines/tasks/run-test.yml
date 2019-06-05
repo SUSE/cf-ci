@@ -9,5 +9,8 @@ inputs:
 - name: ci
 - name: s3.scf-config
 - name: pool.kube-hosts
+params:
+  CAP_BUNDLE_URL: ""
+  TEST_NAME: ""
 run:
   path: ci/qa-pipelines/tasks/run-test.sh

@@ -13,10 +13,10 @@ CAP_DIRECTORY=s3.scf-config
 log_uid=$(hexdump -n 8 -e '2/4 "%08x"' /dev/urandom)
 SCF_LOG_HOST="log-${log_uid}.${CF_NAMESPACE}.svc.cluster.local"
 
-if [ -n "${CAP_INSTALL_VERSION:-}" ]; then
+if [ -n "${CAP_BUNDLE_URL:-}" ]; then
     # For pre-upgrade deploys
-    echo "Using CAP ${CAP_INSTALL_VERSION}"
-    curl ${CAP_INSTALL_VERSION} -Lo cap-install-version.zip
+    echo "Using CAP ${CAP_BUNDLE_URL}"
+    curl ${CAP_BUNDLE_URL} -Lo cap-install-version.zip
     export CAP_DIRECTORY=cap-install-version
     unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
 else
@@ -109,10 +109,10 @@ wait_for_release() {
 function semver_is_gte() {
   # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
   # lexical comparison doesn't work on semvers, e.g. 10.0.0 > 2.0.0
-  [[ "$(echo -e "$1\n$2" |
+  [[ "$(echo -e "$1\\n$2" |
         sort -t '.' -k 1,1 -k 2,2 -k 3,3 -g |
         tail -n 1
-    )" == $1 ]]
+    )" == "$1" ]]
 }
 
 # Get the version of the helm chart for uaa
@@ -170,32 +170,37 @@ set_helm_params() {
 }
 
 set_uaa_sizing_params() {
-    # if [[ ${HA} == true ]]; then
-    #     if semver_is_gte $(helm_chart_version) 2.11.0; then
-    #         # HA UAA not supported prior to 2.11.0
-    #         HELM_PARAMS+=(--set=config.HA=true)
-    #     fi
-    # elif [[ ${SCALED_HA} == true ]]; then
-    #     HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
-    # fi
-    :
+    return 0 # Sizing UAA up breaks CATS
+    if [[ "${HA}" == true ]]; then
+        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
+            # HA UAA not supported prior to 2.11.0
+            HELM_PARAMS+=(--set=config.HA=true)
+        fi
+    elif [[ ${SCALED_HA} == true ]]; then
+        HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
+    fi
 }
 
 set_scf_sizing_params() {
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
     fi
-    if [[ ${HA} == true ]]; then
-        if semver_is_gte $(helm_chart_version) 2.11.0; then
+    case "${HA}" in
+    true)
+        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
             HELM_PARAMS+=(--set=config.HA=true)
         else
             HELM_PARAMS+=(--set=sizing.HA=true)
         fi
-    elif [[ ${SCALED_HA} == true ]]; then
-        HELM_PARAMS+=(--set=sizing.routing_api.count=1)
-        HELM_PARAMS+=(--set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2)
-        HELM_PARAMS+=(--set=sizing.{diego_api,diego_locket,diego_cell}.count=3)
-    fi
+        ;;
+    scaled)
+        HELM_PARAMS+=(
+            --set=sizing.routing_api.count=1
+            --set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2
+            --set=sizing.{diego_api,diego_locket,diego_cell}.count=3
+        )
+        ;;
+    esac
 }
 
 set -o allexport

@@ -21,8 +21,8 @@ Available options:
 
 Note: --pr and --nightly flags cannot be used together
 
-Note: Instead of using an existing preset file, you can instead use the argument, "single-brain"
-to deploy a pipeline which will allow you to select an individual brain test.
+Note: Using the special preset file "pipeline-presets/single-brain.yml" will
+deploy a pipeline which will allow you to select an individual brain test.
 EOF
 }
 
@@ -54,9 +54,9 @@ if test -z "${1:-}" ; then
     exit 1
 fi
 vars_file="config-${pool}.yml"
-preset_file=${1}
-pipeline_name=$(basename ${preset_file})
-pipeline_name="${prefix}${pipeline_name%.yml}"
+preset_file="${1}"
+preset_name="$(basename ${preset_file} .yml)"
+pipeline_name="${prefix}${preset_name}"
 
 
 if ! test -r "${vars_file}" ; then
@@ -67,24 +67,25 @@ if ! test -r "${vars_file}" ; then
     exit 1
 fi
 
-if [[ ${preset_file} == "single-brain" ]]; then
-    pipeline_file="single-brain.yml"
-    # Set preset file to some existing yml file to not break substitution later; this won't be used
-    preset_file=pipeline-presets/single-brain.yml
-else
-    pipeline_file="qa-pipeline.yml"
-fi
+# generate_pipeline will emit the pipeline definition on STDOUT; this deals with
+# the single-brain special case.
+generate_pipeline() {
+  local pipeline_template='qa-pipeline.yml.erb'
+  local preset_template="${preset_file}"
+  local flags='flags.yml'
+  if [[ "${preset_file}" == "pipeline-presets/single-brain.yml" ]]; then
+    pipeline_template='single-brain.yml.erb'
+    preset_template='pipeline-presets/single-brain.yml'
+    flags='pipeline-presets/single-brain.yml'
+  fi
+  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}"
+}
 
-if ! test -r "${preset_file}" ; then
-    usage >&2
-    printf "Failed to read preset file %s\n" "${preset_file}" >&2
-    exit 1
-fi
-
-if ! test -r "${pipeline_file}" ; then
-    usage >&2
-    printf "Failed to read pipeline configuration %s\n" "${pipeline_file}" >&2
-    exit 1
+# If a concourse secrets file named after the pool exists, use that instead.
+# This is useful for local testing (for alternative pool / s3 storage / etc.)
+alt_secrets_file="CONCOURSE_SECRETS_FILE_${pool//-/_}"
+if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
+    CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
 fi
 
 if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
@@ -155,7 +156,7 @@ fly \
     --non-interactive \
     --pipeline="${pipeline_name}" \
     --var pipeline-name="${pipeline_name}" \
-    --config="${pipeline_file}" \
+    --config=<(generate_pipeline) \
     --var src-ci-branch=${src_ci_branch} \
     --var s3-config-prefix-sles=${s3_config_prefix} \
     --load-vars-from=<(

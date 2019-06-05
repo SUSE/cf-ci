@@ -1,11 +1,6 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-if [[ $ENABLE_USB_DEPLOY != true ]]; then
-  echo "usb-deploy.sh: Flag not set. Skipping USB deploy"
-  exit 0
-fi
-
 # Set kube config from pool
 source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 

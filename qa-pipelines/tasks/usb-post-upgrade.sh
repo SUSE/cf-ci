@@ -1,11 +1,6 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-if [[ $ENABLE_USB_POST_UPGRADE != true ]]; then
-  echo "usb-post-upgrade.sh: Flag not set. Skipping upgrade"
-  exit 0
-fi
-
 # Set kube config from pool
 source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
