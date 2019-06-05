@@ -55,8 +55,6 @@ CF_CERT=$(get_internal_ca_cert scf)
 # Get external IP from first node of sorted list
 DB_EXTERNAL_IP=$(kubectl get nodes -o json | jq -r '[.items[] | .status.addresses[] | select(.type=="InternalIP").address] | sort | first')
 
-helm init --client-only
-
 is_namespace_ready() {
   # Check that the setup pod is Completed. Return with a failure status if not
   if [[ Completed != $(kubectl get pods -a --namespace=pg-sidecar 2>/dev/null \
