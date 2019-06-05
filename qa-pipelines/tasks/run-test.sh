@@ -6,6 +6,9 @@ if [[ -z "${TEST_NAME:-}" ]] ; then
     exit 0
 fi
 
+# Set kube config from pool
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
+
 set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 01[12] to skip tests 011 and 012
