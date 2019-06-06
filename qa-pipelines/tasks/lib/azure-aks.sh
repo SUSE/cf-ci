@@ -79,8 +79,8 @@ azure_wait_for_lbs_in_namespace() {
 }
 
 azure_set_record() {
-    local lb_hostname=$(jq .hostname <<< $2)
-    local lb_ip=$(jq .ip <<< $2)
+    local lb_hostname=$(jq -r .hostname <<< $2)
+    local lb_ip=$(jq -r .ip <<< $2)
     if [[ ${cap_platform} == "eks" ]]; then
         az network dns record-set cname create \
             --resource-group ${AZURE_DNS_RESOURCE_GROUP} \
