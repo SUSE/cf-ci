@@ -1,6 +1,6 @@
 ---
 
-enable-cf-deploy-pre-upgrade: scf-sle-2.15.2+cf3.6.0.0.gde1bd02f
+enable-cf-deploy-pre-upgrade: master/scf-sle-2.16.4%2Bcf6.10.0.2.g5abdb16f
 
 enable-cf-smoke-tests-pre-upgrade: true
 
