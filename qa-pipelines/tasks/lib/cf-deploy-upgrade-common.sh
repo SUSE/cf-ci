@@ -63,9 +63,13 @@ is_namespace_ready() {
         | uniq) ]]
 }
 
+# Outputs a json representation of a yml document
 y2j() {
-    # Parses YAML input as a stream from stdin and outputs JSON
-    ruby -r json -r yaml -e 'puts (YAML.load_stream(ARGF.read).to_json)'
+    if [[ -e ${1:-} ]]; then
+        ruby -r json -r yaml -e "puts YAML.load_stream(File.read('$1')).to_json"
+    else
+        ruby -r json -r yaml -e 'puts (YAML.load_stream(ARGF.read).to_json)'
+    fi
 }
 
 wait_for_jobs() {
