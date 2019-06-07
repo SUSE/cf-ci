@@ -87,7 +87,7 @@ wait_for_jobs() {
         set -o errexit 
         time_since_start=$(( $(date +%s) - ${start} ))
         if [[ ${kubectl_wait_status} -eq 0 ]]; then
-            echo "Done waiting for ${release} jobs at $(date --rfc-2822) (${time_since_start})s)"
+            echo "Done waiting for ${release} jobs at $(date --rfc-2822) (${time_since_start}s)"
         elif [[ ${time_since_start} -ge 4800 ]]; then  
             echo "${release} job ${job} not completed due to timeout"
             return 1
