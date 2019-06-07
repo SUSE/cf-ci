@@ -62,26 +62,36 @@ is_namespace_ready() {
         | sort \
         | uniq) ]]
 }
+
+y2j() {
+    # Parses YAML input as a stream from stdin and outputs JSON
+    ruby -r json -r yaml -e 'puts (YAML.load_stream(ARGF.read).to_json)'
+}
+
 wait_for_jobs() {
-    local release=$1
-    local jobs_desired_remaining
-    start=$(date +%s)
-    for (( i = 0 ; i < 480 ; i ++ )); do
-        # Get the list of all jobs in the helm release, and subtract the value of 'completed' from 'desired'
-        # It would be better to parse this from `helm get manifest`, but since that command is broken in helm
-        # v2.8.2 (https://github.com/helm/helm/issues/3833) for now we'll parse it from the human-readable status
-        jobs_desired_remaining=$(helm status $release | awk '/==> v1\/Job/ { getline; getline; while (NF>0) { print $2 - $3; getline } }')
-        now=$(date +%s)
-        if [[ $(echo "${jobs_desired_remaining}" | sort -n | tail -1) -le 0 ]]; then
-           printf "\rDone waiting for %s jobs at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
-           return 0
+    local release=${1}
+    local namespace=$(helm status ${release} -o json | jq -r .namespace)
+    local jobs_in_namespace=$(helm get manifest ${release} | y2j | jq -r '.[] | select(.kind=="Job").metadata.name')
+    local job seconds_remaining time_since_start kubectl_wait_status
+    local start=$(date +%s)
+    for job in ${jobs_in_namespace}; do
+        echo "waiting for job ${job}"
+        seconds_remaining=$(( 4800 + ${start} - $(date +%s) ))
+        set +o errexit 
+        kubectl wait job --namespace ${namespace} --for=condition=complete --timeout ${seconds_remaining}s
+        kubectl_wait_status=$?
+        set -o errexit 
+        time_since_start=$(( $(date +%s) - ${start} ))
+        if [[ ${kubectl_wait_status} -eq 0 ]]; then
+            echo "Done waiting for ${release} jobs at $(date --rfc-2822) (${time_since_start})s)"
+        elif [[ ${time_since_start} -ge 4800 ]]; then  
+            echo "${release} job ${job} not completed due to timeout"
+            return 1
         else
-           sleep 10
+            echo "waiting for ${release} job ${job} failed with exit status ${kubectl_wait_status}"
+            return 1
         fi
-        printf "\rWaiting for %s jobs at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
     done
-    printf "%s jobs not completed\n" "${release}"
-    return 1
 }
 
 wait_for_release() {
