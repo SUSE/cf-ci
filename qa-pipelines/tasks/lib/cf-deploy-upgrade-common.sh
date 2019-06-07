@@ -82,7 +82,7 @@ wait_for_jobs() {
         echo "waiting for job ${job}"
         seconds_remaining=$(( 4800 + ${start} - $(date +%s) ))
         set +o errexit 
-        kubectl wait job --namespace ${namespace} --for=condition=complete --timeout ${seconds_remaining}s
+        kubectl wait job ${job} --namespace ${namespace} --for=condition=complete --timeout ${seconds_remaining}s
         kubectl_wait_status=$?
         set -o errexit 
         time_since_start=$(( $(date +%s) - ${start} ))
