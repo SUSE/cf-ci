@@ -81,14 +81,14 @@ wait_for_jobs() {
     for job in ${jobs_in_namespace}; do
         echo "waiting for job ${job}"
         seconds_remaining=$(( 4800 + ${start} - $(date +%s) ))
-        set +o errexit 
+        set +o errexit
         kubectl wait job ${job} --namespace ${namespace} --for=condition=complete --timeout ${seconds_remaining}s
         kubectl_wait_status=$?
-        set -o errexit 
+        set -o errexit
         time_since_start=$(( $(date +%s) - ${start} ))
         if [[ ${kubectl_wait_status} -eq 0 ]]; then
             echo "Done waiting for ${release} jobs at $(date --rfc-2822) (${time_since_start}s)"
-        elif [[ ${time_since_start} -ge 4800 ]]; then  
+        elif [[ ${time_since_start} -ge 4800 ]]; then
             echo "${release} job ${job} not completed due to timeout"
             return 1
         else
@@ -117,6 +117,15 @@ wait_for_release() {
     if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
         printf "%s pods are still pending after 80 minutes \n" "${release}"
         exit 1
+    fi
+
+    # For eks clusters, use a kubectl patch to set health check port
+    # Otherwise, AWS loadbalancer health checks fail when the TCP service doesn't expose port 8080
+    if [[ ${cap_platform} == "eks" &&  ${namespace} == "scf" ]]; then
+        healthcheck_port=$(kubectl get service tcp-router-tcp-router-public -o jsonpath='{.spec.ports[?(@.name == "healthcheck")].port}' --namespace scf)
+        if [ -z "${healthcheck_port}" ]; then
+            kubectl patch service tcp-router-tcp-router-public --namespace scf --type strategic --patch '{"spec": {"ports": [{"name": "healthcheck", "port": 8080}]}}'
+        fi
     fi
 }
 
