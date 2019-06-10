@@ -2,9 +2,13 @@
 
 set -eu # errexit, nounset
 
-# Outputs a json representation of a yml document. For multi-document files, only the first document will be converted
+# Outputs a json representation of a yml document
 y2j() {
-    ruby -r json/ext -r yaml -e "puts YAML.load_file('$1').to_json"
+    if [[ -e ${1:-} ]]; then
+        ruby -r json -r yaml -e "puts YAML.load_stream(File.read('$1')).to_json"
+    else
+        ruby -r json -r yaml -e 'puts (YAML.load_stream(ARGF.read).to_json)'
+    fi
 }
 
 az_login() {
@@ -17,7 +21,7 @@ az_login() {
 AZURE_DNS_ZONE_NAME=susecap.net
 AZURE_DNS_RESOURCE_GROUP=susecap-domain
 if grep "eks.amazonaws.com" ~/.kube/config; then
-    AZURE_AKS_RESOURCE_GROUP=$(y2j ~/.kube/config | jq -r .clusters[0].name | cut -d / -f 2)
+    AZURE_AKS_RESOURCE_GROUP=$(y2j ~/.kube/config | jq -r .[0].clusters[0].name | cut -d / -f 2)
 else
     AZURE_AKS_RESOURCE_GROUP=$(kubectl get configmap -n kube-system -o json cap-values | jq -r '.data["resource-group"]')
 fi
