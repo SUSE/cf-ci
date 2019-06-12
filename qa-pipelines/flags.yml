@@ -10,18 +10,20 @@ status-reporting: true
 # version to upgrade from; if null, upgrade is not performed.
 enable-cf-deploy-pre-upgrade: master/scf-sle-2.16.4%2Bcf6.10.0.2.g5abdb16f
 
-# When upgrading, deploy cf-usb (and an app using it) pre-upgrade, and ensure
-# that it remains working post-upgrade
-enable-cf-usb-upgrade-tests: true
-
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true
 
+# When upgrading, deploy cf-usb (and an app using it) pre-upgrade, and ensure
+# that it remains working post-upgrade
+enable-cf-usb-upgrade-tests: true
+enable-cf-upgrade: true
+# USB post-upgrade task will run after upgrade when upgrade-tests flag is enabled
+
 # Deploy CF for pipelines.  If upgrade-from-version is set, this triggers an
 # upgrade instead.  This may be `true` (use the latest in the bucket), `false`
 # (don't deploy), or a string (in which case use given bundle URL)
-enable-cf-deploy: true
+enable-cf-deploy: false
 
 # run tests for non-upgrade pipelines, and post-upgrade tests for upgrade pipelines
 enable-cf-smoke-tests: true
