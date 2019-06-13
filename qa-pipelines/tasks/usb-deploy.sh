@@ -107,7 +107,7 @@ COMMON_SIDECAR_PARAMS=(
 )
 
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
-cf login -u admin -p changeme
+cf login -u admin -p changeme -o system
 cf create-org usb-test-org
 cf create-space -o usb-test-org usb-test-space
 cf target -o usb-test-org -s usb-test-space
