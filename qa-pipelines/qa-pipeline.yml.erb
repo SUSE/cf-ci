@@ -241,8 +241,6 @@ jobs:
       params:
         <<: *status-params-<%= avail %>
         state: success
-    <% end %> # status_reporting
-    <% if status_reporting %>
     on_failure:
       put: status.src
       params:
