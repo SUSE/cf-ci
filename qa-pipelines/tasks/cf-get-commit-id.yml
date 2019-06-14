@@ -11,4 +11,4 @@ inputs:
 outputs:
 - name: commit-id
 run:
-  path: ci/qa-pipelines/tasks/cf-get-commit-id.sh
+  path: ci/qa-pipelines/tasks/cf-get-commit-id-test.sh
