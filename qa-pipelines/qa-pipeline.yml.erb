@@ -13,7 +13,51 @@ end
 
 %>
 ---
+
 # Concourse pipeline to deploy and upgrade CAP
+
+aliases:
+  # This section is only used for anchor targets; this is not a real concourse
+  # pipeline definition section.
+  common-task-params: &common-task-params
+    KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
+    KUBE_REGISTRY_USERNAME: ((registry-username))
+    KUBE_REGISTRY_PASSWORD: ((registry-password))
+    KUBE_ORGANIZATION: ((organization))
+    MAGIC_DNS_SERVICE: ((magic-dns-service))
+
+    # AWS/EKS configuration
+    AZ_SP_APPID: ((az-sp-app-id))
+    AZ_SP_PASSWORD: ((az-sp-password))
+    AZ_SP_TENANT: ((az-sp-tenant))
+    AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
+    AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
+
+    # GCP/GKE configuration
+    GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+
+    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
+    KLOG_COLLECTION_ON_FAILURE: <%= klog_collection_on_failure %>
+  upgrade-task-params: &upgrade-task-params
+    << : *common-task-params
+    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
+  s3-common-params: &s3-common-params
+    endpoint: ((s3-config-endpoint))
+    access_key_id: ((s3-config-access-key))
+    secret_access_key: ((s3-config-secret-key))
+    bucket: ((s3-config-bucket-sles))
+
+  # Terraform AKS Configuration
+  # Used in terraform-deploy-aks and delete-aks-resource-group
+  terraform-aks-params: &terraform-aks-params
+    << : *common-task-params
+    ARM_CLIENT_ID: ((arm-client-id))
+    ARM_CLIENT_SECRET: ((arm-client-secret))
+    ARM_TENANT_ID: ((az-sp-tenant))
+    ARM_SUBSCRIPTION_ID: ((arm-subscription-id))
+    TF_VAR_client_id: ((arm-client-id))
+    TF_VAR_client_secret: ((arm-client-secret))
+    TF_VAR_location: westus
 
 resource_types:
 - name: github-status
@@ -37,30 +81,20 @@ resources:
 - name: s3.pg-sidecar
   type: s3
   source:
-    endpoint: ((s3-config-endpoint))
-    access_key_id: ((s3-config-access-key))
-    secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-sles))
+    << : *s3-common-params
     regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-postgres-(.*)\.tgz$
-
 # USB sidecar archive for MySQL
 - name: s3.mysql-sidecar
   type: s3
   source:
-    endpoint: ((s3-config-endpoint))
-    access_key_id: ((s3-config-access-key))
-    secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-sles))
+    << : *s3-common-params
     regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
 
 # SCF bundle to install from (upgrade target, if upgrading)
 - name: s3.scf-config-sles
   type: s3
   source:
-    endpoint: ((s3-config-endpoint))
-    access_key_id: ((s3-config-access-key))
-    secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-sles))
+    << : *s3-common-params
     regexp: ((s3-config-prefix-sles))scf-sle-(.*)\.zip$
 
 # Pool resource with kube cluster information
@@ -81,42 +115,14 @@ resources:
     access_token: ((github-access-token))
 <% end %>
 
-aliases:
-  # This section is only used for anchor targets; this is not a real concourse
-  # pipeline definition section.
-  common-task-params: &common-task-params
-    KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
-    KUBE_REGISTRY_USERNAME: ((registry-username))
-    KUBE_REGISTRY_PASSWORD: ((registry-password))
-    KUBE_ORGANIZATION: ((organization))
-    MAGIC_DNS_SERVICE: ((magic-dns-service))
-
-    # AWS/EKS configuration
-    AZ_SP_APPID: ((az-sp-app-id))
-    AZ_SP_PASSWORD: ((az-sp-password))
-    AZ_SP_TENANT: ((az-sp-tenant))
-    AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
-    AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
-
-    # GCP/GKE configuration
-    GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
-
-    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
-  upgrade-task-params: &upgrade-task-params
-    << : *common-task-params
-    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
-
-  # Terraform AKS Configuration
-  # Used in terraform-deploy-aks and delete-aks-resource-group
-  terraform-aks-params: &terraform-aks-params
-    << : *common-task-params
-    ARM_CLIENT_ID: ((arm-client-id))
-    ARM_CLIENT_SECRET: ((arm-client-secret))
-    ARM_TENANT_ID: ((az-sp-tenant))
-    ARM_SUBSCRIPTION_ID: ((arm-subscription-id))
-    TF_VAR_client_id: ((arm-client-id))
-    TF_VAR_client_secret: ((arm-client-secret))
-    TF_VAR_location: westus
+<% if klog_collection_on_failure %>
+- name: s3.klog-destination
+  type: s3
+  source:
+    << : *s3-common-params
+    bucket: ((s3-config-bucket-sles))-klogs-archive
+    regexp: ((s3-config-prefix-sles))klog-(.*)\.tar\.gz$
+<% end %>
 
 jobs:
 <% %w(SA HA).each do |avail| %>
@@ -275,13 +281,21 @@ jobs:
         << : *status-params-<%= avail %>
         state: success
     <% end %> # status_reporting
-    <% if status_reporting %>
+    <% if status_reporting || klog_collection_on_failure %>
     on_failure:
-      put: status.src
-      params:
-        << : *status-params-<%= avail %>
-        state: failure
-    <% end %> # status_reporting
+      do:
+      <% if status_reporting %>
+      - put: status.src
+        params:
+          <<: *status-params-<%= avail %>
+          state: failure
+      <% end %> # status_reporting
+      <% if klog_collection_on_failure %>
+      - put: s3.klog-destination
+        params:
+          file: klog/klog-*.tar.gz
+      <% end %> # klog_collection_on_failure
+    <% end %> # status_reporting || klog_collection_on_failure
     <% if enable_terraform %>
     ensure:
       do:
@@ -292,4 +306,4 @@ jobs:
         - put: pool.kube-hosts
           params: {remove: pool.kube-hosts}
     <% end %> # enable_terraform
-<% end %>
+<% end %> # %w(SA HA).each

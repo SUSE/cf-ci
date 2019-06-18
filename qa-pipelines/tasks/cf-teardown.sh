@@ -3,16 +3,22 @@ set -o errexit -o nounset
 
 # Set kube config from pool
 source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
+source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
+
 set -o allexport
 CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 set +o allexport
 
-for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
+set -- "${CF_NAMESPACE}" "${UAA_NAMESPACE}"
+while [[ -n "${1}" ]]; do
+    # Upload klogs for any releases which have not yet been successfully deleted
+    trap "upload_klogs_on_failure ${*}" EXIT
     while [[ -n $(helm list --short --all ${namespace}) ]]; do
         helm delete --purge ${namespace} ||:
         sleep 10
     done
+    shift
 done
 
 for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
@@ -40,3 +46,5 @@ kubectl delete --ignore-not-found \
     --filename ci/qa-tools/cap-crb-tests.yaml \
     --filename ci/qa-tools/cap-psp-nonprivileged.yaml \
     --filename ci/qa-tools/cap-psp-privileged.yaml
+
+trap "" EXIT
