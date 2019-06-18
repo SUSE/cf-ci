@@ -1,5 +1,7 @@
 ---
 
+klog-collection-on-failure: true
+
 enable-cf-deploy: true
 
 enable-cf-smoke-tests: true

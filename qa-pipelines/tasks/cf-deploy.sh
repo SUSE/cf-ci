@@ -3,6 +3,7 @@ set -o errexit
 set -o nounset
 
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
+source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
@@ -42,6 +43,8 @@ helm install ${CAP_DIRECTORY}/helm/uaa/ \
     --timeout 600 \
     "${HELM_PARAMS[@]}"
 
+trap "upload_klogs_on_failure ${UAA_NAMESPACE}" EXIT
+
 # Wait for UAA release
 wait_for_release uaa
 
@@ -78,6 +81,8 @@ helm install ${CAP_DIRECTORY}/helm/cf/ \
     --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
     "${HELM_PARAMS[@]}"
 
+trap "upload_klogs_on_failure ${UAA_NAMESPACE} ${CF_NAMESPACE}" EXIT
+
 # Wait for CF release
 wait_for_release scf
 
@@ -85,3 +90,5 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
 fi
+
+trap "" EXIT

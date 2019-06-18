@@ -2,6 +2,8 @@
 set -o errexit -o nounset
 
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
+source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
+trap "upload_klogs_on_failure ${CF_NAMESPACE} ${UAA_NAMESPACE}" EXIT
 
 # monitor_url takes a URL argument and a path to a log file
 # This will time out after 3 hours. Until then, repeatedly curl the URL with a 1-second wait period, and log the response
@@ -113,3 +115,5 @@ uniq -c "${monitor_file}"
 cf login -u admin -p changeme -o testorg -s testspace
 cf delete -f go-env
 cf delete-org -f testorg
+
+trap "" EXIT
