@@ -12,6 +12,8 @@ Table of Contents
     * [Deploy a pipeline which does a non-upgrade test of a custom bundle (which is neither an RC or a release)](#deploy-a-pipeline-which-does-a-non-upgrade-test-of-a-custom-bundle-not-an-rc-or-a-release)
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
   * [Dev Nightly Upgrades CI](#dev-nightly-upgrades-ci)
+  * [PR pipeline](#pr-pipeline)
+  * [Single Brain Pipeline](#single-brain-pipeline)
 
 # Pipeline deployment overview
 
@@ -45,11 +47,11 @@ Example usage:
 
 When a new pipeline is deployed, all jobs will be paused, so when you want to start a new build from a job on this pipeline, you can drill down to the job in the concourse UI, unpause it, and click the '+' sign.
 
-Additionally, when deploying a pipeline, a `CONCOURSE_SECRETS_FILE` environment variable must be set, which points to the location of the file `secure/concourse-secrets.yml.gpg` from your clone of https://github.com/SUSE/cloudfoundry. You must have a private GPG key in your keyring capable of decrypting this file.
+Additionally, when deploying a pipeline, a `CONCOURSE_SECRETS_FILE` environment variable must be set, which points to the location of the file `secure/concourse-secrets.yml.gpg` from your clone of https://github.com/SUSE/cloudfoundry. You must have a private GPG key in your keyring capable of decrypting this file.  If a `CONCOURSE_SECRETS_FILE_poolname` environment variable exists (where `poolname` is the name of the pool), that will be used instead.
 
 # Pool requirements
 
-In our usage of [concourse pools](https://github.com/concourse/pool-resource), the lock files used by concourse signal which kubernetes deployments are available, but should also be valid kubernetes configs for accessing those kubernetes hosts. When a config is taken from the `unlocked/` directory by a pipeline which is running a cf-deploy task (see [Additional considerations](#additional-considerations) for an example case where this may not be true), the cf-deploy task expects that the kubernetes deployment does not have existing `scf` or `uaa` namespaces, and that its tiller also does not have `scf` or `uaa` releases (even historical ones... this means they should be deleted with `helm delete --purge`)
+In our usage of [concourse pools](https://github.com/concourse/pool-resource), the lock files used by concourse signal which kubernetes deployments are available, but should also be valid kubernetes configs for accessing those kubernetes hosts. When a config is taken from the `unclaimed/` directory by a pipeline which is running a cf-deploy task (see [Additional considerations](#additional-considerations) for an example case where this may not be true), the cf-deploy task expects that the kubernetes deployment does not have existing `scf` or `uaa` namespaces, and that its tiller also does not have `scf` or `uaa` releases (even historical ones... this means they should be deleted with `helm delete --purge`)
 
 The pool-specific config file follows a `config-${POOL_NAME}.yml` naming convention, and is expected to contain some settings worth noting ([config-provo.yml](config-provo.yml) may be useful as a reference):
 
@@ -79,7 +81,7 @@ For QA purposes, we prefer to use config files which will not 'expire', which me
 
 # Preset file instructions
 
-When deploying a pipeline, you'll need to provide a 'preset' file which contains a flag for each task you want to enable. The canonical list of flags with a description of what each one does can be seen in [flags.yml](flags.yml). This file is also symlinked from within the preset file [cap-qa-full-upgrades.yml](pipeline-presets/cap-qa-full-upgrades.yml) and has all the flags set to run our full, canonical, upgrade pipeline, which deploys a pre-upgrade version, runs smoke and brains, usb-deploy, upgrades the deployment to the latest release in the s3 path specified in the pipeline config file, usb-post-upgrade, smoke, brains, and cats, and finally the teardown task.
+When deploying a pipeline, you'll need to provide a 'preset' file which contains a flag for each task you want to enable. The canonical list of flags with a description of what each one does can be seen in [flags.yml](flags.yml). This file is also symlinked from within the preset file [cap-qa-full-upgrades.yml](pipeline-presets/full-upgrades.yml) and has all the flags set to run our full, canonical, upgrade pipeline, which deploys a pre-upgrade version, runs smoke and brains, usb-deploy, upgrades the deployment to the latest release in the s3 path specified in the pipeline config file, usb-post-upgrade, smoke, brains, and cats, and finally the teardown task.
 
 All tasks are run sequentially, so if any task encounters a failure, the build will abort and the kube resource will remain locked in the pool.
 
@@ -107,10 +109,10 @@ enable-cf-teardown: true
 The composability of the pipeline tasks means there are some interesting things you can do, besides just running the full upgrade pipeline in a linear way. In addition to what's supported by the tracked preset files, you may want to do something like the following:
 
 ## Deploy a pipeline which does a non-upgrade test of a custom bundle (not an RC or a release).
-In order to do this, replace the CAP bundle URLs in the pipeline config, enable *only* the pre-upgrade tests, and deploy the pipeline. The deploy will use the bundle from the `cap-sle-url` setting in the pipeline config.
+In order to do this, set `enable-cf-deploy` to the URL of the custom bundle, and set upgrade-from-version to `false`.
+
 ## Continue a test suite from where a previous build left off.
 Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline
-
 
 # Dev Nightly Upgrades CI
 
@@ -129,3 +131,16 @@ Example command to deploy CI on concourse:
 `./set-pipeline -t provo -p Official-DEV-Nightly-Upgrades --pool=capci --nightly pipeline-presets/cap-qa-upgrades-lite.yml`
 
 [pipeline-presets/cap-qa-upgrades-lite.yml](pipeline-presets/cap-qa-upgrades-lite.yml) is more than enough to accomplish our goals here
+
+
+# PR pipeline
+
+Similar to the nightly build deployment, a pipeline can also be deployed which will use the helm charts generated for a given PR, which end up in s3://cap-release-archives/prs/ . In order to deploy such a pipeline, use the `--pr` flag with the number of the PR. For example, to deploy a pipeline which would use s3://cap-release-archives/prs/PR-2327-scf-sle-2.16.0+cf6.10.0.90.gdd77c7c3.zip, you can use the parameter `--pr 2327` when running the `set-pipeline` script
+
+
+# Single Brain Pipeline
+
+You can deploy a pipeline which will skip the normal series of tasks, and instead run one individual brain test, by using the preset file `pipeline-presets/single-brain.yml`.
+
+Such a pipeline will show one job for each brain test, which you can trigger a build from to run the corresponding brain test with the first available pool resource.
+

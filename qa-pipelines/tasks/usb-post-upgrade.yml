@@ -1,9 +1,12 @@
+# The usb-post-upgrade task checks that applications deployed via the earlier
+# usb-deploy task is still functioning correctly after an upgrade.
 ---
 platform: linux
 image_resource:
   type: docker-image
   source:
     repository: splatform/cf-ci-orchestration
+    tag: latest
 inputs:
 - name: ci
 - name: s3.mysql-sidecar

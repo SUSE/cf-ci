@@ -1,11 +1,6 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-if [[ $ENABLE_CF_UPGRADE != true ]]; then
-  echo "cf-upgrade.sh: Flag not set. Skipping upgrade"
-  exit 0
-fi
-
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 
 # monitor_url takes a URL argument and a path to a log file
@@ -59,6 +54,7 @@ echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.re
 
 helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
     --namespace "${UAA_NAMESPACE}" \
+    --recreate-pods \
     --timeout 3600 \
     --wait \
     "${HELM_PARAMS[@]}"
@@ -77,6 +73,7 @@ echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.re
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
+    --recreate-pods \
     --timeout 3600 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \

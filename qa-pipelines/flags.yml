@@ -4,31 +4,25 @@
 # The settings in this file will also be valid for our most complete pipeline
 # (which performs an upgrade and all tests)
 
-# deploy cf for upgrade pipelines
-enable-cf-deploy-pre-upgrade: true
+# Report status as steps complete
+status-reporting: true
+
+# version to upgrade from; if null, upgrade is not performed.
+enable-cf-deploy-pre-upgrade: master/scf-sle-2.16.4%2Bcf6.10.0.2.g5abdb16f
 
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true
 
-# This should *only* ever be true when running a *full* pre-upgrade pipeline. The only reason to do this is
-# when you want to deploy a pipeline which uses a custom config URL instead of determining it from the
-# s3.scf-config-* resources. A typical upgrade pipeline only runs cats post-upgrade, and a typical deploy
-# pipeline has all the 'pre-upgrade' flags set to false
-enable-cf-acceptance-tests-pre-upgrade: false
-
-# deploy mysql and postgres services, sidecars, and sample apps before an upgrade
-enable-usb-deploy: true
-
-
-# upgrade cf deployment to latest. When this is set to true, URLs for the pre-upgrade charts should be provide
+# When upgrading, deploy cf-usb (and an app using it) pre-upgrade, and ensure
+# that it remains working post-upgrade
+enable-cf-usb-upgrade-tests: true
 enable-cf-upgrade: true
+# USB post-upgrade task will run after upgrade when upgrade-tests flag is enabled
 
-# test apps which use services, and tear down apps, services, and sidecars
-enable-usb-post-upgrade: true
-
-# NON-UPGRADE PIPELINES START HERE
-# deploy for non-upgrade pipelines
+# Deploy CF for pipelines.  If upgrade-from-version is set, this triggers an
+# upgrade instead.  This may be `true` (use the latest in the bucket), `false`
+# (don't deploy), or a string (in which case use given bundle URL)
 enable-cf-deploy: false
 
 # run tests for non-upgrade pipelines, and post-upgrade tests for upgrade pipelines
@@ -36,5 +30,5 @@ enable-cf-smoke-tests: true
 enable-cf-brain-tests: true
 enable-cf-acceptance-tests: true
 
-# tear down CAP deployment
+# tear down CAP deployment when all tasks are successful
 enable-cf-teardown: true

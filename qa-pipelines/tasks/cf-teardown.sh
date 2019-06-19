@@ -1,15 +1,8 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-if [[ $ENABLE_CF_TEARDOWN != true ]]; then
-  echo "cf-teardown.sh: Flag not set. Cluster will not be torn down or released."
-  exit 1
-fi
-
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp pool.kube-hosts/metadata /root/.kube/config
-
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 set -o allexport
 CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
@@ -32,7 +25,9 @@ for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
     done
 done
 
-if [[ $(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform) == azure ]]; then
+cap_platform=${cap_platform:-$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)}
+
+if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
     az_login
     azure_dns_clear

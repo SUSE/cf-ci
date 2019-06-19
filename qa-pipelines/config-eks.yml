@@ -4,8 +4,8 @@ src-ci-repo: https://github.com/SUSE/cf-ci.git
 src-rails-example-repo: https://github.com/scf-samples/rails-example.git
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
 kube-pool-key: *github-private-key
-kube-pool-branch: ecp-kube-hosts
-kube-pool-pool: ecp-kube-hosts
+kube-pool-branch: eks-kube-hosts
+kube-pool-pool: eks-kube-hosts
 
 s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key

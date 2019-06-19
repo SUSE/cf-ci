@@ -1,14 +1,8 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-if [[ $ENABLE_USB_DEPLOY != true ]]; then
-  echo "usb-deploy.sh: Flag not set. Skipping USB deploy"
-  exit 0
-fi
-
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 if kubectl get pod --namespace scf api-0 2>/dev/null; then
     api_pod_name=api-0
@@ -60,8 +54,6 @@ CF_CERT=$(get_internal_ca_cert scf)
 
 # Get external IP from first node of sorted list
 DB_EXTERNAL_IP=$(kubectl get nodes -o json | jq -r '[.items[] | .status.addresses[] | select(.type=="InternalIP").address] | sort | first')
-
-helm init --client-only
 
 is_namespace_ready() {
   # Check that the setup pod is Completed. Return with a failure status if not
@@ -115,7 +107,7 @@ COMMON_SIDECAR_PARAMS=(
 )
 
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
-cf login -u admin -p changeme
+cf login -u admin -p changeme -o system
 cf create-org usb-test-org
 cf create-space -o usb-test-org usb-test-space
 cf target -o usb-test-org -s usb-test-space

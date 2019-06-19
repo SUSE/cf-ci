@@ -1,14 +1,8 @@
 #!/bin/bash
 set -o errexit -o nounset
 
-if [[ $ENABLE_USB_POST_UPGRADE != true ]]; then
-  echo "usb-post-upgrade.sh: Flag not set. Skipping upgrade"
-  exit 0
-fi
-
 # Set kube config from pool
-mkdir -p /root/.kube/
-cp  pool.kube-hosts/metadata /root/.kube/config
+source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 DOMAIN=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
