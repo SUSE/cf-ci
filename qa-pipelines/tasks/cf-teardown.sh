@@ -10,16 +10,17 @@ CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 set +o allexport
 
-set -- "${CF_NAMESPACE}" "${UAA_NAMESPACE}"
-while [[ -n "${1}" ]]; do
+namespaces=("${CF_NAMESPACE}" "${UAA_NAMESPACE}")
+while [[ "${#namespaces[@]}" -gt 0 ]]; do
     # Upload klogs for any releases which have not yet been successfully deleted
-    trap "upload_klogs_on_failure ${*}" EXIT
-    while [[ -n $(helm list --short --all ${namespace}) ]]; do
-        helm delete --purge ${namespace} ||:
+    trap "upload_klogs_on_failure ${namespaces[*]}" EXIT
+    while [[ -n $(helm list --short --all ${namespaces[0]}) ]]; do
+        helm delete --purge ${namespaces[0]} ||:
         sleep 10
     done
-    shift
+    namespaces=(${namespaces[@]:1})
 done
+trap "" EXIT
 
 for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
     while kubectl get namespace "${namespace}" 2>/dev/null; do
@@ -46,5 +47,3 @@ kubectl delete --ignore-not-found \
     --filename ci/qa-tools/cap-crb-tests.yaml \
     --filename ci/qa-tools/cap-psp-nonprivileged.yaml \
     --filename ci/qa-tools/cap-psp-privileged.yaml
-
-trap "" EXIT
