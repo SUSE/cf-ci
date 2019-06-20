@@ -6,7 +6,7 @@ image_resource:
   type: docker-image
   source:
     repository: splatform/cf-ci-orchestration
-    tag: latest
+    tag: prabal-terraform
 inputs:
 - name: ci
 - name: s3.mysql-sidecar
