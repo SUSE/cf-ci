@@ -23,9 +23,9 @@ RUN true \
     direnv \
     bash-completion docker-bash-completion systemd-bash-completion \
     python-xml python-pyOpenSSL python-devel \
-    && curl -sS "https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip" -o "terraform_0.12.2_linux_amd64.zip" \
-    && unzip terraform_0.12.2_linux_amd64 \
-    && mv terraform /usr/local/bin/terraform \
+    && curl -LO "https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip" \
+    && unzip terraform_0.12.2_linux_amd64.zip \
+    && mv ./terraform /usr/local/bin/terraform \
     && rm terraform_0.12.2_linux_amd64.zip \
     && curl -sS "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" \
     && unzip awscli-bundle.zip \
@@ -34,9 +34,6 @@ RUN true \
     && curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.12.7/2019-03-27/bin/linux/amd64/aws-iam-authenticator \
     && chmod +x ./aws-iam-authenticator \
     && mv ./aws-iam-authenticator /usr/local/bin/aws-iam-authenticator \
-    && rpm --import https://packages.microsoft.com/keys/microsoft.asc \
-    && zypper addrepo --name 'Azure CLI' --check https://packages.microsoft.com/yumrepos/azure-cli azure-cli \
-    && zypper --non-interactive install --from azure-cli azure-cli \
     && helm_version=v2.8.2 \
     && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
     && mv /usr/local/bin/helm /usr/local/bin/helm_${helm_version} \
