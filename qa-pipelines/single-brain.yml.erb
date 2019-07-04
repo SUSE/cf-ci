@@ -46,7 +46,7 @@ jobs:
     - task: acceptance-tests-brain
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
-        ENABLE_CF_BRAIN_TESTS: true
+        TEST_NAME: acceptance-tests-brain
         INCLUDE_BRAINS_REGEX: "<%= test_name %>"
 
         # AWS/EKS configuration
