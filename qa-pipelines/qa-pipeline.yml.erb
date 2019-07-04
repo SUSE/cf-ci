@@ -65,6 +65,10 @@ resource_types:
   source:
     repository: resource/github-status
     tag: release
+- name: meta
+  type: docker-image
+  source:
+    repository: swce/metadata-resource
 
 resources:
 # CI helper scripts repository
@@ -106,6 +110,9 @@ resources:
     branch: ((kube-pool-branch))
     pool: ((kube-pool-pool))
 
+- name: meta
+  type: meta
+
 # GitHub commit status
 <% if status_reporting %>
 - name: status.src
@@ -131,6 +138,7 @@ jobs:
   - do:
     - aggregate:
       - get: ci
+      - get: meta
       - get: s3.pg-sidecar
         trigger: true
       - get: s3.mysql-sidecar

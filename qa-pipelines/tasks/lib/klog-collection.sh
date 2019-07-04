@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 __generate_klog() {
   echo "Generating klog for namespace ${1}"
@@ -29,6 +29,7 @@ upload_klogs_on_failure() {
   # Insert version file into ~/klog dir so it's included in the final klog tgz
   mkdir -p ~/klog
   cp s3.scf-config/version ~/klog
+  cp -r meta ~/klog
   while [[ ${#} -gt 0 ]]; do
     __generate_klog "${1}" && klog_name="${klog_name}-${1}"
     shift
