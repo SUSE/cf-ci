@@ -7,6 +7,7 @@ image_resource:
     tag: latest
 inputs:
 - name: ci
+- name: meta
 - name: s3.scf-config
 - name: pool.kube-hosts
 outputs:

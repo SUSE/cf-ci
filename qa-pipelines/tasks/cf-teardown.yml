@@ -7,6 +7,7 @@ image_resource:
     tag: latest
 inputs:
 - name: ci
+- name: meta
 - name: pool.kube-hosts
 outputs:
 - name: klog
