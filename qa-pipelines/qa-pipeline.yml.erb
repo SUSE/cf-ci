@@ -37,7 +37,11 @@ aliases:
     GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
 
     CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
-    KLOG_COLLECTION_ON_FAILURE: <%= klog_collection_on_failure %>
+    <% if klog_collection_on_failure %>
+    KLOG_COLLECTION_ON_FAILURE: ((s3-config-bucket-sles))-klogs-archive/((s3-klog-prefix))
+    <% else %>
+    KLOG_COLLECTION_ON_FAILURE: false
+    <% end %> # klog_collection_on_failure
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params
     CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
@@ -56,7 +60,6 @@ resource_types:
   type: docker-image
   source:
     repository: swce/metadata-resource
-
 resources:
 # CI helper scripts repository
 - name: ci
@@ -115,7 +118,7 @@ resources:
   source:
     << : *s3-common-params
     bucket: ((s3-config-bucket-sles))-klogs-archive
-    regexp: ((s3-config-prefix-sles))klog-(.*)\.tar\.gz$
+    regexp: ((s3-klog-prefix))/klog-(.*)\.tar\.gz$
 <% end %>
 
   # Terraform AKS Configuration
@@ -291,17 +294,20 @@ jobs:
     <% if status_reporting || klog_collection_on_failure %>
     on_failure:
       do:
-      <% if status_reporting %>
-      - put: status.src
-        params:
-          <<: *status-params-<%= avail %>
-          state: failure
-      <% end %> # status_reporting
       <% if klog_collection_on_failure %>
       - put: s3.klog-destination
         params:
           file: klog/klog-*.tar.gz
       <% end %> # klog_collection_on_failure
+      <% if status_reporting %>
+      - put: status.src
+        params:
+          <<: *status-params-<%= avail %>
+          state: failure
+          <% if klog_collection_on_failure %>
+          target_url: klog/target_url
+          <% end %> # klog_collection_on_failure
+      <% end %> # status_reporting
     <% end %> # status_reporting || klog_collection_on_failure
     <% if enable_terraform %>
     ensure:
