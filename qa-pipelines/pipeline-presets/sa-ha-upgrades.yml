@@ -1,0 +1,11 @@
+---
+
+#deploy latest build with deploy-lite.yml. Then continue from HA upgrades using this CI
+
+enable-cf-upgrade: true
+
+enable-cf-smoke-tests: true
+enable-cf-brain-tests: true
+enable-cf-acceptance-tests: true
+
+enable-cf-teardown: true
