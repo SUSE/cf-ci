@@ -1,5 +1,5 @@
 #Base image for kube yaml installer
-FROM opensuse/leap:42.3
+FROM opensuse/leap:15.1
 
 # Install: ruby, unzip, openssh, sshpass, vim, nano, curl, kubectl
 # Install: wget, tar, helm, direnv
@@ -9,7 +9,6 @@ FROM opensuse/leap:42.3
 #
 RUN true \
     && zypper removerepo "OSS Update" \
-    && zypper --non-interactive addrepo http://download.opensuse.org/repositories/utilities/openSUSE_Leap_42.3/utilities.repo \
     && zypper --non-interactive --gpg-auto-import-keys refresh \
     && zypper --non-interactive install ruby \
     unzip \
@@ -20,7 +19,9 @@ RUN true \
     curl \
     wget \
     tar \
+    gzip \
     direnv \
+    git-core \
     bash-completion docker-bash-completion systemd-bash-completion \
     python-xml python-pyOpenSSL python-devel \
     && curl -sS "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" \
@@ -75,6 +76,7 @@ RUN true \
     && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet
 
 COPY helm /usr/local/bin/helm
+
 RUN true \
     && chmod a+x /usr/local/bin/helm
 
