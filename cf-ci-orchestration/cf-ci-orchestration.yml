@@ -5,7 +5,7 @@ resources:
   type: git
   source:
     uri: https://github.com/SUSE/cf-ci.git
-    branch: develop
+    branch: prabal-concourse-terraform
     paths:
     - cf-ci-orchestration/*
 
@@ -13,7 +13,7 @@ resources:
   type: docker-image
   source:
     repository: splatform/cf-ci-orchestration
-    tag: latest
+    tag: prabal-terraform
     username: {{docker-username}}
     password: {{docker-password}}
 
