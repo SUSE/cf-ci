@@ -5,5 +5,4 @@
 scf*/
 *.info
 **/*cluster-plan/*
-*.tfvars
 temp/

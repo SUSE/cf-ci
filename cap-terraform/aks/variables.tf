@@ -13,10 +13,6 @@ variable "machine_type" {
     default = "Standard_DS3_v2"
 }
 
-variable "agent_admin" {
-    type = "string"
-}
-
 variable "dns_prefix" {
     default = "cap-on-aks"
 }
@@ -37,9 +33,5 @@ variable client_id {
 }
 
 variable client_secret {
-    type = "string"
-}
-
-variable "ssh_public_key" {
     type = "string"
 }

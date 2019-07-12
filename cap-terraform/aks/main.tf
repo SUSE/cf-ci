@@ -12,14 +12,6 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     dns_prefix          = "${var.dns_prefix}"
     kubernetes_version  = "${var.k8s_version}"
 
-    linux_profile {
-        admin_username = "${var.agent_admin}"
-
-        ssh_key {
-            key_data = "${file("${var.ssh_public_key}")}"
-        }
-    }
-
     agent_pool_profile {
         name            = "agentpool"
         count           = "${var.node_count}"
