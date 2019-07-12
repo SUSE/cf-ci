@@ -18,4 +18,4 @@ params:
   CAP_BUNDLE_URL: ""
 
 run:
-  path: ci/qa-pipelines/tasks/cf-teardown.sh
+  path: ci/qa-pipelines/tasks/terraform-deploy.sh

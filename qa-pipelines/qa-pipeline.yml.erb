@@ -23,6 +23,16 @@ resource_types:
     tag: release
 
 resources:
+# CI helper scripts repository
+- name: ci
+  type: git
+  source:
+    uri: ((src-ci-repo))
+    branch: ((src-ci-branch))
+    paths:
+    - qa-pipelines/*
+    - sample-apps/*
+
 # USB sidecar archive for postgres
 - name: s3.pg-sidecar
   type: s3
@@ -42,16 +52,6 @@ resources:
     secret_access_key: ((s3-config-secret-key))
     bucket: ((s3-config-bucket-sles))
     regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
-
-# CI helper scripts repository
-- name: ci
-  type: git
-  source:
-    uri: ((src-ci-repo))
-    branch: ((src-ci-branch))
-    paths:
-    - qa-pipelines/*
-    - sample-apps/*
 
 # SCF bundle to install from (upgrade target, if upgrading)
 - name: s3.scf-config-sles
@@ -91,6 +91,18 @@ aliases:
     KUBE_ORGANIZATION: ((organization))
     MAGIC_DNS_SERVICE: ((magic-dns-service))
 
+    # Terraform AKS Configuration
+    ARM_CLIENT_ID: ((arm-client-id))
+    ARM_CLIENT_SECRET: ((arm-client-secret))
+    ARM_TENANT_ID: ((az-sp-tenant))
+    ARM_SUBSCRIPTION_ID: ((arm-subscription-id))
+    KUBE_POOL_REPO: ((kube-pool-repo))
+    KUBE_POOL_KEY: ((kube-pool-key))
+    KUBE_POOL_BRANCH: ((kube-pool-branch))
+    KUBE_POOL_POOL: ((kube-pool-pool))
+    PIPELINE_NAME: ((pipeline-name))
+    AZ_REGION: westus
+
     # AWS/EKS configuration
     AZ_SP_APPID: ((az-sp-app-id))
     AZ_SP_PASSWORD: ((az-sp-password))
@@ -119,9 +131,15 @@ jobs:
         trigger: true
       - get: s3.scf-config-sles
         trigger: true
-      - put: pool.kube-hosts
-        params: {acquire: true}
-        timeout: 2m
+    <% if enable_terraform %>
+    - task: terraform-deploy-aks
+      file: ci/qa-pipelines/tasks/terraform-deploy.yml
+      params:
+        << : *common-task-params
+    <% end %> # enable_terraform
+    - put: pool.kube-hosts
+      params: {acquire: true}
+      timeout: 2m
     - task: cf-get-commit-id
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
       input_mapping:
@@ -135,8 +153,15 @@ jobs:
         state: pending
     <% end %> # status_reporting
     on_failure:
-      put: pool.kube-hosts
-      params: {release: pool.kube-hosts}
+      do:
+      - put: pool.kube-hosts
+        params: {release: pool.kube-hosts}
+      <% if enable_terraform %>
+      - task: delete-aks-resource-group
+        file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+        params:
+          << : *common-task-params
+      <% end %> # enable_terraform
   - do:
     <% if enable_cf_deploy_pre_upgrade %>
     - task: cf-deploy-pre-upgrade
@@ -146,6 +171,16 @@ jobs:
         HA: <%= avail == 'HA' %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_deploy_pre_upgrade
     <% if enable_cf_smoke_tests_pre_upgrade %>
     - task: cf-smoke-tests-pre-upgrade
@@ -155,6 +190,16 @@ jobs:
         TEST_NAME: smoke-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_smoke_tests_pre_upgrade
     <% if enable_cf_brain_tests_pre_upgrade %>
     - task: acceptance-tests-brain-pre-upgrade
@@ -164,13 +209,32 @@ jobs:
         TEST_NAME: acceptance-tests-brain
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_brain_tests_pre_upgrade
     <% if enable_cf_usb_upgrade_tests %>
     - task: usb-deploy-pre-upgrade
       file: ci/qa-pipelines/tasks/usb-deploy.yml
       params:
         << : *upgrade-task-params
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_usb_upgrade_tests
     <% if enable_cf_upgrade %>
     - task: cf-upgrade
@@ -180,11 +244,31 @@ jobs:
         HA: <%= avail == 'HA' %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_upgrade
     <% if enable_cf_usb_upgrade_tests %>
     - task: usb-post-upgrade
       file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
       params: *common-task-params
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_usb_upgrade_tests
     # When this is _not_ an upgrade pipeline, we may wish to deploy CF before
     # running the tests.
@@ -196,6 +280,16 @@ jobs:
         HA: <%= avail == 'HA' %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_deploy
     <% if enable_cf_smoke_tests %>
     - task: cf-smoke-tests
@@ -205,6 +299,16 @@ jobs:
         TEST_NAME: smoke-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_smoke_tests
     <% if enable_cf_brain_tests %>
     - task: acceptance-tests-brain
@@ -214,6 +318,16 @@ jobs:
         TEST_NAME: acceptance-tests-brain
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      on_failure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_brain_tests
     <% if enable_cf_acceptance_tests %>
     - task: acceptance-tests
@@ -223,30 +337,42 @@ jobs:
         TEST_NAME: acceptance-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      ensure:
+        <% if enable_terraform %>
+        do:
+        - put: pool.kube-hosts
+          params: {release: pool.kube-hosts}
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        <% end %> # enable_terraform
     <% end %> # enable_cf_acceptance_tests
     # We intentionally don't put the teardown and pool release steps in an ensure
     # block, so that when tests fail we have a chance of examining why things are
     # failing.
-    <% if enable_cf_teardown %>
+    <% if enable_cf_teardown && !enable_terraform %>
     - task: cf-teardown
       file: ci/qa-pipelines/tasks/cf-teardown.yml
       timeout: 1h
       params: *common-task-params
-    <% end %> # enable_cf_teardown
+    <% end %> # enable_cf_teardown and not enable_terraform
+    <% if !enable_terraform %>
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
+    <% end %> # not enable_terraform
     <% if status_reporting %>
     on_success:
       put: status.src
       params:
-        <<: *status-params-<%= avail %>
+        << : *status-params-<%= avail %>
         state: success
     <% end %> # status_reporting
     <% if status_reporting %>
     on_failure:
       put: status.src
       params:
-        <<: *status-params-<%= avail %>
+        << : *status-params-<%= avail %>
         state: failure
     <% end %> # status_reporting
 <% end %>
