@@ -11,21 +11,7 @@ class PipelineDeployer
         k.tr('-', '_').to_sym
     end
 
-    # make_open_struct converts a hash to an openstruct, recursively
-    def make_open_struct(o)
-        case o
-        when Hash
-            OpenStruct.new.tap do |s|
-                o.each { |k, v| s[fix_key(k)] = make_open_struct(v) }
-            end
-        when Array
-            o.map { |i| make_open_struct(i) }
-        else
-            o
-        end
-    end
-
-    def eval_context(flags_file='flags.yml', all_flags_file='flags.yml')
+    def eval_context(flags_file='flags.yml', all_flags_file='flags.yml', config_file='config.yml', pool_config_file, secrets_file)
         # Load the configuration file
         @eval_context ||= binding.dup.tap do |context|
             flags = open(File.join(__dir__, all_flags_file), 'r', &YAML.method(:load))
@@ -33,21 +19,24 @@ class PipelineDeployer
             flags.each do |k, v|
                 context.local_variable_set fix_key(k), false
             end
-            flags = open(File.join(__dir__, flags_file), 'r', &YAML.method(:load)) || Hash.new
-            flags.each do |k, v|
-                context.local_variable_set fix_key(k), make_open_struct(v)
+            vars_file="---\n"
+            [secrets_file, flags_file, config_file, pool_config_file].each do |file|
+                vars_file += File.read(file).split("\n").select{ |line| line !~ /^---$/ }.join("\n") + "\n"
+            end
+            YAML.load(vars_file).each do |k, v|
+                context.local_variable_set fix_key(k), v
             end
         end
     end
 
-    def render(template_file, flags_file, all_flags_file)
+    def render(template_file, flags_file, all_flags_file, config_file, pool_config_file, secrets_file)
         # Render the template
         filename = File.join(__dir__, template_file)
         template = ERB.new(File.read(filename))
         template.filename = filename
-        result = YAML.load template.result(eval_context(flags_file, all_flags_file))
+        result = YAML.load template.result(eval_context(flags_file, all_flags_file, config_file, pool_config_file, secrets_file))
         puts result.to_yaml
     end
 end
 
-PipelineDeployer.new.render *ARGV.first(3)
+PipelineDeployer.new.render *ARGV.first(6)
