@@ -53,33 +53,19 @@ if test -z "${1:-}" ; then
     usage
     exit 1
 fi
-vars_file="config-${pool}.yml"
+pool_vars_file="config-${pool}.yml"
 preset_file="${1}"
 preset_name="$(basename ${preset_file} .yml)"
 pipeline_name="${prefix}${preset_name}"
 
 
-if ! test -r "${vars_file}" ; then
+if ! test -r "${pool_vars_file}" ; then
     usage >&2
     if test -n "${1:-}" ; then
-        printf "Variables file %s is not readable\n" "${vars_file}" >&2
+        printf "Variables file %s is not readable\n" "${pool_vars_file}" >&2
     fi
     exit 1
 fi
-
-# generate_pipeline will emit the pipeline definition on STDOUT; this deals with
-# the single-brain special case.
-generate_pipeline() {
-  local pipeline_template='qa-pipeline.yml.erb'
-  local preset_template="${preset_file}"
-  local flags='flags.yml'
-  if [[ "${preset_file}" == "pipeline-presets/single-brain.yml" ]]; then
-    pipeline_template='single-brain.yml.erb'
-    preset_template='pipeline-presets/single-brain.yml'
-    flags='pipeline-presets/single-brain.yml'
-  fi
-  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}"
-}
 
 # If a concourse secrets file named after the pool exists, use that instead.
 # This is useful for local testing (for alternative pool / s3 storage / etc.)
@@ -97,6 +83,20 @@ if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     fi
 fi
 
+# generate_pipeline will emit the pipeline definition on STDOUT; this deals with
+# the single-brain special case.
+generate_pipeline() {
+  local pipeline_template='qa-pipeline.yml.erb'
+  local preset_template="${preset_file}"
+  local flags='flags.yml'
+  if [[ "${preset_file}" == "pipeline-presets/single-brain.yml" ]]; then
+    pipeline_template='single-brain.yml.erb'
+    preset_template='pipeline-presets/single-brain.yml'
+    flags='pipeline-presets/single-brain.yml'
+  fi
+  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" "config.yml" "${pool_vars_file}" <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
+}
+
 # Branch is assumed to be the current branch if not specified, but the concourse git
 # resource doesn't allow commit references to be used directly.
 if [[ -z $src_ci_branch ]] ||
@@ -111,7 +111,7 @@ fi
 
 src_ci_repo=$(
   #Remove anchor references from vars file as they break parsing
-  grep -v '\*' $vars_file \
+  grep -v '\*' config.yml \
   | ruby -r yaml -e "puts YAML.load(STDIN.read)['src-ci-repo']"
 )
 src_ci_remote=$(git remote -v | grep -F "$src_ci_repo (fetch)" | cut -f1 | head -1)
@@ -145,11 +145,6 @@ else
   pipeline_already_existed=false
 fi
 
-# We concatenate our secrets file, pipeline variables, preset file (which sets
-# 'enable' flags for each task needed for this pipeline deployment), and an
-# additional set of 'false' enable flags, for every flag which is not mentioned in
-# the preset file. This is created by subtracting the keys in the preset file from
-# the keys in flags.yml, which contains all possible enable flags
 fly \
     ${target:+"--target=${target}"} \
     set-pipeline \
@@ -159,17 +154,7 @@ fly \
     --config=<(generate_pipeline) \
     --var src-ci-branch=${src_ci_branch} \
     --var s3-config-prefix-sles=${s3_config_prefix} \
-    --var s3-klog-prefix=${s3_config_prefix%%/*} \
-    --load-vars-from=<(
-        ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
-        sed '/^---$/d' < "${vars_file}"                        # Config vars
-        sed '/^---$/d' < "${preset_file}"
-        ruby -r yaml << EOF | tail -n+2
-          pipeline_flags=YAML.load_file('${preset_file}').keys
-          all_flags=YAML.load_file('flags.yml').keys
-          puts YAML.dump((all_flags - pipeline_flags).zip([false].cycle).to_h)
-EOF
-    )
+    --var s3-klog-prefix=${s3_config_prefix%%/*}
 
 fly \
     ${target:+"--target=$target"} \
