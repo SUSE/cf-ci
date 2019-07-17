@@ -33,6 +33,14 @@ resources:
     - qa-pipelines/*
     - sample-apps/*
 
+# cf-ci-pools repo of type git. To commit terrform generated kubeconfig
+- name: cf-ci-pools
+  type: git
+  source:
+    uri: ((kube-pool-repo))
+    private_key: ((kube-pool-key))
+    branch: ((kube-pool-branch))
+
 # USB sidecar archive for postgres
 - name: s3.pg-sidecar
   type: s3
@@ -96,17 +104,16 @@ aliases:
     ARM_CLIENT_SECRET: ((arm-client-secret))
     ARM_TENANT_ID: ((az-sp-tenant))
     ARM_SUBSCRIPTION_ID: ((arm-subscription-id))
-    KUBE_POOL_REPO: ((kube-pool-repo))
     KUBE_POOL_KEY: ((kube-pool-key))
     KUBE_POOL_BRANCH: ((kube-pool-branch))
     KUBE_POOL_POOL: ((kube-pool-pool))
     PIPELINE_NAME: ((pipeline-name))
-    AZ_REGION: westus
     TF_VAR_client_id: ((arm-client-id))
     TF_VAR_client_secret: ((arm-client-secret))
     TF_VAR_az_resource_group: ((pipeline-name))
-    TF_VAR_cluster_labels: ((pipeline-name))
-    TF_VAR_location: {"owner" = "((pipeline-name))"}
+    TF_VAR_location: westus
+    TF_VAR_cluster_labels:
+      owner: ((pipeline-name))
 
     # AWS/EKS configuration
     AZ_SP_APPID: ((az-sp-app-id))
@@ -137,10 +144,14 @@ jobs:
       - get: s3.scf-config-sles
         trigger: true
     <% if enable_terraform %>
+    - get: cf-ci-pools
     - task: terraform-deploy-aks
       file: ci/qa-pipelines/tasks/terraform-deploy.yml
       params:
         << : *common-task-params
+    - put: cf-ci-pools
+      params:
+        repository: cf-ci-pools-terraform
     <% end %> # enable_terraform
     - put: pool.kube-hosts
       params: {acquire: true}
@@ -159,14 +170,15 @@ jobs:
     <% end %> # status_reporting
     on_failure:
       do:
-      - put: pool.kube-hosts
-        params: {release: pool.kube-hosts}
-      <% if enable_terraform %>
-      - task: delete-aks-resource-group
-        file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
-        params:
-          << : *common-task-params
-      <% end %> # enable_terraform
+        - aggregate:
+          - put: pool.kube-hosts
+            params: {release: pool.kube-hosts}
+          <% if enable_terraform %>
+          - task: delete-aks-resource-group
+            file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+            params:
+              << : *common-task-params
+          <% end %> # enable_terraform
   - do:
     <% if enable_cf_deploy_pre_upgrade %>
     - task: cf-deploy-pre-upgrade
