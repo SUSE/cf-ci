@@ -102,6 +102,11 @@ aliases:
     KUBE_POOL_POOL: ((kube-pool-pool))
     PIPELINE_NAME: ((pipeline-name))
     AZ_REGION: westus
+    TF_VAR_client_id: ((arm-client-id))
+    TF_VAR_client_secret: ((arm-client-secret))
+    TF_VAR_az_resource_group: ((pipeline-name))
+    TF_VAR_cluster_labels: ((pipeline-name))
+    TF_VAR_location: {"owner" = "((pipeline-name))"}
 
     # AWS/EKS configuration
     AZ_SP_APPID: ((az-sp-app-id))
