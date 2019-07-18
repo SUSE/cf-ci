@@ -7,9 +7,10 @@ image_resource:
     tag: prabal-terraform
 inputs:
 - name: ci
-- name: cf-ci-pools
+#- name: cf-ci-pools
 outputs:
-- name: cf-ci-pools-terraform
+- name: kubeconfig-pool
+  path: kubeconfig-pool
 
 params:
   KUBE_REGISTRY_HOSTNAME: ""

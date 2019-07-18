@@ -52,5 +52,5 @@ output "kube_config" {
 
 resource "local_file" "k8scfg" {
   content = "${local.k8scfg}"
-  filename = "aksk8scfg"
+  filename = "kubeconfig"
 }

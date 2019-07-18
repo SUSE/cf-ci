@@ -3,6 +3,8 @@
 # Set kube config from pool
 source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
+exit 1
+
 UAA_PORT=2793
 
 CF_NAMESPACE=scf

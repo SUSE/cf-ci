@@ -11,8 +11,8 @@
 
 2. `terraform init`
 
-3. `terraform plan -out <PLAN-path>`
+3. `terraform plan`
 
-4. `terraform apply plan <PLAN-path>`
+4. `terraform apply`
 
-5. A kubeconfig named aksk8scfg is generated in the same directory TF is run from.
+5. A kube config named kubeconfig is generated in the same directory TF is run from.
