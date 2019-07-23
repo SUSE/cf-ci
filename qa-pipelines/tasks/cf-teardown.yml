@@ -4,18 +4,9 @@ image_resource:
   type: docker-image
   source:
     repository: splatform/cf-ci-orchestration
-    tag: prabal-terraform
+    tag: latest
 inputs:
 - name: ci
-
-params:
-  KUBE_REGISTRY_HOSTNAME: ""
-  KUBE_REGISTRY_USERNAME: ""
-  KUBE_REGISTRY_PASSWORD: ""
-  KUBE_ORGANIZATION: ""
-  HA: false # true, false, or "scaled"
-  MAGIC_DNS_SERVICE: xip.io
-  CAP_BUNDLE_URL: ""
-
+- name: pool.kube-hosts
 run:
   path: ci/qa-pipelines/tasks/cf-teardown.sh

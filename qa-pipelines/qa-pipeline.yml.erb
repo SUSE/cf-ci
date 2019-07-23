@@ -152,8 +152,8 @@ jobs:
         state: pending
     <% end %> # status_reporting
     on_failure:
+      <% if enable_terraform %>
       try:
-        <% if enable_terraform %>
         do:
           - task: delete-aks-resource-group
             file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
@@ -161,7 +161,7 @@ jobs:
               << : *common-task-params
           - put: pool.kube-hosts
             params: {remove: pool.kube-hosts}
-        <% end %> # enable_terraform
+      <% end %> # enable_terraform
       <% if !enable_terraform %>
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
@@ -252,16 +252,6 @@ jobs:
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_acceptance_tests
-    ensure:
-      do:
-        <% if enable_terraform %>
-        - task: delete-aks-resource-group
-          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
-          params:
-            << : *common-task-params
-        - put: pool.kube-hosts
-          params: {remove: pool.kube-hosts}
-        <% end %> # enable_terraform
     # We intentionally don't put the teardown and pool release steps in an ensure
     # block, so that when tests fail we have a chance of examining why things are
     # failing.
@@ -289,4 +279,14 @@ jobs:
         << : *status-params-<%= avail %>
         state: failure
     <% end %> # status_reporting
+    <% if enable_terraform %>
+    ensure:
+      do:
+        - task: delete-aks-resource-group
+          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          params:
+            << : *common-task-params
+        - put: pool.kube-hosts
+          params: {remove: pool.kube-hosts}
+    <% end %> # enable_terraform
 <% end %>
