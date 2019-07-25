@@ -18,6 +18,7 @@ params:
   HA: false # true, false, or "scaled"
   MAGIC_DNS_SERVICE: xip.io
   CAP_BUNDLE_URL: ""
+  EMBEDDED_UAA: false # true or false
 
 run:
   path: ci/qa-pipelines/tasks/cf-deploy.sh

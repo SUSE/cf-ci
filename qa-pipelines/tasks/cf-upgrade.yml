@@ -16,6 +16,7 @@ params:
   KUBE_ORGANIZATION: ""
   HA: false # true, false, or "scaled"
   MAGIC_DNS_SERVICE: xip.io
+  EMBEDDED_UAA: false # true or false
 
 run:
   path: ci/qa-pipelines/tasks/cf-upgrade.sh
