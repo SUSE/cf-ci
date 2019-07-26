@@ -299,7 +299,6 @@ jobs:
       - put: s3.klog-destination
         params:
           file: klog/klog-*.tar.gz
-          acl: public-read
       <% end %> # klog_collection_on_failure
       <% if status_reporting %>
       - put: status.src
