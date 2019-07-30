@@ -124,7 +124,7 @@ if [[ ${TEST_NAME} == "acceptance-tests-brain" ]]; then
             if doc["kind"] == "Pod"
                 File.open("${test_pod_yml}", 'w') { |file| file.write(doc.to_yaml) }
             else
-                File.open("${test_non_pods_yml}", 'a') { |file| file.write(doc.to_yaml) }
+                File.open("${test_non_pods_yml}", 'w') { |file| file.write(doc.to_yaml) }
             end
         end
 EOF
