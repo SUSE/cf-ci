@@ -240,6 +240,24 @@ set_uaa_sizing_params() {
     fi
 }
 
+pxc_pre_upgrade() {
+    if [[ "${HA}" == true ]]; then
+        if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
+            HELM_PARAMS+=(--set=sizing.mysql.count=1)
+            return 0    
+        fi
+        return 1
+    fi
+}
+
+pxc_post_upgrade() {
+    if [[ "${HA}" == true ]]; then
+        HELM_PARAMS+=(--set=sizing.mysql.count=3)
+        return 0
+    fi
+    return 1
+}
+
 set_scf_sizing_params() {
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")

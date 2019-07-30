@@ -28,7 +28,7 @@ if [[ ${cap_platform} != "eks" ]]; then
     fi
 fi
 
-echo UAA customization ...
+echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
@@ -57,11 +57,23 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     fi
 fi
 
+if pxc_pre_upgrade; then
+    echo "Downsizing UAA mysql node count to 1..."
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+        --namespace "${UAA_NAMESPACE}" \
+        --timeout 600 \
+        "${HELM_PARAMS[@]}"
+
+    # Wait for UAA release
+    wait_for_release uaa
+fi
+
 # Deploy CF
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
-echo SCF customization ...
+echo "SCF customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 kubectl create namespace "${CF_NAMESPACE}"
@@ -92,6 +104,25 @@ wait_for_release scf
 if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
+fi
+
+if pxc_pre_upgrade; then
+    echo "Downsizing SCF mysql node count to 1..."
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+    helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+        --namespace "${CF_NAMESPACE}" \
+        --timeout 3600 \
+        --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+        --set "env.UAA_HOST=${UAA_HOST}" \
+        --set "env.UAA_PORT=${UAA_PORT}" \
+        --set "secrets.UAA_CA_CERT=${CA_CERT}" \
+        --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
+        --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
+        --wait \
+        "${HELM_PARAMS[@]}"
+
+    # Wait for CF release
+    wait_for_release scf
 fi
 
 trap "" EXIT
