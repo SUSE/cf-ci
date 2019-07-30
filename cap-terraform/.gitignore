@@ -1,0 +1,8 @@
+**/creds/*
+.terraform
+*.backup
+*.tfstate
+scf*/
+*.info
+**/*cluster-plan/*
+temp/

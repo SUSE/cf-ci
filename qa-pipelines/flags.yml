@@ -4,11 +4,14 @@
 # The settings in this file will also be valid for our most complete pipeline
 # (which performs an upgrade and all tests)
 
+# Use terraform to deploy AKS cluster
+enable-terraform: true
+
 # Report status as steps complete
 status-reporting: true
 
 # version to upgrade from; if null, upgrade is not performed.
-enable-cf-deploy-pre-upgrade: master/scf-sle-2.16.4%2Bcf6.10.0.2.g5abdb16f
+enable-cf-deploy-pre-upgrade: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
 
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
