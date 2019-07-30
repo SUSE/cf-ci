@@ -4,7 +4,7 @@
 # The settings in this file will also be valid for our most complete pipeline
 # (which performs an upgrade and all tests)
 
-# Use terrafrom to deploy AKS cluster
+# Use terraform to deploy AKS cluster
 enable-terraform: true
 
 # Report status as steps complete

@@ -91,15 +91,6 @@ aliases:
     KUBE_ORGANIZATION: ((organization))
     MAGIC_DNS_SERVICE: ((magic-dns-service))
 
-    # Terraform AKS Configuration
-    ARM_CLIENT_ID: ((arm-client-id))
-    ARM_CLIENT_SECRET: ((arm-client-secret))
-    ARM_TENANT_ID: ((az-sp-tenant))
-    ARM_SUBSCRIPTION_ID: ((arm-subscription-id))
-    TF_VAR_client_id: ((arm-client-id))
-    TF_VAR_client_secret: ((arm-client-secret))
-    TF_VAR_location: westus
-
     # AWS/EKS configuration
     AZ_SP_APPID: ((az-sp-app-id))
     AZ_SP_PASSWORD: ((az-sp-password))
@@ -114,6 +105,18 @@ aliases:
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params
     CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
+
+  # Terraform AKS Configuration
+  # Used in terraform-deploy-aks and delete-aks-resource-group
+  terraform-aks-params: &terraform-aks-params
+    << : *common-task-params
+    ARM_CLIENT_ID: ((arm-client-id))
+    ARM_CLIENT_SECRET: ((arm-client-secret))
+    ARM_TENANT_ID: ((az-sp-tenant))
+    ARM_SUBSCRIPTION_ID: ((arm-subscription-id))
+    TF_VAR_client_id: ((arm-client-id))
+    TF_VAR_client_secret: ((arm-client-secret))
+    TF_VAR_location: westus
 
 jobs:
 <% %w(SA HA).each do |avail| %>
@@ -132,7 +135,7 @@ jobs:
     - task: terraform-deploy-aks
       file: ci/qa-pipelines/tasks/terraform-deploy.yml
       params:
-        << : *common-task-params
+        << : *terraform-aks-params
     - put: pool.kube-hosts
       params: {add: kubeconfig-pool}
     <% end %> # enable_terraform
@@ -158,14 +161,14 @@ jobs:
           - task: delete-aks-resource-group
             file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
             params:
-              << : *common-task-params
+              << : *terraform-aks-params
           - put: pool.kube-hosts
             params: {remove: pool.kube-hosts}
       <% end %> # enable_terraform
       <% if !enable_terraform %>
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-      <% end %> # not enable_terraform
+      <% end %> # !enable_terraform
   - do:
     <% if enable_cf_deploy_pre_upgrade %>
     - task: cf-deploy-pre-upgrade
@@ -260,11 +263,11 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-teardown.yml
       timeout: 1h
       params: *common-task-params
-    <% end %> # enable_cf_teardown and not enable_terraform
+    <% end %> # enable_cf_teardown && !enable_terraform
     <% if !enable_terraform %>
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-    <% end %> # not enable_terraform
+    <% end %> # !enable_terraform
     <% if status_reporting %>
     on_success:
       put: status.src
@@ -285,7 +288,7 @@ jobs:
         - task: delete-aks-resource-group
           file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
           params:
-            << : *common-task-params
+            << : *terraform-aks-params
         - put: pool.kube-hosts
           params: {remove: pool.kube-hosts}
     <% end %> # enable_terraform
