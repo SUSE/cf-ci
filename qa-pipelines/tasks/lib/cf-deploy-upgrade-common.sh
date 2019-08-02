@@ -158,16 +158,6 @@ set_helm_params() {
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "enable.autoscaler=true"
                  --set "kube.storage_class.persistent=${STORAGECLASS}")
-
-    # CAP-370. Let the CC give brokers 10 minutes to respond with
-    # their catalog. We have seen minibroker in the brain tests
-    # require 4.5 minutes to assemble such, likely due to a slow
-    # network. Doubling that should be generous enough. Together with
-    # the doubled brain test timeout (see `run-test.sh`), such tests
-    # will then still have the normal 10 minutes for any remaining
-    # actions.
-    HELM_PARAMS+=(--set "env.BROKER_CLIENT_TIMEOUT_SECONDS=600")
-
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
         HELM_PARAMS+=(--set "env.GARDEN_APPARMOR_PROFILE=")
