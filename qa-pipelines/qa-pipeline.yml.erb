@@ -11,6 +11,8 @@ def bundle_url_from_version(version)
   end
 end
 
+is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || enable_cf_usb_upgrade_tests
+
 %>
 ---
 
@@ -73,6 +75,12 @@ resource_types:
   type: docker-image
   source:
     repository: swce/metadata-resource
+<% if status_reporting %>
+- name: email
+  type: docker-image
+  source:
+    repository: pcfseceng/email-resource
+<% end %>
 resources:
 # CI helper scripts repository
 - name: ci
@@ -97,6 +105,7 @@ resources:
     << : *s3-common-params
     regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
 
+# SCF bundle for pre-upgrade
 # SCF bundle to install from (upgrade target, if upgrading)
 - name: s3.scf-config-sles
   type: s3
@@ -123,7 +132,18 @@ resources:
   source:
     repo: ((src-repo))
     access_token: ((github-access-token))
-<% end %>
+- name: status.email
+  type: email
+  source:
+    smtp:
+      host: ((status-email-host))
+      port: "((status-email-port))"
+      username: ((status-email-username))
+      password: ((status-email-password))
+    from: ((status-email-sender))
+    to: [((status-email-receiver))]
+    debug: true
+<% end %> # status_reporting
 
 <% if klog_collection_on_failure %>
 - name: s3.klog-destination
@@ -132,7 +152,7 @@ resources:
     << : *s3-common-params
     bucket: ((s3-config-bucket-sles))-klogs-archive
     regexp: ((s3-klog-prefix))/klog-(.*)\.tar\.gz$
-<% end %>
+<% end %> # klog_collection_on_failure
 
 jobs:
 <% %w(SA HA).each do |avail| %>
@@ -159,11 +179,15 @@ jobs:
     - put: pool.kube-hosts
       params: {acquire: true}
       timeout: 2m
+    <% if status_reporting %>
     - task: cf-get-commit-id
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
+      <% if is_upgrade_pipeline %>
+      params:
+        CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
+      <% end %> # is_upgrade_pipeline
       input_mapping:
         s3.archive: s3.scf-config-sles
-    <% if status_reporting %>
     - put: status.src
       params: &status-params-<%= avail %>
         context: ((pipeline-name))-<%= avail %>
@@ -220,6 +244,12 @@ jobs:
       params:
         << : *upgrade-task-params
     <% end %> # enable_cf_usb_upgrade_tests
+    <% if status_reporting %>
+    - task: cf-get-commit-id
+      file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
+      input_mapping:
+        s3.archive: s3.scf-config-sles
+    <% end %> # status_reporting
     <% if enable_cf_upgrade %>
     - task: cf-upgrade
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
@@ -308,6 +338,14 @@ jobs:
           <% if klog_collection_on_failure %>
           target_url: klog/target_url
           <% end %> # klog_collection_on_failure
+      - task: generate-email
+        file: ci/qa-pipelines/tasks/generate-email.yml
+        params:
+          <<: *common-task-params
+      - put: status.email
+        params:
+          subject: email/subject
+          body: email/body
       <% end %> # status_reporting
     <% end %> # status_reporting || klog_collection_on_failure
     <% if enable_terraform %>

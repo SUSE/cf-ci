@@ -8,7 +8,7 @@
 enable-terraform: true
 
 # Report status as steps complete
-status-reporting: true
+status-reporting: false
 
 # Upload klogs to s3 upon failure
 klog-collection-on-failure: true
