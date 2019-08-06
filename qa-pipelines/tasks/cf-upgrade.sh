@@ -52,7 +52,7 @@ set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 echo UAA customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-if [ "${EMBEDDED_UAA:-false}" != "true" ]; then
+if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
   helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
       --namespace "${UAA_NAMESPACE}" \
       --recreate-pods \

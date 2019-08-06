@@ -187,19 +187,19 @@ set_helm_params() {
             HELM_PARAMS+=(--set "kube.external_ips[$i]=${external_ips[$i]}")
         done
     fi
-    if [ "${EMBEDDED_UAA:-false}" = "true" ]; then
+    if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
         HELM_PARAMS+=(--set "enable.uaa=true")
     fi
-    if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
+    if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi
-    if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
+    if [[ -n "${KUBE_REGISTRY_USERNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
     fi
-    if [ -n "${KUBE_REGISTRY_PASSWORD:-}" ]; then
+    if [[ -n "${KUBE_REGISTRY_PASSWORD:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}")
     fi
-    if [ -n "${KUBE_ORGANIZATION:-}" ]; then
+    if [[ -n "${KUBE_ORGANIZATION:-}" ]]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")

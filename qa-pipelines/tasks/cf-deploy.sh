@@ -30,7 +30,7 @@ fi
 echo UAA customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-if [ "${EMBEDDED_UAA:-false}" != "true" ]; then
+if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     # Deploy UAA
     kubectl create namespace "${UAA_NAMESPACE}"
     if [[ "${PROVISIONER}" == "kubernetes.io/rbd" ]]; then
