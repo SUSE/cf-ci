@@ -176,6 +176,7 @@ jobs:
       params:
         << : *upgrade-task-params
         HA: <%= avail == 'HA' %>
+        EMBEDDED_UAA: ((enable-embedded-uaa))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_deploy_pre_upgrade
@@ -209,6 +210,7 @@ jobs:
       params:
         << : *common-task-params
         HA: <%= avail == 'HA' %>
+        EMBEDDED_UAA: ((enable-embedded-uaa))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_upgrade
@@ -225,6 +227,7 @@ jobs:
       params:
         << : *common-task-params
         HA: <%= avail == 'HA' %>
+        EMBEDDED_UAA: ((enable-embedded-uaa))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     <% end %> # enable_cf_deploy

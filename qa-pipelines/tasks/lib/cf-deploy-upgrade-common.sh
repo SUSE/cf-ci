@@ -43,7 +43,7 @@ elif [[ ${cap_platform} == "eks" ]] && kubectl get storageclass | grep gp2 > /de
     PROVISIONER=$(kubectl get storageclasses ${STORAGECLASS} -o "jsonpath={.provisioner}")
     garden_rootfs_driver="overlay-xfs"
 else
-    echo "Your k8s cluster must have a SC named persitent or gp2"
+    echo "Your k8s cluster must have a SC named persistent or gp2"
     exit 1
 fi
 
@@ -143,7 +143,7 @@ helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  |
 
 generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
 
-get_internal_ca_cert() (
+get_uaa_ca_cert() (
     set -o pipefail
     local uaa_secret_name=$(generated_secrets_secret)
     kubectl get secret ${uaa_secret_name} \
@@ -177,16 +177,19 @@ set_helm_params() {
             HELM_PARAMS+=(--set "kube.external_ips[$i]=${external_ips[$i]}")
         done
     fi
-    if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
+    if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
+        HELM_PARAMS+=(--set "enable.uaa=true")
+    fi
+    if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi
-    if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
+    if [[ -n "${KUBE_REGISTRY_USERNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
     fi
-    if [ -n "${KUBE_REGISTRY_PASSWORD:-}" ]; then
+    if [[ -n "${KUBE_REGISTRY_PASSWORD:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}")
     fi
-    if [ -n "${KUBE_ORGANIZATION:-}" ]; then
+    if [[ -n "${KUBE_ORGANIZATION:-}" ]]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
@@ -232,19 +235,20 @@ set -o allexport
 # The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 
-if [[ ${cap_platform} == openstack || ${cap_platform} == bare ]]; then
-  external_ips=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
-  public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
-fi
+public_ip="$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"] // ""')"
 
-
-if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
-    source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
-    DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
-else
+if [[ -n "${public_ip}" ]]; then
+    # If we have a public IP in the config map, we assume this is openstack / bare metal / etc. and have
+    # external IPs hard-coded.
     # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
     # referenced by external_ip.
     DOMAIN=${public_ip}.${MAGIC_DNS_SERVICE}
+    # We use external_ips in set_helm_params()
+    external_ips=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
+else
+    # If we do _not_ have a public IP, assume this is in the cloud™ somewhere and we will use Azure DNS
+    source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
+    DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
 fi
 
 #Set INSECURE_DOCKER_REGISTRIES for brain test
