@@ -71,9 +71,7 @@ set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 echo SCF customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-if [ "${EMBEDDED_UAA:-false}" = "true" ]; then
-    HELM_PARAMS+=(--set "enable.uaa=true")
-else
+if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
 fi
 
