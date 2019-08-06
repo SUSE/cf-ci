@@ -93,6 +93,15 @@ kube_overrides() {
                 unless include_brains_regex.empty?
                     container['env'].push name: "INCLUDE", value: include_brains_regex
                 end
+
+                # CAP-370. Extend overall brain test timeout to 20
+                # minutes. This is done to give the minibroker brain
+                # tests enough time for all their actions even when a
+                # slow network causes the broker to take up to 10
+                # minutes for the assembly/delivery of the catalog.
+                # See also `lib/cf-deploy-upgrade-common.sh` for the
+                # corresponding CC change: BROKER_CLIENT_TIMEOUT_SECONDS.
+                container['env'].push name: "TIMEOUT", value: "1200"
             end
             if obj['metadata']['name'] == "acceptance-tests"
                 container['env'].push name: "CATS_SUITES", value: '${CATS_SUITES:-}'
