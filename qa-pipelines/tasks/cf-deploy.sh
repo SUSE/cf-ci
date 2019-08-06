@@ -66,7 +66,7 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
-if [ "${EMBEDDED_UAA:-false}" = "true" ]; then
+if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
     HELM_PARAMS+=(--set "enable.uaa=true")
 else
     HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
