@@ -42,6 +42,7 @@ skuba() {
   docker run -ti --rm \
   -v "$app_path":/app:rw \
   -v "$(dirname "$SSH_AUTH_SOCK")":"$(dirname "$SSH_AUTH_SOCK")" \
+  -v "/etc/passwd:/etc/passwd:ro" \
   --env-file <( env| cut -f1 -d= ) \
   -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
   -u "$(id -u)":"$(id -g)" \
