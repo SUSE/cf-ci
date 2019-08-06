@@ -80,11 +80,11 @@ skuba-deploy --run-in-docker terraform plan -out my-plan
 skuba-deploy --run-in-docker terraform apply -auto-approve my-plan
 
 echo ">>> Bootstrapping cluster with skuba"
-skuba-deploy --run-in-docker deploy
+skuba-deploy deploy
 
 echo ">>> Disabling updates and reboots in cluster"
-skuba-deploy --run-in-docker updates -all -disable
-skuba-deploy --run-in-docker reboots -disable
+skuba-deploy updates -all -disable
+skuba-deploy reboots -disable
 
 export KUBECONFIG="$TMPDIR"/deployment/my-cluster/config
 export PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_load_balancer)"
