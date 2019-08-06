@@ -97,6 +97,6 @@ popd
 cd ~0
 
 echo ">>> Preparing cluster for CAP"
-bash ./prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"
+bash $(dirname "$(readlink -f "$0")")/prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"
 
-
+echo ">>> Deployment at "$TMPDIR"/deployment/"
