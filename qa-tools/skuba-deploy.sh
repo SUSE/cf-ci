@@ -183,7 +183,7 @@ while [[ $# -gt 0 ]] ; do
     case $1 in
     --deploy)
       JSON=$(terraform output -json)
-      LB=$(echo "$JSON" | jq -r '.ip_load_balancer.value[0]')
+      LB=$(echo "$JSON" | jq -r '.ip_load_balancer.value')
       MASTERS=$(echo "$JSON" | jq -r '.ip_masters.value[]')
       WORKERS=$(echo "$JSON" | jq -r '.ip_workers.value[]')
       ALL="$MASTERS $WORKERS"
