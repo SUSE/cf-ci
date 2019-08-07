@@ -32,7 +32,7 @@ Usage:
 USAGE
 )
 
-skuba() {
+skuba_container() {
   local app_path="$PWD"
   if [[ "$1" == "$CLUSTER_NAME" ]]; then
       local app_path="$PWD/$1"
@@ -106,7 +106,7 @@ updates() {
 init_control_plane() {
   if ! [[ -d "$CLUSTER_NAME" ]]; then
       echo ">>> Deploying control plane"
-      skuba cluster init --control-plane "$LB" "$CLUSTER_NAME"
+      skuba_container skuba cluster init --control-plane "$LB" "$CLUSTER_NAME"
   fi
 }
 
@@ -116,12 +116,12 @@ for n in $1; do
     local j="$(printf "%03g" $i)"
     if [[ $i -eq 0 ]]; then
       echo ">>> Boostrapping first master node, master$j: $n"
-      skuba "$CLUSTER_NAME" node bootstrap --user sles --sudo --target "$n" "master$j" -v "$LOG_LEVEL"
+      skuba_container "$CLUSTER_NAME" skuba node bootstrap --user sles --sudo --target "$n" "master$j" -v "$LOG_LEVEL"
     fi
 
     if [[ $i -ne 0 ]]; then
       echo ">>> Boostrapping other master nodes, master$j: $n"
-      skuba "$CLUSTER_NAME" node join --role master --user sles --sudo --target  "$n" "master$j" -v "$LOG_LEVEL"
+      skuba_container "$CLUSTER_NAME" skuba node join --role master --user sles --sudo --target  "$n" "master$j" -v "$LOG_LEVEL"
     fi
     ((++i))
 done
@@ -132,7 +132,7 @@ deploy_workers() {
   for n in $1; do
       local j="$(printf "%03g" $i)"
       echo ">>> Deploying workers, worker$j: $n"
-      (skuba "$CLUSTER_NAME" node join --role worker --user sles --sudo --target  "$n" "worker$j" -v "$LOG_LEVEL") &
+      (skuba_container "$CLUSTER_NAME" skuba node join --role worker --user sles --sudo --target  "$n" "worker$j" -v "$LOG_LEVEL") &
       sleep 2
       ((++i))
   done
@@ -140,10 +140,11 @@ deploy_workers() {
 
 deploy() {
   init_control_plane
+  pushd $(pwd)/
   deploy_masters "$MASTERS"
   deploy_workers "$WORKERS"
   echo ">>> Cluster bootstraped:"
-  skuba cluster status
+  skuba_container $CLUSTER_NAME skuba cluster status
 }
 
 define_node_group() {
@@ -172,7 +173,7 @@ node_upgrade() {
       echo ">>> Upgrading node $n"
 
   #    skuba "$CLUSTER_NAME" node upgrade plan  -v "$LOG_LEVEL"
-      skuba "$CLUSTER_NAME" node upgrade apply --user sles --sudo --target "$n" -v "$LOG_LEVEL"
+      skuba_container "$CLUSTER_NAME" skuba node upgrade apply --user sles --sudo --target "$n" -v "$LOG_LEVEL"
   #  ((++i))
   done
 }
@@ -190,7 +191,7 @@ while [[ $# -gt 0 ]] ; do
       ;;
     --run-in-docker)
       shift
-      skuba "$@"
+      skuba_container "$@"
       ;;
     --node-upgrade)
       TARGET="${2:-all}"

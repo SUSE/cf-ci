@@ -79,12 +79,15 @@ skuba-deploy --run-in-docker terraform init
 skuba-deploy --run-in-docker terraform plan -out my-plan
 skuba-deploy --run-in-docker terraform apply -auto-approve my-plan
 
+echo ">>> Deployment at "$TMPDIR"/deployment/"
+
 echo ">>> Bootstrapping cluster with skuba"
-skuba-deploy deploy
+export KUBECONFIG=
+skuba-deploy --deploy
 
 echo ">>> Disabling updates and reboots in cluster"
-skuba-deploy updates -all -disable
-skuba-deploy reboots -disable
+skuba-deploy --updates -all disable
+skuba-deploy --reboots disable
 
 export KUBECONFIG="$TMPDIR"/deployment/my-cluster/config
 export PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_load_balancer)"
@@ -93,10 +96,11 @@ export ROOTFS=overlay-xfs
 export NFS_SERVER_IP="$(skuba-deploy --run-in-docker terraform output ip_storage_int)"
 export NFS_PATH="$(skuba-deploy --run-in-docker terraform output storage_share)"
 
-popd
+pushd "$TMPDIR"/deployment/my-cluster
 cd ~0
-
 echo ">>> Preparing cluster for CAP"
 bash $(dirname "$(readlink -f "$0")")/prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"
 
-echo ">>> Deployment at "$TMPDIR"/deployment/"
+popd
+popd
+cd ~0
