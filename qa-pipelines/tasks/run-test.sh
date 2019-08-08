@@ -21,6 +21,7 @@ UAA_NAMESPACE=uaa
 CF_NAMESPACE=scf
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 trap "upload_klogs_on_failure ${CF_NAMESPACE} ${UAA_NAMESPACE}" EXIT
+exit 1
 CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
