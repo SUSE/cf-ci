@@ -229,7 +229,6 @@ set_helm_params() {
 }
 
 set_uaa_sizing_params() {
-    return 0 # Sizing UAA up breaks CATS
     if [[ "${HA}" == true ]]; then
         if semver_is_gte "$(helm_chart_version)" 2.11.0; then
             # HA UAA not supported prior to 2.11.0
@@ -241,7 +240,7 @@ set_uaa_sizing_params() {
 }
 
 pxc_pre_upgrade() {
-    if [[ "${HA}" == true ]]; then
+    if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
         if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
             HELM_PARAMS+=(--set=sizing.mysql.count=1)
             return 0    
