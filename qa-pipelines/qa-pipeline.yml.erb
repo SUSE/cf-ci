@@ -325,11 +325,6 @@ jobs:
     <% if status_reporting || klog_collection_on_failure %>
     on_failure:
       do:
-      <% if klog_collection_on_failure %>
-      - put: s3.klog-destination
-        params:
-          file: klog/klog-*.tar.gz
-      <% end %> # klog_collection_on_failure
       <% if status_reporting %>
       - put: status.src
         params:
@@ -347,6 +342,11 @@ jobs:
           subject: email/subject
           body: email/body
       <% end %> # status_reporting
+      <% if klog_collection_on_failure %>
+      - put: s3.klog-destination
+        params:
+          file: klog/klog-*.tar.gz
+      <% end %> # klog_collection_on_failure
     <% end %> # status_reporting || klog_collection_on_failure
     <% if enable_terraform %>
     ensure:

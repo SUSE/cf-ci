@@ -7,6 +7,6 @@ echo "Failure in concourse job $(cat meta/build-pipeline-name)/$(cat meta/build-
 
 echo "Status set at https://github.com/SUSE/scf/commits/$(cat commit-id/sha)" | tee -a email/body
 echo "URL to build is $(cat meta/atc-external-url)/builds/$(cat meta/build-id)" | tee -a email/body
-if [[ -f klog/target_url ]]; then
+if [ -f klog/klog-* ]; then
   echo "For more information, view klog at $(cat klog/target_url)" >> email/body | tee -a email/body
 fi
