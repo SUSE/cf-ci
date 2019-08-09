@@ -28,5 +28,7 @@ params:
   AWS_SECRET_ACCESS_KEY: ""
   GKE_PRIVATE_KEY_BASE64: ""
   KLOG_COLLECTION_ON_FAILURE: false
+  EMBEDDED_UAA: false # true or false
+
 run:
   path: ci/qa-pipelines/tasks/cf-deploy.sh

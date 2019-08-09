@@ -10,23 +10,20 @@ enable-terraform: true
 # Report status as steps complete
 status-reporting: false
 
-# Upload klogs to s3 upon failure
-klog-collection-on-failure: true
-
 # version to upgrade from; if null, upgrade is not performed.
-enable-cf-deploy-pre-upgrade: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
+enable-cf-deploy-pre-upgrade: develop/scf-sle-2.17.1%2Bcf7.11.0.93.g6192712d
 
 # When deploying / upgrading, use the embedded UAA instead of the normal,
 # separately namespaced UAA.
-enable-embedded-uaa: false
+enable-embedded-uaa: true
 
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
-enable-cf-brain-tests-pre-upgrade: true
+enable-cf-brain-tests-pre-upgrade: false
 
 # When upgrading, deploy cf-usb (and an app using it) pre-upgrade, and ensure
 # that it remains working post-upgrade
-enable-cf-usb-upgrade-tests: true
+enable-cf-usb-upgrade-tests: false
 enable-cf-upgrade: true
 # USB post-upgrade task will run after upgrade when upgrade-tests flag is enabled
 
@@ -37,8 +34,8 @@ enable-cf-deploy: false
 
 # run tests for non-upgrade pipelines, and post-upgrade tests for upgrade pipelines
 enable-cf-smoke-tests: true
-enable-cf-brain-tests: true
-enable-cf-acceptance-tests: true
+enable-cf-brain-tests: false
+enable-cf-acceptance-tests: false
 
 # tear down CAP deployment when all tasks are successful
 enable-cf-teardown: true
