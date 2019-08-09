@@ -96,8 +96,16 @@ export ROOTFS=overlay-xfs
 export NFS_SERVER_IP="$(skuba-deploy --run-in-docker terraform output ip_storage_int)"
 export NFS_PATH="$(skuba-deploy --run-in-docker terraform output storage_share)"
 
-pushd "$TMPDIR"/deployment/my-cluster
-cd ~0
+echo ">>> Enabling swapaccount on all nodes"
+skuba-deploy --run-cmd all "sudo sed -i -r 's|^(GRUB_CMDLINE_LINUX_DEFAULT=)\"(.*.)\"|\1\"\2 swapaccount=1 \"|' /etc/default/grub && \
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg && \
+sudo reboot
+"
+
+# TODO wait for ssh ready after reboot
+echo ">>> Waiting for nodes to be up"
+sleep 100
+
 echo ">>> Preparing cluster for CAP"
 bash $(dirname "$(readlink -f "$0")")/prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"
 
