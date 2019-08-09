@@ -10,6 +10,7 @@ inputs:
 - name: meta
 - name: s3.scf-config
 - name: pool.kube-hosts
+- name: commit-id
 outputs:
 - name: klog
 
