@@ -29,7 +29,7 @@ upload_klogs_on_failure() {
   fi
   local initial_errexit=$(shopt -o errexit | awk '{ print $2 }')
   set +o errexit
-  local scf_version=$(cat s3.scf-config/version | awk -F. '{print $NF}' | tr -d g)
+  local scf_version=$(cat commit-id/sha)
   local klog_name=klog-${scf_version}-$(date +%s)
   # Insert version file into ~/klog dir so it's included in the final klog tgz
   cp s3.scf-config/version klog
