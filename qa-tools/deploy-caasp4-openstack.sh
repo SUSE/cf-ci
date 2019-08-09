@@ -86,7 +86,7 @@ export KUBECONFIG=
 skuba-deploy --deploy
 
 echo ">>> Disabling updates and reboots in cluster"
-skuba-deploy --updates -all disable
+skuba-deploy --updates all disable
 skuba-deploy --reboots disable
 
 export KUBECONFIG="$TMPDIR"/deployment/my-cluster/config
