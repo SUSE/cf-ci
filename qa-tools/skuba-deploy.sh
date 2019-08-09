@@ -39,7 +39,7 @@ skuba_container() {
       shift
   fi
 
-  docker run -ti --rm \
+  docker run -i --rm \
   -v "$app_path":/app:rw \
   -v "$(dirname "$SSH_AUTH_SOCK")":"$(dirname "$SSH_AUTH_SOCK")" \
   -v "/etc/passwd:/etc/passwd:ro" \
