@@ -147,7 +147,16 @@ deploy() {
   skuba_container $CLUSTER_NAME skuba cluster status
 }
 
+set_env_vars() {
+    JSON=$(terraform output -json)
+    export LB=$(echo "$JSON" | jq -r '.ip_load_balancer.value')
+    export MASTERS=$(echo "$JSON" | jq -r '.ip_masters.value[]')
+    export WORKERS=$(echo "$JSON" | jq -r '.ip_workers.value[]')
+    export ALL="$MASTERS $WORKERS"
+}
+
 define_node_group() {
+  set_env_vars
   case "$1" in
     "all")
     GROUP="$ALL"
@@ -182,11 +191,7 @@ node_upgrade() {
 while [[ $# -gt 0 ]] ; do
     case $1 in
     --deploy)
-      JSON=$(terraform output -json)
-      LB=$(echo "$JSON" | jq -r '.ip_load_balancer.value')
-      MASTERS=$(echo "$JSON" | jq -r '.ip_masters.value[]')
-      WORKERS=$(echo "$JSON" | jq -r '.ip_workers.value[]')
-      ALL="$MASTERS $WORKERS"
+      set_env_vars
       deploy
       ;;
     --run-in-docker)
@@ -194,12 +199,7 @@ while [[ $# -gt 0 ]] ; do
       skuba_container "$@"
       ;;
     --node-upgrade)
-      TARGET="${2:-all}"
       node_upgrade "$TARGET"
-      ;;
-    --test)
-      TARGET="$2"
-      my_test "$TARGET"
       ;;
     --updates)
       TARGET="${2:-all}"
