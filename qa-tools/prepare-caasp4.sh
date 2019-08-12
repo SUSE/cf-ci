@@ -18,8 +18,11 @@ create_configmap() {
           --from-literal=garden-rootfs-driver="${ROOTFS}" \
           --from-literal=nfs-server="${NFS_SERVER_IP}" \
           --from-literal=platform=caasp4
-        cat cluster-admin.yaml | kubectl apply -f -
     fi
+}
+
+create_rolebinding() {
+    cat cluster-admin.yaml | kubectl apply -f -
 }
 
 install_helm_and_tiller() {
@@ -30,20 +33,6 @@ install_helm_and_tiller() {
     else
         echo "Installing helm client and tiller"
         kubectl create serviceaccount tiller --namespace kube-system
-        kubectl create -f - << EOF
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: kube-system:default
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: kube-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-EOF
         helm init
     fi
 }
@@ -88,10 +77,8 @@ while [[ $# -gt 0 ]] ; do
     shift
 done
 
-if [[ -z "$ROOTFS" ]]; then
-    ROOTFS="overlay-xfs"
-fi
 create_configmap
+create_rolebinding
 install_helm_and_tiller
 create_nfs_storageclass
 create_qa_sa_config
