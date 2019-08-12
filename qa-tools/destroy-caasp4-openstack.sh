@@ -24,16 +24,6 @@ skuba-deploy() {
 
 export KUBECONFIG=""
 
-# check ssh key
-agent="$(pgrep ssh-agent -u "$USER")"
-if [[ "$agent" == "" ]]; then
-    eval "$(ssh-agent -s)"
-fi
-if ssh-add -L | grep -q 'ssh' ; then
-    curl https://raw.githubusercontent.com/SUSE/skuba/master/ci/infra/id_shared -o "$WORKSPACE"/id_rsa
-    ssh-add "$WORKSPACE"/id_rsa
-fi
-
 if [[ ! -v OS_PASSWORD ]]; then
     echo ">>> Missing openstack credentials" && exit 1
 fi
