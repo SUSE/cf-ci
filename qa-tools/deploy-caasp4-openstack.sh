@@ -107,15 +107,14 @@ wait
 echo ">>> Waiting for nodes to be up"
 sleep 100
 
-
-popd
-cd ~0
-
 export PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_load_balancer)"
 # openstack images rootfs:
 export ROOTFS=overlay-xfs
 export NFS_SERVER_IP="$(skuba-deploy --run-in-docker terraform output ip_storage_int)"
 export NFS_PATH="$(skuba-deploy --run-in-docker terraform output storage_share)"
+
+popd
+cd ~0
 
 echo ">>> Preparing cluster for CAP"
 bash $(dirname "$(readlink -f "$0")")/prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"
