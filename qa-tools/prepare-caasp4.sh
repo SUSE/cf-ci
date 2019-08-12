@@ -43,7 +43,7 @@ create_nfs_storageclass() {
         echo "Skipping setting up storageclass \"persistent\"; already exists"
     else
         echo "Creating storage class with provided nfs server"
-        helm install stable/nfs-client-provisioner --set nfs.server="$NFS_SERVER_IP" --set nfs.path="$NFS_PATH"
+        helm install stable/nfs-client-provisioner --set nfs.server="$NFS_SERVER_IP" --set nfs.path="$NFS_PATH" --set storageClass.name=persistent
     fi
 }
 
