@@ -1,34 +1,32 @@
 #!/usr/bin/env bash
-set -exuo pipefail
+set -euo pipefail
 
-usage() {
-    echo "Deploys Caasp4 cluster on openstack, with an nfs server, and prepares
-    it for CAP.
-    Usage: $0 ---version CAASP_VERSION --openstack STACK
-    CAASP_VERSION can be one of: devel, staging, product, update
+# Deploys Caasp4 cluster on openstack, with an nfs server, and prepares
+# it for CAP.
+# Creates WORKSPACE folder.
+#
+# Expected env var           Eg:
+#   VERSION                  devel, staging, product, update
+#   STACK                    yourname-cf-ci
+#   WORKSPACE                deployment-caasp4. Defaults to deployment-$STACK
+#
+# Requirements:
+# - Built skuba docker image
+# - Sourced openrc.sh
+# - Key on the ssh keyring. If not, will put one
 
-    Requirements: a built skuba docker image, a sourced openrc.sh, a key on the
-    ssh keyring"
-}
-
-# TODO add deployment folder for terraform deletion
-
-# Parse options
-while [[ $# -gt 0 ]] ; do
-    case $1 in
-        --version)
-            export VERSION="${2:-devel}"
-            ;;
-        --openstack-stack)
-            export STACK="${2:-$(whoami)-caasp4-cf-ci}"
-            ;;
-        -h|--help)
-            echo usage
-            exit 0
-            ;;
-    esac
-    shift
-done
+if [[ ! -v VERSION ]]; then
+    export VERSION="devel"
+fi
+if [[ ! -v STACK ]]; then
+    STACK="$(whoami)-caasp4-cf-ci"
+    export STACK
+fi
+if [[ ! -v WORKSPACE ]]; then
+    WORKSPACE="$(pwd)/deployment-$STACK"
+    export WORKSPACE
+    mkdir "$WORKSPACE"
+fi
 
 export SKUBA_TAG="$VERSION"
 SKUBA_DEPLOY_PATH=$(dirname "$(readlink -f "$0")")/skuba-deploy.sh
@@ -36,7 +34,27 @@ skuba-deploy() {
     bash "$SKUBA_DEPLOY_PATH" "$@"
 }
 
-TMPDIR=$(mktemp -d)
+
+# check ssh key
+agent="$(pgrep ssh-agent -u "$USER")"
+if [[ "$agent" == "" ]]; then
+    eval "$(ssh-agent -s)"
+fi
+if ! ssh-add -L | grep -q 'ssh' ; then
+    echo ">>> Adding ssh key"
+    curl https://raw.githubusercontent.com/SUSE/skuba/master/ci/infra/id_shared -o id_rsa \
+        && chmod 0600 id_rsa
+    ssh-add "$WORKSPACE"/id_rsa
+fi
+
+if [[ ! -v OS_PASSWORD ]]; then
+    echo ">>> Missing openstack credentials" && exit 1
+fi
+# TODO
+# credentials for ecp? read from env meanwhile
+# -v openstack_password="$(bosh int ../../secure/concourse-secrets.yml --path '/openstack-password')" \
+    # cloudfoundry/cloud.suse.de/bosh-deployment/bosh.pem.gpg
+# qa-pipelines/config-ecp.yml ?
 
 echo ">>> Extracting terraform files from skuba package"
 docker run \
@@ -46,32 +64,35 @@ docker run \
        skuba/"$VERSION" sleep infinity
 docker cp \
        skuba-"$VERSION":/usr/share/caasp/terraform/openstack/. \
-       "$TMPDIR"/deployment
+       "$WORKSPACE"/deployment
 docker rm -f skuba-"$VERSION"
 
-# TODO change caasp repos
 echo ">>> Copying our own terraform files"
+case "$VERSION" in
+    "devel")
+         CAASP_REPO='caasp_40_devel_sle15sp1 = "http://download.suse.de/ibs/Devel:/CaaSP:/4.0/SLE_15_SP1/"'
+         ;;
+    "staging")
+         CAASP_REPO='caasp_40_staging_sle15sp1 = "http://download.suse.de/ibs/SUSE:/SLE-15-SP1:/Update:/Products:/CASP40/staging/"'
+         ;;
+    "product")
+         CAASP_REPO="TODO"
+         CAASP_REPO='caasp_40_product_sle15sp1 = "http://download.suse.de/ibs/SUSE:/SLE-15-SP1:/Update:/Products:/CASP40/standard/"'
+         ;;
+    "update")
+         CAASP_REPO='caasp_40_update_sle15sp1 = "http://download.suse.de/ibs/SUSE:/SLE-15-SP1:/Update:/Products:/CASP40:/Update/standard/"'
+         ;;
+esac
+echo ">>>>>> Using $CAASP_REPO"
 sed -e "s%#~placeholder_stack~#%$STACK%g" \
+    -e "s%#~placeholder_caasp_repo~#%$CAASP_REPO%g" \
     -e "s%#~placeholder_sshkey~#%$(ssh-add -L)%g" \
     "$(dirname "$0")/../cap-terraform/caasp4/terraform.tfvars.skel" > \
-    "$TMPDIR"/deployment/terraform.tfvars
-cp -r "$(dirname "$0")/../cap-terraform/caasp4"/* "$TMPDIR"/deployment/
+    "$WORKSPACE"/deployment/terraform.tfvars
 
-# TODO add ssh key
-# agent="$(pgrep ssh-agent -u "$USER")"
-# if [[ "$agent" == "" ]]; then
-#     eval "$(ssh-agent -s)"
-# fi
-# curl https://raw.githubusercontent.com/SUSE/skuba/master/ci/infra/id_shared -o "$TMPDIR"/id_rsa
-# ssh-add "$TMPDIR"/id_rsa
+cp -r "$(dirname "$0")/../cap-terraform/caasp4"/* "$WORKSPACE"/deployment/
 
-# TODO source container-openrc.sh
-# credentials for ecp? read from env meanwhile
-# -v openstack_password="$(bosh int ../../secure/concourse-secrets.yml --path '/openstack-password')" \
-# cloudfoundry/cloud.suse.de/bosh-deployment/bosh.pem.gpg
-# qa-pipelines/config-ecp.yml ?
-
-pushd "$TMPDIR"/deployment
+pushd "$WORKSPACE"/deployment
 cd ~0
 
 echo ">>> Deploying with terraform"
@@ -79,14 +100,14 @@ skuba-deploy --run-in-docker terraform init
 skuba-deploy --run-in-docker terraform plan -out my-plan
 skuba-deploy --run-in-docker terraform apply -auto-approve my-plan
 
-echo ">>> Deployment at "$TMPDIR"/deployment/"
+echo ">>> Deployment at $WORKSPACE/deployment/"
 
 echo ">>> Bootstrapping cluster with skuba"
 export KUBECONFIG=
 skuba-deploy --deploy
 wait
 
-export KUBECONFIG="$TMPDIR"/deployment/my-cluster/admin.conf
+export KUBECONFIG="$WORKSPACE"/deployment/my-cluster/admin.conf
 
 echo ">>> Disabling automatic updates in cluster"
 skuba-deploy --updates all disable
@@ -103,18 +124,25 @@ sudo shutdown -r now &
 "
 wait
 
-# # TODO wait for ssh ready after reboot
 echo ">>> Waiting for nodes to be up"
 sleep 100
 
-export PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_load_balancer)"
+PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_load_balancer)"
+export PUBLIC_IP
 # openstack images rootfs:
-export ROOTFS=overlay-xfs
-export NFS_SERVER_IP="$(skuba-deploy --run-in-docker terraform output ip_storage_int)"
-export NFS_PATH="$(skuba-deploy --run-in-docker terraform output storage_share)"
+ROOTFS=overlay-xfs
+export ROOTFS
+
+NFS_SERVER_IP="$(skuba-deploy --run-in-docker terraform output ip_storage_int)"
+export NFS_SERVER_IP
+NFS_PATH="$(skuba-deploy --run-in-docker terraform output storage_share)"
+export NFS_PATH
 
 popd
 cd ~0
 
 echo ">>> Preparing cluster for CAP"
-bash $(dirname "$(readlink -f "$0")")/prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"
+bash "$(dirname "$(readlink -f "$0")")"/prepare-caasp4.sh
+
+cp "$KUBECONFIG" "$WORKSPACE/kubeconfig"
+echo ">>> Done. kubeconfig at $WORKSPACE/kubeconfig"
