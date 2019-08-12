@@ -88,18 +88,18 @@ wait
 
 export KUBECONFIG="$TMPDIR"/deployment/my-cluster/admin.conf
 
-echo ">>> Disabling updates in cluster"
+echo ">>> Disabling automatic updates in cluster"
 skuba-deploy --updates all disable
 wait
 
-echo ">>> Disabling reboots in cluster"
+echo ">>> Disabling automatic reboots in cluster"
 skuba-deploy --reboots disable
 wait
 
 echo ">>> Enabling swapaccount on all nodes"
 skuba-deploy --run-cmd all "sudo sed -i -r 's|^(GRUB_CMDLINE_LINUX_DEFAULT=)\"(.*.)\"|\1\"\2 swapaccount=1 \"|' /etc/default/grub && \
 sudo grub2-mkconfig -o /boot/grub2/grub.cfg && \
-sudo reboot
+sudo shutdown -r now &
 "
 wait
 
