@@ -3,7 +3,8 @@ set -euo pipefail
 
 # Deploys Caasp4 cluster on openstack, with an nfs server, and prepares
 # it for CAP.
-# Creates WORKSPACE folder.
+#
+# Creates WORKSPACE folder, with kubeconfig and artifacts inside
 #
 # Expected env var           Eg:
 #   VERSION                  devel, staging, product, update
