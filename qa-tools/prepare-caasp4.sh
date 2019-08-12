@@ -18,7 +18,6 @@ create_configmap() {
           --from-literal=garden-rootfs-driver="${ROOTFS}" \
           --from-literal=nfs-server="${NFS_SERVER_IP}" \
           --from-literal=platform=caasp4
-        cat persistent-sc.yaml | kubectl create -f -
         cat cluster-admin.yaml | kubectl apply -f -
     fi
 }
