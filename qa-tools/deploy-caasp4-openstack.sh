@@ -84,31 +84,38 @@ echo ">>> Deployment at "$TMPDIR"/deployment/"
 echo ">>> Bootstrapping cluster with skuba"
 export KUBECONFIG=
 skuba-deploy --deploy
+wait
 
-echo ">>> Disabling updates and reboots in cluster"
+export KUBECONFIG="$TMPDIR"/deployment/my-cluster/admin.conf
+
+echo ">>> Disabling updates in cluster"
 skuba-deploy --updates all disable
-skuba-deploy --reboots disable
+wait
 
-export KUBECONFIG="$TMPDIR"/deployment/my-cluster/config
-export PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_load_balancer)"
-# openstack images rootfs:
-export ROOTFS=overlay-xfs
-export NFS_SERVER_IP="$(skuba-deploy --run-in-docker terraform output ip_storage_int)"
-export NFS_PATH="$(skuba-deploy --run-in-docker terraform output storage_share)"
+echo ">>> Disabling reboots in cluster"
+skuba-deploy --reboots disable
+wait
 
 echo ">>> Enabling swapaccount on all nodes"
 skuba-deploy --run-cmd all "sudo sed -i -r 's|^(GRUB_CMDLINE_LINUX_DEFAULT=)\"(.*.)\"|\1\"\2 swapaccount=1 \"|' /etc/default/grub && \
 sudo grub2-mkconfig -o /boot/grub2/grub.cfg && \
 sudo reboot
 "
+wait
 
-# TODO wait for ssh ready after reboot
+# # TODO wait for ssh ready after reboot
 echo ">>> Waiting for nodes to be up"
 sleep 100
 
-echo ">>> Preparing cluster for CAP"
-bash $(dirname "$(readlink -f "$0")")/prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"
 
 popd
-popd
 cd ~0
+
+export PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_load_balancer)"
+# openstack images rootfs:
+export ROOTFS=overlay-xfs
+export NFS_SERVER_IP="$(skuba-deploy --run-in-docker terraform output ip_storage_int)"
+export NFS_PATH="$(skuba-deploy --run-in-docker terraform output storage_share)"
+
+echo ">>> Preparing cluster for CAP"
+bash $(dirname "$(readlink -f "$0")")/prepare-caasp4.sh --public-ip "$PUBLIC_IP" --rootfs "$ROOTFS" --nfs-server-ip "$NFS_SERVER_IP"

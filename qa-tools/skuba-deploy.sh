@@ -117,11 +117,13 @@ for n in $1; do
     if [[ $i -eq 0 ]]; then
       echo ">>> Boostrapping first master node, master$j: $n"
       skuba_container "$CLUSTER_NAME" skuba node bootstrap --user sles --sudo --target "$n" "master$j" -v "$LOG_LEVEL"
+      wait
     fi
 
     if [[ $i -ne 0 ]]; then
       echo ">>> Boostrapping other master nodes, master$j: $n"
       skuba_container "$CLUSTER_NAME" skuba node join --role master --user sles --sudo --target  "$n" "master$j" -v "$LOG_LEVEL"
+      wait
     fi
     ((++i))
 done
@@ -133,7 +135,7 @@ deploy_workers() {
       local j="$(printf "%03g" $i)"
       echo ">>> Deploying workers, worker$j: $n"
       (skuba_container "$CLUSTER_NAME" skuba node join --role worker --user sles --sudo --target  "$n" "worker$j" -v "$LOG_LEVEL") &
-      sleep 2
+      wait
       ((++i))
   done
 }
