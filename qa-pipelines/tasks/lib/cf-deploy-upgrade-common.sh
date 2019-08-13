@@ -56,9 +56,8 @@ is_namespace_ready() {
 
     # Check that all pods not from jobs are ready
     if ! kubectl get pods --namespace "${namespace}" --selector '!job-name' \
-        --output 'custom-columns=:.metadata.name,:.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-        | awk '{ if ($NF != "true") { print } }' \
-        | tee /dev/stderr \
+        --output 'custom-columns=:.status.containerStatuses[*].ready' \
+        | grep false \
         | xargs --no-run-if-empty false
     then
         return 1
@@ -139,6 +138,10 @@ wait_for_release() {
     printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((now - start))
     kubectl get pods --namespace="${namespace}"
     if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
+        kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+            --output 'custom-columns=NAME:.metadata.name,CONTAINERS:.status.containerStatuses[*].name,READY:.status.containerStatuses[*].ready' \
+            | grep -E 'READY|false' \
+            || true
         printf "%s pods are still pending after 80 minutes \n" "${release}"
         exit 1
     fi
