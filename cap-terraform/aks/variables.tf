@@ -22,7 +22,7 @@ variable "cluster_labels" {
 }
 
 variable "k8s_version" {
-    default = "1.13.5"
+    default = "1.13.7"
 }
 variable "disk_size_gb" {
     default = 60
