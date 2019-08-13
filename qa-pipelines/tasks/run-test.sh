@@ -17,7 +17,10 @@ EXCLUDE_BRAINS_REGEX=
 INCLUDE_BRAINS_REGEX=${INCLUDE_BRAINS_REGEX:-}
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 ACCEPTANCE_TEST_NODES=3
+UAA_NAMESPACE=uaa
 CF_NAMESPACE=scf
+source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
+trap "upload_klogs_on_failure ${CF_NAMESPACE} ${UAA_NAMESPACE}" EXIT
 CAP_DIRECTORY=s3.scf-config
 set +o allexport
 
@@ -232,6 +235,9 @@ if [[ -f "${test_non_pods_yml}" ]]; then
 fi
 # Delete test pod if they pass. Required pre upgrade
 if [[ $pod_status -eq 0 ]]; then
+    trap "" EXIT
     kubectl delete pod --namespace=scf ${TEST_NAME}
+else
+    echo "Test failed with status ${pod_status}"
 fi
-exit $pod_status
+exit ${pod_status}

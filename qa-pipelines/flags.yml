@@ -8,7 +8,10 @@
 enable-terraform: true
 
 # Report status as steps complete
-status-reporting: true
+status-reporting: false
+
+# Upload klogs to s3 upon failure
+klog-collection-on-failure: true
 
 # version to upgrade from; if null, upgrade is not performed.
 enable-cf-deploy-pre-upgrade: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb

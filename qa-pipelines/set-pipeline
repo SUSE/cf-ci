@@ -159,6 +159,7 @@ fly \
     --config=<(generate_pipeline) \
     --var src-ci-branch=${src_ci_branch} \
     --var s3-config-prefix-sles=${s3_config_prefix} \
+    --var s3-klog-prefix=${s3_config_prefix%%/*} \
     --load-vars-from=<(
         ${secrets_file:+gpg --decrypt --batch ${secrets_file}} # Import secrets
         sed '/^---$/d' < "${vars_file}"                        # Config vars
