@@ -11,6 +11,7 @@ __generate_klog() {
 }
 
 __set_errexit() {
+  # Restores previous errexit status determined from shopt
   if [[ "${1:-}" == "on" ]]; then
     set -o errexit
   elif [[ "${1:-}" == "off" ]]; then

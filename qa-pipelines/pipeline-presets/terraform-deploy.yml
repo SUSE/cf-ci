@@ -1,4 +1,6 @@
 ---
+
+klog-collection-on-failure: true
 enable-terraform: true
 
 enable-cf-deploy: true

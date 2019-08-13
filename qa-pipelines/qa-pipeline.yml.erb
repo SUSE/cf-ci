@@ -11,7 +11,7 @@ def bundle_url_from_version(version)
   end
 end
 
-is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || enable_cf_usb_upgrade_tests
+is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || 
 
 %>
 ---
@@ -66,11 +66,6 @@ aliases:
     TF_VAR_location: westus
 
 resource_types:
-- name: github-status
-  type: docker-image
-  source:
-    repository: resource/github-status
-    tag: release
 - name: meta
   type: docker-image
   source:
@@ -80,6 +75,11 @@ resource_types:
   type: docker-image
   source:
     repository: pcfseceng/email-resource
+- name: github-status
+  type: docker-image
+  source:
+    repository: resource/github-status
+    tag: release
 <% end %>
 resources:
 # CI helper scripts repository
@@ -105,7 +105,6 @@ resources:
     << : *s3-common-params
     regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
 
-# SCF bundle for pre-upgrade
 # SCF bundle to install from (upgrade target, if upgrading)
 - name: s3.scf-config-sles
   type: s3
@@ -142,7 +141,6 @@ resources:
       password: ((status-email-password))
     from: ((status-email-sender))
     to: [((status-email-receiver))]
-    debug: true
 <% end %> # status_reporting
 
 <% if klog_collection_on_failure %>

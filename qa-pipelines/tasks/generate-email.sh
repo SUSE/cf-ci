@@ -2,7 +2,6 @@
 set -o errexit
 set -o nounset
 
-mkdir -p email
 echo "Failure in concourse job $(cat meta/build-pipeline-name)/$(cat meta/build-job-name) build $(cat meta/build-name)" | tee -a  email/subject
 
 echo "Status set at https://github.com/SUSE/scf/commits/$(cat commit-id/sha)" | tee -a email/body
