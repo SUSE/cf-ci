@@ -11,7 +11,7 @@ def bundle_url_from_version(version)
   end
 end
 
-is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || 
+is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || enable_cf_usb_tests
 
 %>
 ---
@@ -177,7 +177,6 @@ jobs:
     - put: pool.kube-hosts
       params: {acquire: true}
       timeout: 2m
-    <% if status_reporting %>
     - task: cf-get-commit-id
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
       <% if is_upgrade_pipeline %>
@@ -186,6 +185,7 @@ jobs:
       <% end %> # is_upgrade_pipeline
       input_mapping:
         s3.archive: s3.scf-config-sles
+    <% if status_reporting %>
     - put: status.src
       params: &status-params-<%= avail %>
         context: ((pipeline-name))-<%= avail %>
