@@ -11,7 +11,7 @@ variable "node_count" {
 }
 
 variable "machine_type" {
-    default = "Standard_DS3_v2"
+    default = "Standard_DS4_v2"
 }
 
 variable "dns_prefix" {
