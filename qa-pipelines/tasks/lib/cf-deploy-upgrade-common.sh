@@ -54,13 +54,15 @@ UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 is_namespace_ready() {
     local namespace="$1"
 
-    # Check that all pods which were not created by jobs are ready
-    [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-        | grep -vE 'secret-generation|post-deployment' \
-        | awk '{ print $2 }' \
-        | sed '/^ *$/d' \
-        | sort \
-        | uniq) ]]
+    # Check that all pods not from jobs are ready
+    if kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+        --output 'custom-columns=:.status.containerStatuses[*].ready' \
+        | grep --quiet false
+    then
+        return 1
+    fi
+
+    return 0
 }
 
 # Outputs a json representation of a yml document
@@ -99,22 +101,46 @@ wait_for_jobs() {
 }
 
 wait_for_release() {
+    local start now elapsed
     local release="$1"
     local namespace=$(helm list "${release}" | awk '$1=="'"$release"'" {print $NF}')
     start=$(date +%s)
+
     wait_for_jobs $release || exit 1
+
+    # Wait for config map
+    local secret_name=""
+    while true ; do
+        secret_name="$(kubectl get configmap -n "${namespace}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
+        if [[ -n "${secret_name}" ]] && kubectl get secrets -n "${namespace}" "${secret_name}" ; then
+            break
+        fi
+        now=$(date +%s)
+        elapsed="$((now - start))"
+        if (( elapsed > 4800 )) ; then
+            printf "\nTimed out waiting for %s config map (%s is %s seconds since start)\n" "${release}" "$(date --rfc-2822)" "${elapsed}"
+        fi
+        printf "\rWaiting for %s config map at %s (%ss)..." "${release}" "$(date --rfc-2822)" "${elapsed}"
+        sleep 10
+    done
+
     for (( i = 0  ; i < 480 ; i ++ )) ; do
         if is_namespace_ready "${namespace}" ; then
             break
         fi
         now=$(date +%s)
-        printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
+        printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((now - start))
         sleep 10
     done
+
     now=$(date +%s)
-    printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
+    printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((now - start))
     kubectl get pods --namespace="${namespace}"
     if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
+        kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+            --output 'custom-columns=NAME:.metadata.name,CONTAINERS:.status.containerStatuses[*].name,READY:.status.containerStatuses[*].ready' \
+            | grep -E 'READY|false' \
+            || true
         printf "%s pods are still pending after 80 minutes \n" "${release}"
         exit 1
     fi
@@ -141,15 +167,22 @@ function semver_is_gte() {
 # Get the version of the helm chart for uaa
 helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 
-generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
-
 get_uaa_ca_cert() (
-    set -o pipefail
-    local uaa_secret_name=$(generated_secrets_secret)
-    kubectl get secret ${uaa_secret_name} \
+    local uaa_secret_name
+    uaa_secret_name="$(kubectl get configmap --namespace "${UAA_NAMESPACE}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
+    if [[ -z "${uaa_secret_name}" ]] ; then
+        echo "Failed to get UAA secret name" >&2
+        exit 1
+    fi
+    local cert_data
+    cert_data="$(kubectl get secret "${uaa_secret_name}" \
       --namespace "${UAA_NAMESPACE}" \
-      -o jsonpath="{.data['internal-ca-cert']}" \
-      | base64 -d
+      -o jsonpath="{.data['internal-ca-cert']}")"
+    if [[ -z "${cert_data}" ]]; then
+        echo "Failed to get UAA CA certificate from secret ${uaa_secret_name}" >&2
+        exit 1
+    fi
+    base64 -d <<< "${cert_data}"
 )
 
 # Helm parameters common to UAA and SCF, for helm install and upgrades

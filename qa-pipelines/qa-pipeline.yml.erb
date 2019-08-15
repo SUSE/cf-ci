@@ -11,7 +11,7 @@ def bundle_url_from_version(domain, version)
   end
 end
 
-is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || 
+is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || enable_cf_usb_upgrade_tests
 
 # Convert a multiline string into a string with literal '\n's for YAML to parse as multiline string
 class ::String
@@ -73,7 +73,7 @@ aliases:
     ARM_SUBSCRIPTION_ID: <%= arm_subscription_id %>
     TF_VAR_client_id: <%= arm_client_id %>
     TF_VAR_client_secret: <%= arm_client_secret %>
-    TF_VAR_location: westus
+    TF_VAR_location: eastus
 
 resource_types:
 - name: meta
@@ -187,7 +187,6 @@ jobs:
     - put: pool.kube-hosts
       params: {acquire: true}
       timeout: 2m
-    <% if status_reporting %>
     - task: cf-get-commit-id
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
       <% if is_upgrade_pipeline %>
@@ -196,6 +195,7 @@ jobs:
       <% end %> # is_upgrade_pipeline
       input_mapping:
         s3.archive: s3.scf-config-sles
+    <% if status_reporting %>
     - put: status.src
       params: &status-params-<%= avail %>
         context: ((pipeline-name))-<%= avail %>

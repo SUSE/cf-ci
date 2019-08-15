@@ -9,8 +9,9 @@ variable "location" {
 variable "node_count" {
     default = "1"
 }
+
 variable "machine_type" {
-    default = "Standard_DS3_v2"
+    default = "Standard_DS4_v2"
 }
 
 variable "dns_prefix" {
@@ -21,9 +22,6 @@ variable "cluster_labels" {
     type = "map"
 }
 
-variable "k8s_version" {
-    default = "1.13.5"
-}
 variable "disk_size_gb" {
     default = 60
 }
