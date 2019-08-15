@@ -56,7 +56,7 @@ is_namespace_ready() {
 
     # Check that all pods which were not created by jobs are ready
     [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-        | grep -vE 'secret-generation|post-deployment' \
+        | grep -vE 'secret-generation|post-deployment|configure-eirini' \
         | awk '{ print $2 }' \
         | sed '/^ *$/d' \
         | sort \
