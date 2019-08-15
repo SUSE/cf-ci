@@ -55,10 +55,9 @@ is_namespace_ready() {
     local namespace="$1"
 
     # Check that all pods not from jobs are ready
-    if ! kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+    if kubectl get pods --namespace "${namespace}" --selector '!job-name' \
         --output 'custom-columns=:.status.containerStatuses[*].ready' \
-        | grep false \
-        | xargs --no-run-if-empty false
+        | grep --quiet false
     then
         return 1
     fi
