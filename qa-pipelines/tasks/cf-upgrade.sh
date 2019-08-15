@@ -92,6 +92,14 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
 # Wait for CF release
 wait_for_release scf
 
+pxc_post_upgrade() {
+    if [[ "${HA}" == true ]]; then
+        HELM_PARAMS+=(--set=sizing.mysql.count=3)
+        return 0
+    fi
+    return 1
+}
+
 if pxc_post_upgrade; then
   # Delete left-over PVCs from mysql upgrade.
   kubectl delete pvc -n scf mysql-data-mysql-1
