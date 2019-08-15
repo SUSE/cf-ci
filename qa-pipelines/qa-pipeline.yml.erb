@@ -225,7 +225,7 @@ jobs:
       params:
         << : *upgrade-task-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: ((enable-embedded-uaa))
+        EMBEDDED_UAA: <%= enable_embedded_uaa %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h
@@ -268,7 +268,7 @@ jobs:
       params:
         << : *common-task-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: ((enable-embedded-uaa))
+        EMBEDDED_UAA: <%= enable_embedded_uaa %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h
@@ -286,7 +286,7 @@ jobs:
       params:
         << : *common-task-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: ((enable-embedded-uaa))
+        EMBEDDED_UAA: <%= enable-embedded-uaa %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h

@@ -16,10 +16,6 @@ klog-collection-on-failure: true
 
 enable-cf-deploy-pre-upgrade: true
 
-# When deploying / upgrading, use the embedded UAA instead of the normal,
-# separately namespaced UAA.
-enable-embedded-uaa: false
-
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
 enable-cf-brain-tests-pre-upgrade: true

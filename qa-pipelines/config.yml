@@ -31,3 +31,7 @@ status-email-username: *ci-status-email-username
 status-email-password: *ci-status-email-password
 status-email-sender: *ci-status-email-sender
 status-email-receiver: *ci-status-email-receiver
+
+# When deploying / upgrading, use the embedded UAA instead of the normal,
+# separately namespaced UAA.
+enable-embedded-uaa: false
