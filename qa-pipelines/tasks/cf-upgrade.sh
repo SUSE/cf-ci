@@ -123,7 +123,6 @@ if pxc_post_upgrade; then
       --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
       --set "env.UAA_HOST=${UAA_HOST}" \
       --set "env.UAA_PORT=${UAA_PORT}" \
-      --set "secrets.UAA_CA_CERT=${CA_CERT}" \
       --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
       --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
       --wait \
