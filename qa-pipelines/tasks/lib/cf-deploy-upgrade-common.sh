@@ -233,10 +233,9 @@ set_uaa_sizing_params() {
         if semver_is_gte "$(helm_chart_version)" 2.11.0; then
             # HA UAA not supported prior to 2.11.0
             HELM_PARAMS+=(--set=config.HA=true)
+            # Need to have uaa count set to 1 for CATs to pass.
+            HELM_PARAMS+=(--set=sizing.uaa.count=1)
         fi
-    elif [[ ${SCALED_HA} == true ]]; then
-        HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
-    fi
 }
 
 set_scf_sizing_params() {

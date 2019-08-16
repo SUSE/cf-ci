@@ -57,28 +57,6 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     fi
 fi
 
-pxc_pre_upgrade() {
-    if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
-        if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
-            HELM_PARAMS+=(--set=sizing.mysql.count=1)
-            return 0    
-        fi
-        return 1
-    fi
-}
-
-if pxc_pre_upgrade; then
-    echo "Downsizing UAA mysql node count to 1..."
-    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
-        --namespace "${UAA_NAMESPACE}" \
-        --timeout 600 \
-        "${HELM_PARAMS[@]}"
-
-    # Wait for UAA release
-    wait_for_release uaa
-fi
-
 # Deploy CF
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
@@ -116,7 +94,29 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_set_record_sets_for_namespace scf
 fi
 
+pxc_pre_upgrade() {
+    if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
+        if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
+            HELM_PARAMS+=(--set=sizing.mysql.count=1)
+            return 0    
+        fi
+        return 1
+    fi
+}
+
+set_helm_params # Resets HELM_PARAMS
+
 if pxc_pre_upgrade; then
+    echo "Downsizing UAA mysql node count to 1..."
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+        --namespace "${UAA_NAMESPACE}" \
+        --timeout 600 \
+        "${HELM_PARAMS[@]}"
+
+    # Wait for UAA release
+    wait_for_release uaa
+
     echo "Downsizing SCF mysql node count to 1..."
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
     helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
