@@ -51,7 +51,7 @@ monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
-echo UAA customization ...
+echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
@@ -105,7 +105,7 @@ if pxc_post_upgrade; then
   kubectl delete pvc -n scf mysql-data-mysql-1
 
   # Scaling the instances up after mysql to pxc migration.
-  echo "Scaling up the instances up for UAA..."
+  echo "Scaling up mysql instances for UAA..."
   echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
   helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
       --namespace "${UAA_NAMESPACE}" \
@@ -115,7 +115,7 @@ if pxc_post_upgrade; then
   # Wait for UAA release
   wait_for_release uaa
   
-  echo "Scaling up the instances up for SCF..."
+  echo "Scaling up mysql instances for SCF..."
   echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
   helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
       --namespace "${CF_NAMESPACE}" \
