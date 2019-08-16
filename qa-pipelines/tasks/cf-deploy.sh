@@ -112,6 +112,8 @@ if pxc_pre_upgrade; then
     helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
+        # Need to have uaa count set to 1 for CATs to pass.
+        --set=sizing.uaa.count=1
         "${HELM_PARAMS[@]}"
 
     # Wait for UAA release

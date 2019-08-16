@@ -233,8 +233,6 @@ set_uaa_sizing_params() {
         if semver_is_gte "$(helm_chart_version)" 2.11.0; then
             # HA UAA not supported prior to 2.11.0
             HELM_PARAMS+=(--set=config.HA=true)
-            # Need to have uaa count set to 1 for CATs to pass.
-            HELM_PARAMS+=(--set=sizing.uaa.count=1)
         fi
     fi
 }
