@@ -236,6 +236,7 @@ set_uaa_sizing_params() {
             # Need to have uaa count set to 1 for CATs to pass.
             HELM_PARAMS+=(--set=sizing.uaa.count=1)
         fi
+    fi
 }
 
 set_scf_sizing_params() {
