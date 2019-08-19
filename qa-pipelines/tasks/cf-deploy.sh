@@ -97,7 +97,7 @@ fi
 pxc_pre_upgrade() {
     if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
         if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
-            HELM_PARAMS+=(--set=sizing.mysql.count=1)
+            HELM_PARAMS+=(--set "sizing.mysql.count=1")
             return 0    
         fi
         return 1
@@ -113,7 +113,7 @@ if pxc_pre_upgrade; then
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
         # Need to have uaa count set to 1 for CATs to pass.
-        --set=sizing.uaa.count=1
+        --set "sizing.uaa.count=1" \
         "${HELM_PARAMS[@]}"
 
     # Wait for UAA release
