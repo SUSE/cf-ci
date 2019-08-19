@@ -189,7 +189,7 @@ get_uaa_ca_cert() (
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "enable.autoscaler=true"
+                 --set "enable.autoscaler=${ENABLE_AUTOSCALER}"
                  --set "kube.storage_class.persistent=${STORAGECLASS}")
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
@@ -199,7 +199,7 @@ set_helm_params() {
     if [[ $(helm_chart_version) == "2.15.2" ]]; then
         HELM_PARAMS+=(--set "sizing.credhub_user.count=1")
     else
-        HELM_PARAMS+=(--set "enable.credhub=true")
+        HELM_PARAMS+=(--set "enable.credhub=${ENABLE_CREDHUB}")
     fi
 
     if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||

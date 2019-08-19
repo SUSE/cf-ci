@@ -62,6 +62,10 @@ aliases:
     access_key_id: <%= s3_config_access_key %>
     secret_access_key: <%= s3_config_secret_key %>
     bucket: <%= s3_config_bucket_sles %>
+  deploy-upgrade-params: &deploy-upgrade-params
+    ENABLE_CREDHUB: <%= enable_credhub == true %>
+    ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
+    EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
 
   # Terraform AKS Configuration
   # Used in terraform-deploy-aks and delete-aks-resource-group
@@ -224,8 +228,8 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
         << : *upgrade-task-params
+        << : *deploy-upgrade-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: <%= enable_embedded_uaa %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h
@@ -267,8 +271,8 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
       params:
         << : *common-task-params
+        << : *deploy-upgrade-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: <%= enable_embedded_uaa %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h
@@ -285,8 +289,8 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
         << : *common-task-params
+        << : *deploy-upgrade-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: <%= enable-embedded-uaa %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h
