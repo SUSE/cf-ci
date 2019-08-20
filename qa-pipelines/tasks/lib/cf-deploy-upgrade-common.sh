@@ -247,7 +247,7 @@ set_scf_sizing_params() {
             HELM_PARAMS+=(
                 #--set=sizing.{autoscaler_postgres,bits,blobstore,credhub_user}.count=1
                 --set=sizing.{diego_cell,mysql}.count=3
-                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,autoscaler_postgres,blobstore,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,mysql_proxy,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
+                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,mysql,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
             )
         else
             HELM_PARAMS+=(--set=config.HA=true)
