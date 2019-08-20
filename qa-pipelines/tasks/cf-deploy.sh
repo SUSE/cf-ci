@@ -111,6 +111,7 @@ set_helm_params # Resets HELM_PARAMS
 
 if pxc_pre_upgrade; then
     echo "Downsizing UAA mysql node count to 1..."
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
     helm upgrade --reuse-values uaa ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
@@ -120,6 +121,7 @@ if pxc_pre_upgrade; then
     wait_for_release uaa
 
     echo "Downsizing SCF mysql node count to 1..."
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
     helm upgrade --reuse-values scf ${CAP_DIRECTORY}/helm/cf/ \
         --namespace "${CF_NAMESPACE}" \
         --timeout 3600 \

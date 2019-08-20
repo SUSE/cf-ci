@@ -230,14 +230,11 @@ set_helm_params() {
 
 set_uaa_sizing_params() {
     if [[ "${HA}" == true ]]; then
-        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            if [[ ${SCALED_HA} == true ]]; then
-                HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=2)
-            fi
-            else
-                # HA UAA not supported prior to 2.11.0
-                HELM_PARAMS+=(--set=config.HA=true)
-            fi
+        if [[ ${SCALED_HA} == true ]]; then
+            HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=2)
+        else
+            # HA UAA not supported prior to 2.11.0
+            HELM_PARAMS+=(--set=config.HA=true)
         fi
     fi
 }
@@ -245,21 +242,15 @@ set_uaa_sizing_params() {
 set_scf_sizing_params() {
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
-    fi
     elif [[ ${HA} == true ]]; then
-        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            if [[ ${SCALED_HA} == true ]]; then
-                HELM_PARAMS+=(
-                    --set=sizing.routing_api.count=1
-                    --set=sizing.{adapter,api-group,bits,blobstore,cc-clock,cc_uploader,cc_worker,cf-usb-group,diego-api,diego-brain,diego_cell,diego_ssh,doppler,locket,log-api,log-cache-scheduler,mysql,mysql_proxy,nats,nfs-broker,router,routing-api,syslog-scheduler,tcp-router}.count=2
-                )
-            fi
-            else
-                HELM_PARAMS+=(--set=config.HA=true)
-            fi
-        fi
+        if [[ ${SCALED_HA} == true ]]; then
+            HELM_PARAMS+=(
+                #--set=sizing.{autoscaler_postgres,bits,blobstore,credhub_user}.count=1
+                --set=sizing.diego_cell.count=3
+                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,autoscaler_postgres,blobstore,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,mysql,mysql_proxy,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
+            )
         else
-            HELM_PARAMS+=(--set=sizing.HA=true)
+            HELM_PARAMS+=(--set=config.HA=true)
         fi
     fi
 }

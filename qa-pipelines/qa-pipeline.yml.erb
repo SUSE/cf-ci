@@ -349,14 +349,4 @@ jobs:
           file: klog/klog-*.tar.gz
       <% end %> # klog_collection_on_failure
     <% end %> # status_reporting || klog_collection_on_failure
-    <% if enable_terraform %>
-    ensure:
-      do:
-        - task: delete-aks-resource-group
-          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
-          params:
-            << : *terraform-aks-params
-        - put: pool.kube-hosts
-          params: {remove: pool.kube-hosts}
-    <% end %> # enable_terraform
 <% end %> # %w(SA HA).each
