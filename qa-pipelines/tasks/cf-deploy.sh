@@ -15,7 +15,7 @@ pxc_pre_upgrade() {
 }
 
 if pxc_pre_upgrade; then
-   export SCALED_HA=0
+   export SCALED_HA=true
 fi
 
 set_helm_params # Sets HELM_PARAMS

@@ -56,7 +56,7 @@ pxc_post_upgrade() {
 }
 
 if pxc_post_upgrade:
-  export SCALED_HA=1
+  export SCALED_HA=false
 fi
 
 set_helm_params # Sets HELM_PARAMS
