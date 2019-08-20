@@ -231,8 +231,13 @@ set_helm_params() {
 set_uaa_sizing_params() {
     if [[ "${HA}" == true ]]; then
         if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            # HA UAA not supported prior to 2.11.0
-            HELM_PARAMS+=(--set=config.HA=true)
+            if [[ ${SCALED_HA} == true ]]; then
+                HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=2)
+            fi
+            else
+                # HA UAA not supported prior to 2.11.0
+                HELM_PARAMS+=(--set=config.HA=true)
+            fi
         fi
     fi
 }
@@ -241,22 +246,22 @@ set_scf_sizing_params() {
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
     fi
-    case "${HA}" in
-    true)
+    elif [[ ${HA} == true ]]; then
         if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            HELM_PARAMS+=(--set=config.HA=true)
+            if [[ ${SCALED_HA} == true ]]; then
+                HELM_PARAMS+=(
+                    --set=sizing.routing_api.count=1
+                    --set=sizing.{adapter,api-group,bits,blobstore,cc-clock,cc_uploader,cc_worker,cf-usb-group,diego-api,diego-brain,diego_cell,diego_ssh,doppler,locket,log-api,log-cache-scheduler,mysql,mysql_proxy,nats,nfs-broker,router,routing-api,syslog-scheduler,tcp-router}.count=2
+                )
+            fi
+            else
+                HELM_PARAMS+=(--set=config.HA=true)
+            fi
+        fi
         else
             HELM_PARAMS+=(--set=sizing.HA=true)
         fi
-        ;;
-    scaled)
-        HELM_PARAMS+=(
-            --set=sizing.routing_api.count=1
-            --set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2
-            --set=sizing.{diego_api,diego_locket,diego_cell}.count=3
-        )
-        ;;
-    esac
+    fi
 }
 
 set -o allexport
