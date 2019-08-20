@@ -48,8 +48,24 @@ instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | j
 monitor_file=$(mktemp -d)/downtime.log
 monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
 
+pxc_post_upgrade() {
+    if [[ "${HA}" == true ]]; then
+        return 0
+    fi
+    return 1
+}
+
+if pxc_post_upgrade:
+  export SCALED_HA=1
+fi
+
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
+
+if pxc_post_upgrade:
+  HELM_PARAMS+=(--set=config.HA_strict=false)
+  HELM_PARAMS+=(--set=sizing.mysql.count=1)
+fi
 
 echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
@@ -69,6 +85,11 @@ fi
 # Deploy CF
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
+
+if pxc_post_upgrade:
+  HELM_PARAMS+=(--set=config.HA_strict=false)
+  HELM_PARAMS+=(--set=sizing.mysql.count=1)
+fi
 
 echo SCF customization ...
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
@@ -92,20 +113,14 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
 # Wait for CF release
 wait_for_release scf
 
-pxc_post_upgrade() {
-    if [[ "${HA}" == true ]]; then
-        HELM_PARAMS+=(--set=sizing.mysql.count=3)
-        return 0
-    fi
-    return 1
-}
-
 if pxc_post_upgrade; then
   # Delete left-over PVCs from mysql upgrade.
   kubectl delete pvc -n scf mysql-data-mysql-1
 
   # Scaling the instances up after mysql to pxc migration.
-  echo "Scaling up mysql instances for UAA..."
+  echo "Applying actual UAA HA config..."
+  set_helm_params # Resets HELM_PARAMS.
+  set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS.
   echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
   helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
       --namespace "${UAA_NAMESPACE}" \
@@ -115,7 +130,9 @@ if pxc_post_upgrade; then
   # Wait for UAA release
   wait_for_release uaa
   
-  echo "Scaling up mysql instances for SCF..."
+  echo "Applying actual SCF HA config..."
+  set_helm_params # Resets HELM_PARAMS.
+  set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS.
   echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
   helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
       --namespace "${CF_NAMESPACE}" \
