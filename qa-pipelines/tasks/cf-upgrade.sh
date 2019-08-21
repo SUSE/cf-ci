@@ -62,7 +62,7 @@ fi
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
-if pxc_post_upgrade:
+if pxc_post_upgrade; then
   HELM_PARAMS+=(--set=config.HA_strict=false)
   HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
@@ -86,7 +86,7 @@ fi
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
-if pxc_post_upgrade:
+if pxc_post_upgrade; then
   HELM_PARAMS+=(--set=config.HA_strict=false)
   HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
