@@ -54,7 +54,7 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     helm install ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --name uaa \
-        --timeout 600 \
+        --timeout 1200 \
         "${HELM_PARAMS[@]}"
 
     trap "upload_klogs_on_failure ${UAA_NAMESPACE}" EXIT
@@ -89,7 +89,7 @@ fi
 helm install ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
-    --timeout 600 \
+    --timeout 1200 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
@@ -124,7 +124,7 @@ if pxc_pre_upgrade; then
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
     helm upgrade --reuse-values scf ${CAP_DIRECTORY}/helm/cf/ \
         --namespace "${CF_NAMESPACE}" \
-        --timeout 3600 \
+        --timeout 600 \
         --set "sizing.mysql.count=1"
     
     # Wait for CF release
