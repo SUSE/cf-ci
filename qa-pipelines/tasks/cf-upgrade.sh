@@ -55,7 +55,7 @@ pxc_post_upgrade() {
     return 1
 }
 
-if pxc_post_upgrade:
+if pxc_post_upgrade; then
   export SCALED_HA=false
 fi
 
