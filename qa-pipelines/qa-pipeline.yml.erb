@@ -54,6 +54,9 @@ aliases:
     <% else %>
     KLOG_COLLECTION_ON_FAILURE: false
     <% end %> # klog_collection_on_failure
+    <% if test_ha_strict_enable || test_ha_strict_disable %>
+    HA_STRICT: <%= test_ha_strict_enable %>
+    <% end %> # test_ha_strict_enable || test_ha_strict_disable %>
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params
     CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", cap_pre_upgrade_url || enable_cf_deploy_pre_upgrade) %>
