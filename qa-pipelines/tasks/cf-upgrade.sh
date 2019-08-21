@@ -56,14 +56,14 @@ pxc_post_upgrade() {
 }
 
 if pxc_post_upgrade; then
-  export SCALED_HA=false
+  # Need custom sizing for since config.HA_strict=false is not available for UAA charts.
+  export SCALED_HA=true
 fi
 
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
 if pxc_post_upgrade; then
-  HELM_PARAMS+=(--set=config.HA_strict=false)
   HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
 
@@ -80,6 +80,11 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
 
   # Wait for UAA release
   wait_for_release uaa
+fi
+
+if pxc_post_upgrade; then
+  # Now we can turn off SCALED_HA to start using config.HA=true.
+  export SCALED_HA=false
 fi
 
 # Deploy CF
