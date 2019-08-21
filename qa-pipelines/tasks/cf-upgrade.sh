@@ -82,11 +82,6 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
   wait_for_release uaa
 fi
 
-# if pxc_post_upgrade; then
-#   # Now we can turn off SCALED_HA to start using config.HA=true.
-#   export SCALED_HA=false
-# fi
-
 # Deploy CF
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
@@ -119,10 +114,13 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
 wait_for_release scf
 
 if pxc_post_upgrade; then
+  # Now we can turn off SCALED_HA to start using config.HA=true.
+  export SCALED_HA=false
+
   # Delete left-over PVCs from mysql upgrade.
   kubectl delete pvc -n scf mysql-data-mysql-1
 
-  # Scaling the instances up after mysql to pxc migration.
+  # Restoring the HA configuration after mysql to pxc migration.
   echo "Applying actual UAA HA config..."
   set_helm_params # Resets HELM_PARAMS.
   set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS.
