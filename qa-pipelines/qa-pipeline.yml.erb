@@ -2,18 +2,28 @@
 
 # ERB processing section
 
-def bundle_url_from_version(version)
+def bundle_url_from_version(domain, version)
   case version
-    when true    then '""'      # Use bucket version
-    when false   then '""'      # Don't install (non-upgrade pipelines, for example)
+    when true    then '""'      # Use latest version in bucket
+    when false   then '""'      # Don't install (non-upgrade pipelines, for example; task will not be rendered)
     when /:\/\// then version # URL
-    else "https://((s3-config-bucket-sles)).s3.amazonaws.com/#{(version)}.zip"
+    else "https://#{domain}/#{version}.zip"
   end
 end
 
 is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || enable_cf_usb_upgrade_tests
 
+# Convert a multiline string into a string with literal '\n's for YAML to parse as multiline string
+class ::String
+  def yamlify()
+    self.gsub("\n", '\n')
+  end
+end
+
+cap_install_url ||= nil
+cap_pre_upgrade_url ||= nil
 %>
+
 ---
 
 # Concourse pipeline to deploy and upgrade CAP
@@ -22,47 +32,54 @@ aliases:
   # This section is only used for anchor targets; this is not a real concourse
   # pipeline definition section.
   common-task-params: &common-task-params
-    KUBE_REGISTRY_HOSTNAME: ((registry-hostname))
-    KUBE_REGISTRY_USERNAME: ((registry-username))
-    KUBE_REGISTRY_PASSWORD: ((registry-password))
-    KUBE_ORGANIZATION: ((organization))
-    MAGIC_DNS_SERVICE: ((magic-dns-service))
+    KUBE_REGISTRY_HOSTNAME: <%= registry_hostname %>
+    KUBE_REGISTRY_USERNAME: <%= registry_username %>
+    KUBE_REGISTRY_PASSWORD: <%= registry_password %>
+    KUBE_ORGANIZATION: <%= organization %>
+    MAGIC_DNS_SERVICE: <%= magic_dns_service %>
 
     # AWS/EKS configuration
-    AZ_SP_APPID: ((az-sp-app-id))
-    AZ_SP_PASSWORD: ((az-sp-password))
-    AZ_SP_TENANT: ((az-sp-tenant))
-    AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
-    AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
+    AZ_SP_APPID: <%= az_sp_app_id %>
+    AZ_SP_PASSWORD: <%= az_sp_password %>
+    AZ_SP_TENANT: <%= az_sp_tenant %>
+    AWS_ACCESS_KEY_ID: <%= aws_jenkins_access_key %>
+    AWS_SECRET_ACCESS_KEY: <%= aws_jenkins_secret_key %>
 
     # GCP/GKE configuration
-    GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+    GKE_PRIVATE_KEY_BASE64: "<%= gke_private_key_base64.yamlify %>"
 
-    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy) %>
+    CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", cap_install_url || enable_cf_deploy) %>
     <% if klog_collection_on_failure %>
-    KLOG_COLLECTION_ON_FAILURE: ((s3-config-bucket-sles))-klogs-archive/((s3-klog-prefix))
+    KLOG_COLLECTION_ON_FAILURE: <%= s3_config_bucket_sles %>-klogs-archive/((s3-klog-prefix))
     <% else %>
     KLOG_COLLECTION_ON_FAILURE: false
     <% end %> # klog_collection_on_failure
+    <% if test_ha_strict_enable || test_ha_strict_disable %>
+    HA_STRICT: <%= test_ha_strict_enable %>
+    <% end %> # test_ha_strict_enable || test_ha_strict_disable %>
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params
-    CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
+    CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", cap_pre_upgrade_url || enable_cf_deploy_pre_upgrade) %>
   s3-common-params: &s3-common-params
-    endpoint: ((s3-config-endpoint))
-    access_key_id: ((s3-config-access-key))
-    secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-sles))
+    endpoint: <%= s3_config_endpoint %>
+    access_key_id: <%= s3_config_access_key %>
+    secret_access_key: <%= s3_config_secret_key %>
+    bucket: <%= s3_config_bucket_sles %>
+  deploy-upgrade-params: &deploy-upgrade-params
+    ENABLE_CREDHUB: <%= enable_credhub == true %>
+    ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
+    EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
 
   # Terraform AKS Configuration
   # Used in terraform-deploy-aks and delete-aks-resource-group
   terraform-aks-params: &terraform-aks-params
     << : *common-task-params
-    ARM_CLIENT_ID: ((arm-client-id))
-    ARM_CLIENT_SECRET: ((arm-client-secret))
-    ARM_TENANT_ID: ((az-sp-tenant))
-    ARM_SUBSCRIPTION_ID: ((arm-subscription-id))
-    TF_VAR_client_id: ((arm-client-id))
-    TF_VAR_client_secret: ((arm-client-secret))
+    ARM_CLIENT_ID: <%= arm_client_id %>
+    ARM_CLIENT_SECRET: <%= arm_client_secret %>
+    ARM_TENANT_ID: <%= az_sp_tenant %>
+    ARM_SUBSCRIPTION_ID: <%= arm_subscription_id %>
+    TF_VAR_client_id: <%= arm_client_id %>
+    TF_VAR_client_secret: <%= arm_client_secret %>
     TF_VAR_location: eastus
 
 resource_types:
@@ -86,7 +103,7 @@ resources:
 - name: ci
   type: git
   source:
-    uri: ((src-ci-repo))
+    uri: <%= src_ci_repo %>
     branch: ((src-ci-branch))
     paths:
     - qa-pipelines/*
@@ -97,13 +114,13 @@ resources:
   type: s3
   source:
     << : *s3-common-params
-    regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-postgres-(.*)\.tgz$
+    regexp: <%= s3_config_prefix_sidecars %>cf-usb-sidecar-postgres-(.*)\.tgz$
 # USB sidecar archive for MySQL
 - name: s3.mysql-sidecar
   type: s3
   source:
     << : *s3-common-params
-    regexp: ((s3-config-prefix-sidecars))cf-usb-sidecar-mysql-(.*)\.tgz$
+    regexp: <%= s3_config_prefix_sidecars %>cf-usb-sidecar-mysql-(.*)\.tgz$
 
 # SCF bundle to install from (upgrade target, if upgrading)
 - name: s3.scf-config-sles
@@ -116,10 +133,10 @@ resources:
 - name: pool.kube-hosts
   type: pool
   source:
-    uri: ((kube-pool-repo))
-    private_key: ((kube-pool-key))
-    branch: ((kube-pool-branch))
-    pool: ((kube-pool-pool))
+    uri: <%= kube_pool_repo %>
+    private_key: "<%= kube_pool_key.yamlify %>"
+    branch: <%= kube_pool_branch %>
+    pool: <%= kube_pool_pool %>
 
 - name: meta
   type: meta
@@ -129,18 +146,18 @@ resources:
 - name: status.src
   type: github-status
   source:
-    repo: ((src-repo))
-    access_token: ((github-access-token))
+    repo: <%= src_repo %>
+    access_token: <%= github_access_token %>
 - name: status.email
   type: email
   source:
     smtp:
-      host: ((status-email-host))
-      port: "((status-email-port))"
-      username: ((status-email-username))
-      password: ((status-email-password))
-    from: ((status-email-sender))
-    to: [((status-email-receiver))]
+      host: <%= status_email_host %>
+      port: "<%= status_email_port %>"
+      username: <%= status_email_username %>
+      password: <%= status_email_password %>
+    from: <%= status_email_sender %>
+    to: [<%= status_email_receiver %>]
 <% end %> # status_reporting
 
 <% if klog_collection_on_failure %>
@@ -148,7 +165,7 @@ resources:
   type: s3
   source:
     << : *s3-common-params
-    bucket: ((s3-config-bucket-sles))-klogs-archive
+    bucket: <%= s3_config_bucket_sles %>-klogs-archive
     regexp: ((s3-klog-prefix))/klog-(.*)\.tar\.gz$
 <% end %> # klog_collection_on_failure
 
@@ -181,7 +198,7 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
       <% if is_upgrade_pipeline %>
       params:
-        CAP_BUNDLE_URL: <%= bundle_url_from_version(enable_cf_deploy_pre_upgrade) %>
+        CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", enable_cf_deploy_pre_upgrade) %>
       <% end %> # is_upgrade_pipeline
       input_mapping:
         s3.archive: s3.scf-config-sles
@@ -214,10 +231,11 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
         << : *upgrade-task-params
+        << : *deploy-upgrade-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: ((enable-embedded-uaa))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 3h
     <% end %> # enable_cf_deploy_pre_upgrade
     <% if enable_cf_smoke_tests_pre_upgrade %>
     - task: cf-smoke-tests-pre-upgrade
@@ -227,6 +245,7 @@ jobs:
         TEST_NAME: smoke-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 1h
     <% end %> # enable_cf_smoke_tests_pre_upgrade
     <% if enable_cf_brain_tests_pre_upgrade %>
     - task: acceptance-tests-brain-pre-upgrade
@@ -236,6 +255,7 @@ jobs:
         TEST_NAME: acceptance-tests-brain
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 1h
     <% end %> # enable_cf_brain_tests_pre_upgrade
     <% if enable_cf_usb_upgrade_tests %>
     - task: usb-deploy-pre-upgrade
@@ -254,10 +274,11 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-upgrade.yml
       params:
         << : *common-task-params
+        << : *deploy-upgrade-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: ((enable-embedded-uaa))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 3h
     <% end %> # enable_cf_upgrade
     <% if enable_cf_usb_upgrade_tests %>
     - task: usb-post-upgrade
@@ -271,10 +292,11 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
         << : *common-task-params
+        << : *deploy-upgrade-params
         HA: <%= avail == 'HA' %>
-        EMBEDDED_UAA: ((enable-embedded-uaa))
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 3h
     <% end %> # enable_cf_deploy
     <% if enable_cf_smoke_tests %>
     - task: cf-smoke-tests
@@ -284,6 +306,7 @@ jobs:
         TEST_NAME: smoke-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 1h
     <% end %> # enable_cf_smoke_tests
     <% if enable_cf_brain_tests %>
     - task: acceptance-tests-brain
@@ -293,6 +316,7 @@ jobs:
         TEST_NAME: acceptance-tests-brain
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 1h
     <% end %> # enable_cf_brain_tests
     <% if enable_cf_acceptance_tests %>
     - task: acceptance-tests
@@ -302,6 +326,7 @@ jobs:
         TEST_NAME: acceptance-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
+      timeout: 2h
     <% end %> # enable_cf_acceptance_tests
     # We intentionally don't put the teardown and pool release steps in an ensure
     # block, so that when tests fail we have a chance of examining why things are

@@ -28,6 +28,9 @@ params:
   GKE_PRIVATE_KEY_BASE64: ""
   KLOG_COLLECTION_ON_FAILURE: false
   EMBEDDED_UAA: false # true or false
+  ENABLE_CREDHUB: true
+  ENABLE_AUTOSCALER: true
+  HA_STRICT: "" # set to true or false when testing HA_strict
 
 run:
   path: ci/qa-pipelines/tasks/cf-upgrade.sh

@@ -74,9 +74,6 @@ fi
 set_helm_params # Resets HELM_PARAMS
 set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
 
-echo "SCF customization..."
-echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
@@ -85,6 +82,15 @@ fi
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
 fi
+
+# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
+fi
+
+echo "SCF customization..."
+echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 helm install ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \

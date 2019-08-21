@@ -1,0 +1,46 @@
+---
+src-ci-repo: https://github.com/SUSE/cf-ci.git
+
+src-rails-example-repo: https://github.com/scf-samples/rails-example.git
+kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
+kube-pool-key: *github-private-key
+
+s3-config-endpoint: ~
+s3-config-access-key: *aws-access-key
+s3-config-secret-key: *aws-secret-key
+
+s3-config-bucket-sles: cap-release-archives
+
+s3-config-prefix-sidecars: brokers/
+
+registry-hostname: *docker-internal-registry
+registry-username: *docker-internal-username
+registry-password: *docker-internal-password
+organization: splatform
+
+magic-dns-service: omg.howdoi.website
+
+src-repo: SUSE/scf
+
+cap-pre-upgrade-url: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
+cap-install-url: null
+
+status-email-host: *ci-status-email-host
+status-email-port: *ci-status-email-port
+status-email-username: *ci-status-email-username
+status-email-password: *ci-status-email-password
+status-email-sender: *ci-status-email-sender
+status-email-receiver: *ci-status-email-receiver
+
+# When deploying / upgrading, use the embedded UAA instead of the normal,
+# separately namespaced UAA.
+enable-embedded-uaa: false
+enable-autoscaler: true
+enable-credhub: true
+# The following two options test that ha strict mode works by adjusting the diego_api count to 1
+# This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true
+# For non-upgrade pipelines, this affects cf-deploy, and for upgrade pipelines, it affects the upgrade step
+# test-ha-strict-enable leaves the default HA_strict setting (true), and sets diego_api count to 1
+test-ha-strict-enable: false
+# test-ha-strict-enable sets HA_strict to false, and sets diego_api count to 1
+test-ha-strict-disable: false
