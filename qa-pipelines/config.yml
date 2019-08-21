@@ -35,3 +35,5 @@ status-email-receiver: *ci-status-email-receiver
 # When deploying / upgrading, use the embedded UAA instead of the normal,
 # separately namespaced UAA.
 enable-embedded-uaa: false
+enable-autoscaler: true
+enable-credhub: true
