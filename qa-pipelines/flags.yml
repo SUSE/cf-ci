@@ -7,18 +7,14 @@
 # Use terraform to deploy AKS cluster
 enable-terraform: true
 
-# Report status as steps complete
+# Update github commit status at various points, as well as success/failure.
+# Also send emails upon failure
 status-reporting: false
 
 # Upload klogs to s3 upon failure
 klog-collection-on-failure: true
 
-# version to upgrade from; if null, upgrade is not performed.
-enable-cf-deploy-pre-upgrade: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
-
-# When deploying / upgrading, use the embedded UAA instead of the normal,
-# separately namespaced UAA.
-enable-embedded-uaa: false
+enable-cf-deploy-pre-upgrade: true
 
 # run tests before an upgrade
 enable-cf-smoke-tests-pre-upgrade: true
