@@ -5,6 +5,19 @@ set -o nounset
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
+pxc_pre_upgrade() {
+    if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
+        if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
+            return 0    
+        fi
+        return 1
+    fi
+}
+
+if pxc_pre_upgrade; then
+   export SCALED_HA=true
+fi
+
 set_helm_params # Sets HELM_PARAMS
 set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
 
@@ -41,7 +54,7 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     helm install ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --name uaa \
-        --timeout 600 \
+        --timeout 1200 \
         "${HELM_PARAMS[@]}"
 
     trap "upload_klogs_on_failure ${UAA_NAMESPACE}" EXIT
@@ -76,7 +89,7 @@ fi
 helm install ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
-    --timeout 600 \
+    --timeout 1200 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
@@ -94,44 +107,26 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_set_record_sets_for_namespace scf
 fi
 
-pxc_pre_upgrade() {
-    if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
-        if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
-            HELM_PARAMS+=(--set "sizing.mysql.count=1")
-            return 0    
-        fi
-        return 1
-    fi
-}
-
 set_helm_params # Resets HELM_PARAMS
 
 if pxc_pre_upgrade; then
     echo "Downsizing UAA mysql node count to 1..."
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+    helm upgrade --reuse-values uaa ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
-        # Need to have uaa count set to 1 for CATs to pass.
-        --set "sizing.uaa.count=1" \
-        "${HELM_PARAMS[@]}"
+        --set "sizing.mysql.count=1"
 
     # Wait for UAA release
     wait_for_release uaa
 
     echo "Downsizing SCF mysql node count to 1..."
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+    helm upgrade --reuse-values scf ${CAP_DIRECTORY}/helm/cf/ \
         --namespace "${CF_NAMESPACE}" \
-        --timeout 3600 \
-        --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
-        --set "env.UAA_HOST=${UAA_HOST}" \
-        --set "env.UAA_PORT=${UAA_PORT}" \
-        --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
-        --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
-        --wait \
-        "${HELM_PARAMS[@]}"
-
+        --timeout 600 \
+        --set "sizing.mysql.count=1"
+    
     # Wait for CF release
     wait_for_release scf
 fi
