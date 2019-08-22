@@ -231,7 +231,7 @@ set_helm_params() {
 set_uaa_sizing_params() {
     if [[ "${HA}" == true ]]; then
         if [[ ${SCALED_HA} == true ]]; then
-            HELM_PARAMS+=(--set=sizing.{uaa,mysql}.count=2)
+            HELM_PARAMS+=(--set=sizing.mysql.count=2)
         else
             # HA UAA not supported prior to 2.11.0
             HELM_PARAMS+=(--set=config.HA=true)
@@ -242,7 +242,8 @@ set_uaa_sizing_params() {
 set_scf_sizing_params() {
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
-    elif [[ ${HA} == true ]]; then
+    fi
+    if [[ ${HA} == true ]]; then
         if [[ ${SCALED_HA} == true ]]; then
             HELM_PARAMS+=(
                 --set=sizing.diego_cell.count=3

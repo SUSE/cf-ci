@@ -49,10 +49,7 @@ monitor_file=$(mktemp -d)/downtime.log
 monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
 
 pxc_post_upgrade() {
-    if [[ "${HA}" == true ]]; then
-        return 0
-    fi
-    return 1
+  [[ "${HA}" == true ]]
 }
 
 if pxc_post_upgrade; then
@@ -90,9 +87,6 @@ if pxc_post_upgrade; then
   #HELM_PARAMS+=(--set=config.HA_strict=false)
   HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
-
-echo SCF customization ...
-echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
