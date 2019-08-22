@@ -47,7 +47,7 @@ while true ; do
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
     esac
 done
-s3_config_prefix=${s3_config_prefix:-master/}
+s3_config_prefix=${s3_config_prefix:-rc/}
 
 if test -z "${1:-}" ; then
     usage
