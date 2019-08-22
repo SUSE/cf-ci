@@ -121,6 +121,7 @@ if pxc_post_upgrade; then
   export SCALED_HA=false
 
   # Delete left-over PVCs from mysql upgrade.
+  kubectl delete pvc -n uaa mysql-data-mysql-1
   kubectl delete pvc -n scf mysql-data-mysql-1
 
   # Restoring the HA configuration after mysql to pxc migration.
