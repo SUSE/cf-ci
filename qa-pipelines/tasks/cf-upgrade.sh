@@ -117,9 +117,6 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
 wait_for_release scf
 
 if pxc_post_upgrade; then
-  # Now we can turn off SCALED_HA to start using config.HA=true.
-  export SCALED_HA=false
-
   # Delete left-over PVCs from mysql upgrade.
   kubectl delete pvc -n uaa mysql-data-mysql-1
   kubectl delete pvc -n scf mysql-data-mysql-1
@@ -136,6 +133,9 @@ if pxc_post_upgrade; then
 
   # Wait for UAA release
   wait_for_release uaa
+
+  # Now we can turn off SCALED_HA to start using config.HA=true.
+  export SCALED_HA=false
   
   echo "Applying actual SCF HA config..."
   set_helm_params # Resets HELM_PARAMS.
