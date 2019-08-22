@@ -191,6 +191,20 @@ set_helm_params() {
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "enable.autoscaler=${ENABLE_AUTOSCALER}"
                  --set "kube.storage_class.persistent=${STORAGECLASS}")
+
+    # When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, 
+    # and we want to test config.HA_strict.
+    if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
+        HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
+        HELM_PARAMS+=(--set "sizing.diego_api.count=1")
+    fi
+
+    # When this upgrade task is running in an HA job, and we want to test config.HA_strict.
+    if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]]; then
+        HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
+        HELM_PARAMS+=(--set "sizing.diego_api.count=1")
+    fi
+    
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
         HELM_PARAMS+=(--set "env.GARDEN_APPARMOR_PROFILE=")
@@ -228,23 +242,25 @@ set_helm_params() {
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
-set_uaa_sizing_params() {
+set_uaa_params() {
     if [[ "${HA}" == true ]]; then
-        if [[ ${SCALED_HA} == true ]]; then
+        if [[ ${CUSTOM_UAA_SIZING} == true ]]; then
             HELM_PARAMS+=(--set=sizing.mysql.count=2)
         else
-            # HA UAA not supported prior to 2.11.0
             HELM_PARAMS+=(--set=config.HA=true)
         fi
     fi
 }
 
-set_scf_sizing_params() {
+set_scf_params() {
+    if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
+        HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
+    fi
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
     fi
     if [[ ${HA} == true ]]; then
-        if [[ ${SCALED_HA} == true ]]; then
+        if [[ ${CUSTOM_SCF_SIZING} == true ]]; then
             HELM_PARAMS+=(
                 --set=sizing.diego_cell.count=3
                 --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,mysql,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
