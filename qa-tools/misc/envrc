@@ -1,0 +1,3 @@
+export KUBECONFIG=$(pwd)/kubeconfig
+export HELM_HOME=$(pwd)/.helm
+export CF_HOME=$(pwd)/.cf
