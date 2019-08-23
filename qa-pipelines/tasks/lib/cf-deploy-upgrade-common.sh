@@ -229,6 +229,7 @@ set_helm_params() {
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
+# Method to customize UAA.
 set_uaa_params() {
     if [[ "${HA}" == true ]]; then
         if [[ ${CUSTOM_UAA_SIZING} == true ]]; then
@@ -239,6 +240,7 @@ set_uaa_params() {
     fi
 }
 
+# Method to customize SCF.
 set_scf_params() {
     if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
         HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
