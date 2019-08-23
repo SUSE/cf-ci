@@ -119,7 +119,8 @@ skuba-deploy --run-cmd all 'sleep 2 && sudo nohup shutdown -r now > /dev/null 2>
 wait
 
 echo ">>> Waiting for nodes to be up"
-skuba-deploy --wait-ssh all 100
+# skuba-deploy --wait-ssh all 100
+sleep 100
 
 # Create configmap:
 PUBLIC_IP="$(skuba-deploy --run-in-docker terraform output ip_workers | cut -d, -f1 | head -n1)"
