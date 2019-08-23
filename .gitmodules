@@ -3,4 +3,4 @@
 	url = https://github.com/scf-samples/rails-example.git
 [submodule "sample-apps/go-env"]
 	path = sample-apps/go-env
-	url = git@github.com:bikramnehra/go-env.git
+	url = https://github.com/bikramnehra/go-env.git
