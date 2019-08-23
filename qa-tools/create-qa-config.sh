@@ -2,15 +2,18 @@
 set -e
 
 # Usage ./create-qa-config.sh [${QA_ADMIN_NS}]
-# This script must be run directly on the master node of a cluster
 # Creates 'qa-sa' (or $1) namespace and clusterrolebinding so its default SA has cluster admin permissions
 # Outputs a config that can be used for pipeline without fear of revocation
 
 QA_ADMIN_NS=${1:-qa-sa}
 
-TEMPDIR=$( mktemp -d )
+if [[ -v WORKSPACE ]]; then
+    TEMPDIR="$WORKSPACE"
+else
+    TEMPDIR=$( mktemp -d )
+    trap "{ rm -rf ${TEMPDIR} ; exit 255; }" EXIT
+fi
 
-trap "{ rm -rf ${TEMPDIR} ; exit 255; }" EXIT
 
 kubectl apply -f - << EOF
 ---
@@ -43,9 +46,7 @@ BEARER_TOKEN=$( kubectl get secrets -n ${QA_ADMIN_NS} ${SA_SECRET} -o jsonpath='
 
 kubectl get secrets -n ${QA_ADMIN_NS} ${SA_SECRET} -o jsonpath='{.data.ca\.crt}' | base64 -d > ${TEMPDIR}/ca.crt
 
-CLUSTER_URL=$(grep -oP '(?<=--oidc-issuer-url=)https://[^:]+' /etc/kubernetes/apiserver):$(grep -oP '(?<=--secure-port=)[0-9]+' /etc/kubernetes/apiserver)
-
-KUBECONFIG=${TEMPDIR}/config
+CLUSTER_URL=$(kubectl config view -o jsonpath='{.clusters[0].cluster.server}')
 
 kubectl config --kubeconfig=${KUBECONFIG} set-cluster local \
   --server=${CLUSTER_URL} \
