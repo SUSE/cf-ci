@@ -191,19 +191,6 @@ set_helm_params() {
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "enable.autoscaler=${ENABLE_AUTOSCALER}"
                  --set "kube.storage_class.persistent=${STORAGECLASS}")
-
-    # When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, 
-    # and we want to test config.HA_strict.
-    if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
-        HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
-        HELM_PARAMS+=(--set "sizing.diego_api.count=1")
-    fi
-
-    # When this upgrade task is running in an HA job, and we want to test config.HA_strict.
-    if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]]; then
-        HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
-        HELM_PARAMS+=(--set "sizing.diego_api.count=1")
-    fi
     
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")

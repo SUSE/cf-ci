@@ -84,6 +84,12 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
+# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:	
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then	
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
+fi
+
 echo "SCF customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
@@ -113,7 +119,6 @@ if pxc_pre_upgrade; then
     helm upgrade --reuse-values uaa ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
-        --set "secrets.INTERNAL_CA_CERT=$(get_uaa_ca_cert)"
         --set "sizing.mysql.count=1"
 
     # Wait for UAA release
@@ -123,7 +128,6 @@ if pxc_pre_upgrade; then
     helm upgrade --reuse-values scf ${CAP_DIRECTORY}/helm/cf/ \
         --namespace "${CF_NAMESPACE}" \
         --timeout 600 \
-        --set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)"
         --set "sizing.mysql.count=1"
     
     # Wait for CF release

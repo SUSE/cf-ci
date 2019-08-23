@@ -58,7 +58,7 @@ export CUSTOM_UAA_SIZING=true
 
 # We can remove the custom scf sizing after 1.5 release.
 if pxc_post_upgrade; then
-   export CUSTOM_SCF_SIZING=true
+  export CUSTOM_SCF_SIZING=true
 fi
 
 set_helm_params # Sets HELM_PARAMS.
@@ -91,6 +91,12 @@ set_scf_params # Adds scf specific params to HELM_PARAMS.
 # Explicitly setting mysql count to 1 for pxc upgrade testing for scf.
 if pxc_post_upgrade; then
   HELM_PARAMS+=(--set=sizing.mysql.count=1)
+fi
+
+# When this upgrade task is running in an HA job, and we want to test config.HA_strict:	
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]]; then	
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
 fi
 
 echo "SCF customization..."
