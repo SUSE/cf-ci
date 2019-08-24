@@ -4,3 +4,6 @@
 [submodule "sample-apps/go-env"]
 	path = sample-apps/go-env
 	url = https://github.com/bikramnehra/go-env.git
+[submodule "sample-apps/test-app"]
+	path = sample-apps/test-app
+	url = https://github.com/cloudfoundry-samples/test-app.git
