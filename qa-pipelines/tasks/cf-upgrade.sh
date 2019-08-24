@@ -41,12 +41,12 @@ cf target -o testorg -s testspace
 instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | jq .spec.replicas)
 # push app in subshell to avoid changing directory
 (
-  cd ci/sample-apps/go-env
+  cd ci/sample-apps/test-app
   cf push -i ${instance_count}
 )
 
 monitor_file=$(mktemp -d)/downtime.log
-monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
+monitor_url "http://test-app.${DOMAIN}" "${monitor_file}" &
 
 pxc_post_upgrade() {
   [[ "${HA}" == true ]]
@@ -185,7 +185,7 @@ echo "Results of app monitoring:"
 echo "SECONDS|STATUS"
 uniq -c "${monitor_file}"
 cf login -u admin -p changeme -o testorg -s testspace
-cf delete -f go-env
+cf delete -f test-app
 cf delete-org -f testorg
 
 trap "" EXIT
