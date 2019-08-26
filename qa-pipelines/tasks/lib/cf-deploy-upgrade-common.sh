@@ -191,6 +191,7 @@ set_helm_params() {
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "enable.autoscaler=${ENABLE_AUTOSCALER}"
                  --set "kube.storage_class.persistent=${STORAGECLASS}")
+    
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
         HELM_PARAMS+=(--set "env.GARDEN_APPARMOR_PROFILE=")
@@ -228,38 +229,41 @@ set_helm_params() {
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
-set_uaa_sizing_params() {
-    return 0 # Sizing UAA up breaks CATS
+# Method to customize UAA.
+set_uaa_params() {
     if [[ "${HA}" == true ]]; then
-        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            # HA UAA not supported prior to 2.11.0
+        if [[ ${CUSTOM_UAA_SIZING} == true ]]; then
+            HELM_PARAMS+=(--set=sizing.mysql.count=2)
+            if semver_is_gte "$(helm_chart_version)" 2.17.1; then
+               HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
+            fi
+        else
             HELM_PARAMS+=(--set=config.HA=true)
         fi
-    elif [[ ${SCALED_HA} == true ]]; then
-        HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
     fi
 }
 
-set_scf_sizing_params() {
+# Method to customize SCF.
+set_scf_params() {
+    if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
+        HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
+    fi
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
     fi
-    case "${HA}" in
-    true)
-        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            HELM_PARAMS+=(--set=config.HA=true)
+    if [[ ${HA} == true ]]; then
+        if [[ ${CUSTOM_SCF_SIZING} == true ]]; then
+            HELM_PARAMS+=(
+                --set=sizing.diego_cell.count=3
+                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,mysql,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
+            )
+            if semver_is_gte "$(helm_chart_version)" 2.17.1; then
+               HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
+            fi
         else
-            HELM_PARAMS+=(--set=sizing.HA=true)
+            HELM_PARAMS+=(--set=config.HA=true)
         fi
-        ;;
-    scaled)
-        HELM_PARAMS+=(
-            --set=sizing.routing_api.count=1
-            --set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2
-            --set=sizing.{diego_api,diego_locket,diego_cell}.count=3
-        )
-        ;;
-    esac
+    fi
 }
 
 set -o allexport

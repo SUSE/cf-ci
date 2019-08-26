@@ -5,8 +5,26 @@ set -o nounset
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
-set_helm_params # Sets HELM_PARAMS
-set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
+pxc_pre_upgrade() {
+    if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
+        if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
+            return 0    
+        fi
+        return 1
+    fi
+}
+
+# For now we will keep on using custom sizing for UAA.
+# Until CATs failures issue is addressed.
+export CUSTOM_UAA_SIZING=true
+
+# We can remove the custom scf sizing after 1.5 release.
+if pxc_pre_upgrade; then
+   export CUSTOM_SCF_SIZING=true
+fi
+
+set_helm_params # Sets HELM_PARAMS.
+set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
 # Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
 kubectl delete psp --ignore-not-found suse.cap.psp
@@ -28,11 +46,11 @@ if [[ ${cap_platform} != "eks" ]]; then
     fi
 fi
 
-echo UAA customization ...
+echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
-    # Deploy UAA
+    # Deploy UAA.
     kubectl create namespace "${UAA_NAMESPACE}"
     if [[ "${PROVISIONER}" == "kubernetes.io/rbd" ]]; then
         kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
@@ -41,12 +59,12 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     helm install ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --name uaa \
-        --timeout 600 \
+        --timeout 1200 \
         "${HELM_PARAMS[@]}"
 
     trap "upload_klogs_on_failure ${UAA_NAMESPACE}" EXIT
 
-    # Wait for UAA release
+    # Wait for UAA release.
     wait_for_release uaa
 
     if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
@@ -57,32 +75,28 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     fi
 fi
 
-# Deploy CF
-set_helm_params # Resets HELM_PARAMS
-set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
+# Deploy CF.
+set_helm_params # Resets HELM_PARAMS.
+set_scf_params # Adds scf specific params to HELM_PARAMS.
 
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
-if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
-    HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
+# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:	
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then	
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
 fi
 
-# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:
-if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
-    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
-    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
-fi
-
-echo SCF customization ...
+echo "SCF customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 helm install ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
-    --timeout 600 \
+    --timeout 1200 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
@@ -98,6 +112,28 @@ wait_for_release scf
 if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
+fi
+
+if pxc_pre_upgrade; then
+    echo "Downsizing UAA mysql node count to 1..."
+    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+        --reuse-values \
+        --namespace "${UAA_NAMESPACE}" \
+        --timeout 600 \
+        --set "sizing.mysql.count=1"
+
+    # Wait for UAA release
+    wait_for_release uaa
+
+    echo "Downsizing SCF mysql node count to 1..."
+    helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+        --reuse-values \
+        --namespace "${CF_NAMESPACE}" \
+        --timeout 600 \
+        --set "sizing.mysql.count=1"
+    
+    # Wait for CF release
+    wait_for_release scf
 fi
 
 trap "" EXIT

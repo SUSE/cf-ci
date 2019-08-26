@@ -41,17 +41,35 @@ cf target -o testorg -s testspace
 instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | jq .spec.replicas)
 # push app in subshell to avoid changing directory
 (
-  cd ci/sample-apps/go-env
+  cd ci/sample-apps/test-app
   cf push -i ${instance_count}
 )
 
 monitor_file=$(mktemp -d)/downtime.log
-monitor_url "http://go-env.${DOMAIN}" "${monitor_file}" &
+monitor_url "http://test-app.${DOMAIN}" "${monitor_file}" &
 
-set_helm_params # Sets HELM_PARAMS
-set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
+pxc_post_upgrade() {
+  [[ "${HA}" == true ]]
+}
 
-echo UAA customization ...
+# For now we will keep on using custom sizing for UAA.
+# Until CATs failures issue is addressed.
+export CUSTOM_UAA_SIZING=true
+
+# We can remove the custom scf sizing after 1.5 release.
+if pxc_post_upgrade; then
+  export CUSTOM_SCF_SIZING=true
+fi
+
+set_helm_params # Sets HELM_PARAMS.
+set_uaa_params # Adds uaa specific params to HELM_PARAMS.
+
+# Explicitly setting mysql count to 1 for pxc upgrade testing for uaa.
+if pxc_post_upgrade; then
+  HELM_PARAMS+=(--set=sizing.mysql.count=1)
+fi
+
+echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
@@ -67,20 +85,21 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
 fi
 
 # Deploy CF
-set_helm_params # Resets HELM_PARAMS
-set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
+set_helm_params # Resets HELM_PARAMS.
+set_scf_params # Adds scf specific params to HELM_PARAMS.
 
-if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
-    HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
+# Explicitly setting mysql count to 1 for pxc upgrade testing for scf.
+if pxc_post_upgrade; then
+  HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
 
-# When this upgrade task is running in an HA job, and we want to test config.HA_strict:
-if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]]; then
-    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
-    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
+# When this upgrade task is running in an HA job, and we want to test config.HA_strict:	
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]]; then	
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
 fi
 
-echo SCF customization ...
+echo "SCF customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
@@ -97,6 +116,50 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
 
 # Wait for CF release
 wait_for_release scf
+
+if pxc_post_upgrade; then
+  echo "Deleting left-over PVCs for UAA..."
+  kubectl delete pvc -n uaa mysql-data-mysql-1
+  
+  echo "Deleting left-over PVCs for SCF..."
+  kubectl delete pvc -n scf mysql-data-mysql-1
+
+  # Restoring the HA configuration after mysql to pxc migration.
+  echo "Applying actual UAA HA config..."
+  set_helm_params # Resets HELM_PARAMS.
+  set_uaa_params # Adds uaa specific params to HELM_PARAMS.
+  
+  echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+  
+  helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+      --namespace "${UAA_NAMESPACE}" \
+      --timeout 600 \
+      "${HELM_PARAMS[@]}"
+
+  # Wait for UAA release
+  wait_for_release uaa
+
+  # Now we can turn off custom sizing for scf to start using config.HA=true.
+  export CUSTOM_SCF_SIZING=false
+  
+  echo "Applying actual SCF HA config..."
+  set_helm_params # Resets HELM_PARAMS.
+  set_scf_params # Adds scf specific params to HELM_PARAMS.
+  echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+  helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+      --namespace "${CF_NAMESPACE}" \
+      --timeout 3600 \
+      --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+      --set "env.UAA_HOST=${UAA_HOST}" \
+      --set "env.UAA_PORT=${UAA_PORT}" \
+      --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
+      --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
+      --wait \
+      "${HELM_PARAMS[@]}"
+
+  # Wait for CF release
+  wait_for_release scf
+fi
 
 echo "Post Upgrade Users and Orgs State:"
 cf api --skip-ssl-validation "https://api.${DOMAIN}"
@@ -122,7 +185,7 @@ echo "Results of app monitoring:"
 echo "SECONDS|STATUS"
 uniq -c "${monitor_file}"
 cf login -u admin -p changeme -o testorg -s testspace
-cf delete -f go-env
+cf delete -f test-app
 cf delete-org -f testorg
 
 trap "" EXIT
