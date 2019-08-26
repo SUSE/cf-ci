@@ -191,7 +191,7 @@ set_helm_params() {
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
                  --set "enable.autoscaler=${ENABLE_AUTOSCALER}"
                  --set "kube.storage_class.persistent=${STORAGECLASS}")
-    
+
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
         HELM_PARAMS+=(--set "env.GARDEN_APPARMOR_PROFILE=")
@@ -233,9 +233,11 @@ set_helm_params() {
 set_uaa_params() {
     if [[ "${HA}" == true ]]; then
         if [[ ${CUSTOM_UAA_SIZING} == true ]]; then
-            HELM_PARAMS+=(--set=sizing.mysql.count=2)
             if semver_is_gte "$(helm_chart_version)" 2.17.1; then
-               HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
+                HELM_PARAMS+=(--set=sizing.mysql.count=1) #PXC worakound
+                HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
+            else
+                HELM_PARAMS+=(--set=sizing.mysql.count=2)
             fi
         else
             HELM_PARAMS+=(--set=config.HA=true)
@@ -255,10 +257,13 @@ set_scf_params() {
         if [[ ${CUSTOM_SCF_SIZING} == true ]]; then
             HELM_PARAMS+=(
                 --set=sizing.diego_cell.count=3
-                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,mysql,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
+                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
             )
             if semver_is_gte "$(helm_chart_version)" 2.17.1; then
-               HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
+                HELM_PARAMS+=(--set=sizing.mysql.count=1)
+                HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2) #PXC Workaound
+            else
+                HELM_PARAMS+=(--set=sizing.mysql.count=2)
             fi
         else
             HELM_PARAMS+=(--set=config.HA=true)

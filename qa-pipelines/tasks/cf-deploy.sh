@@ -8,7 +8,7 @@ source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 pxc_pre_upgrade() {
     if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
         if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
-            return 0    
+            return 0
         fi
         return 1
     fi
@@ -19,9 +19,9 @@ pxc_pre_upgrade() {
 export CUSTOM_UAA_SIZING=true
 
 # We can remove the custom scf sizing after 1.5 release.
-if pxc_pre_upgrade; then
-   export CUSTOM_SCF_SIZING=true
-fi
+
+export CUSTOM_SCF_SIZING=true
+
 
 set_helm_params # Sets HELM_PARAMS.
 set_uaa_params # Adds uaa specific params to HELM_PARAMS.
@@ -84,10 +84,10 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
-# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:	
-if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then	
-    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
-    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
+# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
 fi
 
 echo "SCF customization..."
@@ -131,9 +131,33 @@ if pxc_pre_upgrade; then
         --namespace "${CF_NAMESPACE}" \
         --timeout 600 \
         --set "sizing.mysql.count=1"
-    
+
     # Wait for CF release
     wait_for_release scf
+fi
+
+if [[ "${HA}" == true ]]; then
+    if semver_is_gte "$(helm_chart_version)" 2.17.1; then
+        echo "Upsizing UAA mysql node count to 3..."
+        helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+            --reuse-values \
+            --namespace "${UAA_NAMESPACE}" \
+            --timeout 600 \
+            --set "sizing.mysql.count=1"
+
+        # Wait for UAA release
+        wait_for_release uaa
+
+        echo "Upsizing SCF mysql node count to 3..."
+        helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+            --reuse-values \
+            --namespace "${CF_NAMESPACE}" \
+            --timeout 600 \
+            --set "sizing.mysql.count=1"
+
+        # Wait for CF release
+        wait_for_release scf
+    fi
 fi
 
 trap "" EXIT
