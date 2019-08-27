@@ -134,6 +134,27 @@ if pxc_pre_upgrade; then
     
     # Wait for CF release
     wait_for_release scf
+
+    echo "Deleting left-over PVCs..."
+    kubectl delete pvc mysql-data-mysql-1 -n "${UAA_NAMESPACE}"
+    kubectl delete pvc mysql-data-mysql-1 -n "${CF_NAMESPACE}"
+
+    RETRY_COUNT=0
+    while true; do
+        if RETRY_COUNT < 100; then
+            UAA_PVC=$(kubectl get pvc mysql-data-mysql-1 -n "${UAA_NAMESPACE}" -o json | jq -r '.metadata.name | test("mysql-data-mysql-1")')
+            SCF_PVC=$(kubectl get pvc mysql-data-mysql-1 -n "${CF_NAMESPACE}" -o json | jq -r '.metadata.name | test("mysql-data-mysql-1")')
+            # Sleep till both PVCs are cleared.
+            if [[ ${UAA_PVC} != "true" ]] && [[ ${SCF_PVC} != "true" ]]; then
+                break
+            else
+                sleep 6
+            fi
+        else
+            break
+        fi
+        RETRY_COUNT++
+    done
 fi
 
 trap "" EXIT
