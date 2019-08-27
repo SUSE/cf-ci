@@ -13,7 +13,7 @@ skuba-deploy() {
     bash "$SKUBA_DEPLOY_PATH" "$@"
 }
 
-KUBECONFIG="$WORKSPACE"/kubeconfig
+export KUBECONFIG="$WORKSPACE"/kubeconfig
 
 if [[ ! -v OS_PASSWORD ]]; then
     echo ">>> Missing openstack credentials" && exit 1
