@@ -120,6 +120,7 @@ if ha_deploy; then
     set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
     # Set uaa count to 1 till CATs failures are resolved.
+    HELM_PARAMS+=(--set=config.HA_strict=false)
     HELM_PARAMS+=(--set=sizing.uaa.count=1)
     
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
