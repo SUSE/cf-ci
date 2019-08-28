@@ -70,9 +70,6 @@ escapeSubst() {
     printf %s "${REPLY%$'\n'}"
 }
 SSHKEY="$(ssh-add -L)"
-if [[ ! -v MAGIC_DNS_SERVICE ]]; then
-    MAGIC_DNS_SERVICE='omg.howdoi.website'
-fi
 CAASP_PATTERN='patterns-caasp-Node-1.15'
 sed -e "s%#~placeholder_stack~#%$(escapeSubst "$STACK")%g" \
     -e "s%#~placeholder_magic_dns~#%$(escapeSubst "$MAGIC_DNS_SERVICE")%g" \

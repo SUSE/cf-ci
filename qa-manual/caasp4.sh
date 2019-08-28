@@ -9,6 +9,7 @@ export DEBUG=${DEBUG:-0}
 export KUBECTL_VER="v1.15.2" # TODO not used yet
 export HELM_VER="v2.8.2" # TODO not used yet
 export KUBECONFIG="$WORKSPACE"/kubeconfig
+export MAGIC_DNS_SERVICE='omg.howdoi.website'
 
 # prerrequisites:
 if [[ "$(docker images -q skuba/$CAASP_VER 2> /dev/null)" == "" ]]; then
