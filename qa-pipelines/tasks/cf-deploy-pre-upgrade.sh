@@ -5,20 +5,26 @@ set -o nounset
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
-ha_deploy() {
-    [[ "${HA}" == true ]]
+pxc_pre_upgrade() {
+    if [[ -n "${CAP_BUNDLE_URL:-}" ]] && [[ "${HA}" == true ]]; then
+        if semver_is_gte 2.17.1 "$(helm_chart_version)"; then
+            return 0    
+        fi
+        return 1
+    fi
 }
+
+# For now we will keep on using custom sizing for UAA.
+# Until CATs failures issue is addressed.
+export CUSTOM_UAA_SIZING=true
+
+# We can remove the custom scf sizing after 1.5 release.
+if pxc_pre_upgrade; then
+   export CUSTOM_SCF_SIZING=true
+fi
 
 set_helm_params # Sets HELM_PARAMS.
 set_uaa_params # Adds uaa specific params to HELM_PARAMS.
-
-# Downsize uaa & mysql if its a UAA HA deploy scenario.
-if ha_deploy; then
-    HELM_PARAMS+=(--set=config.HA_strict=false)
-    # Set uaa count to 1 till CATs failures are resolved.
-    HELM_PARAMS+=(--set=sizing.uaa.count=1)
-    HELM_PARAMS+=(--set=sizing.mysql.count=1)
-fi
 
 # Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
 kubectl delete psp --ignore-not-found suse.cap.psp
@@ -73,12 +79,6 @@ fi
 set_helm_params # Resets HELM_PARAMS.
 set_scf_params # Adds scf specific params to HELM_PARAMS.
 
-# Downsize mysql if its a SCF HA deploy scenario.
-if ha_deploy; then
-    HELM_PARAMS+=(--set=config.HA_strict=false)
-    HELM_PARAMS+=(--set=sizing.mysql.count=1)
-fi
-
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
@@ -114,42 +114,24 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_set_record_sets_for_namespace scf
 fi
 
-if ha_deploy; then
-    # Restoring the HA configuration after mysql to pxc migration.
-    echo "Applying actual UAA HA config..."
-    set_helm_params # Resets HELM_PARAMS.
-    set_uaa_params # Adds uaa specific params to HELM_PARAMS.
-
-    # Set uaa count to 1 till CATs failures are resolved.
-    HELM_PARAMS+=(--set=sizing.uaa.count=1)
-    
-    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    
+if pxc_pre_upgrade; then
+    echo "Downsizing UAA mysql node count to 1..."
     helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+        --reuse-values \
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
-        "${HELM_PARAMS[@]}"
+        --set "sizing.mysql.count=1"
 
     # Wait for UAA release
     wait_for_release uaa
 
-    echo "Applying actual SCF HA config..."
-    set_helm_params # Resets HELM_PARAMS.
-    set_scf_params # Adds scf specific params to HELM_PARAMS.
-    
-    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    
+    echo "Downsizing SCF mysql node count to 1..."
     helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+        --reuse-values \
         --namespace "${CF_NAMESPACE}" \
-        --timeout 3600 \
-        --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
-        --set "env.UAA_HOST=${UAA_HOST}" \
-        --set "env.UAA_PORT=${UAA_PORT}" \
-        --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
-        --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
-        --wait \
-        "${HELM_PARAMS[@]}"
-
+        --timeout 600 \
+        --set "sizing.mysql.count=1"
+    
     # Wait for CF release
     wait_for_release scf
 fi
