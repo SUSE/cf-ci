@@ -142,7 +142,7 @@ if pxc_pre_upgrade; then
 
     RETRY_COUNT=0
     while true; do
-        if RETRY_COUNT < 100; then
+        if ${RETRY_COUNT} < 100; then
             # Checking for mysql pvc in list of PVCs.
             UAA_PVC_DELETED=$(kubectl get pvc -n "${UAA_NAMESPACE}" -o json  | jq '[.items[] | select(.metadata.name=="mysql-data-mysql-1")] | length')
             SCF_PVC_DELETED=$(kubectl get pvc -n "${CF_NAMESPACE}" -o json  | jq '[.items[] | select(.metadata.name=="mysql-data-mysql-1")] | length')
@@ -155,7 +155,7 @@ if pxc_pre_upgrade; then
         else
             break
         fi
-        RETRY_COUNT++
+        ${RETRY_COUNT}++
     done
 fi
 
