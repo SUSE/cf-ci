@@ -160,10 +160,11 @@ if ha_deploy; then
     RETRY_COUNT=0
     while true; do
         if RETRY_COUNT < 100; then
-            UAA_PVC=$(kubectl get pvc mysql-data-mysql-1 -n "${UAA_NAMESPACE}" -o json | jq -r '.metadata.name | test("mysql-data-mysql-1")')
-            SCF_PVC=$(kubectl get pvc mysql-data-mysql-1 -n "${CF_NAMESPACE}" -o json | jq -r '.metadata.name | test("mysql-data-mysql-1")')
-            # Sleep till both PVCs are cleared.
-            if [[ ${UAA_PVC} != "true" ]] && [[ ${SCF_PVC} != "true" ]]; then
+            # Checking for mysql pvc in list of PVCs.
+            UAA_PVC_DELETED=$(kubectl get pvc -n "${UAA_NAMESPACE}" -o json  | jq '[.items[] | select(.metadata.name=="mysql-data-mysql-1")] | length')
+            SCF_PVC_DELETED=$(kubectl get pvc -n "${CF_NAMESPACE}" -o json  | jq '[.items[] | select(.metadata.name=="mysql-data-mysql-1")] | length')
+            # Sleep till both PVCs are deleted.
+            if [[ ${UAA_PVC_DELETED} ]] && [[ ${SCF_PVC_DELETED} ]]; then
                 break
             else
                 sleep 6
