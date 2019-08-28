@@ -15,7 +15,6 @@ set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 # Downsize uaa & mysql if its a UAA HA deploy scenario.
 if ha_deploy; then
     HELM_PARAMS+=(--set=config.HA_strict=false)
-    # Set uaa count to 1 till CATs failures are resolved.
     HELM_PARAMS+=(--set=sizing.uaa.count=1)
     HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi

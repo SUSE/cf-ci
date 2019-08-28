@@ -120,6 +120,7 @@ if pxc_pre_upgrade; then
         --reuse-values \
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
+        --set "sizing.uaa.count=1"
         --set "sizing.mysql.count=1"
 
     # Wait for UAA release

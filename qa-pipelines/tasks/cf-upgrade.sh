@@ -116,8 +116,7 @@ if pxc_post_upgrade; then
   echo "Applying actual UAA HA config..."
   set_helm_params # Resets HELM_PARAMS.
   set_uaa_params # Adds uaa specific params to HELM_PARAMS.
-  
-  # Still need to keep uaa count to 1 till CATs issue is resolved. 
+   
   HELM_PARAMS+=(--set=config.HA_strict=false)
   HELM_PARAMS+=(--set=sizing.uaa.count=1)
   

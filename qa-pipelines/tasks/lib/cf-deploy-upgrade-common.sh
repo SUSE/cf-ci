@@ -233,6 +233,7 @@ set_helm_params() {
 set_uaa_params() {
     if [[ "${HA:-false}" == true ]]; then
         if [[ ${CUSTOM_UAA_SIZING:-false} == true ]]; then
+            HELM_PARAMS+=(--set=sizing.uaa.count=2)
             if [[ "$(helm_chart_version)" == "2.17.1" ]]; then
                HELM_PARAMS+=(--set=sizing.mysql.count=2)
             else
@@ -257,7 +258,7 @@ set_scf_params() {
         if [[ ${CUSTOM_SCF_SIZING:-false} == true ]]; then
             HELM_PARAMS+=(
                 --set=sizing.diego_cell.count=3
-                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
+                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_ssh,doppler,locket,log_api,log_cache_scheduler,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
             )
             if [[ "$(helm_chart_version)" == "2.17.1" ]]; then
                HELM_PARAMS+=(--set=sizing.mysql.count=2)
