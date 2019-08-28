@@ -82,22 +82,22 @@ docker container exec gke-deploy gcloud auth activate-service-account $SA_USER -
 docker container exec gke-deploy gcloud container clusters get-credentials  ${CLUSTER_NAME} --zone ${CLUSTER_ZONE:?required}
 
 checkready() {
-	while [[ $node_readiness != "$NODE_COUNT True" ]]; do
-		sleep 10
-		node_readiness=$(
-			docker container exec gke-deploy kubectl get nodes -o json \
-      		| jq -r '.items[] | .status.conditions[] | select(.type == "Ready").status' \
-      		| uniq -c | grep -o '\S.*'
-  		)
-	done
+  while [[ $node_readiness != "$NODE_COUNT True" ]]; do
+    sleep 10
+    node_readiness=$(
+      docker container exec gke-deploy kubectl get nodes -o json \
+        | jq -r '.items[] | .status.conditions[] | select(.type == "Ready").status' \
+        | uniq -c | grep -o '\S.*'
+    )
+  done
 }
 
 checkready
 
 if [ "$(uname)" == "Darwin" ]; then
-	args=I
+  args=I
 else
-	args=i
+  args=i
 fi
 echo "Setting swap accounting"
 
@@ -108,7 +108,7 @@ instance_names=$(gcloud compute instances list --filter=name~${CLUSTER_NAME:?req
 gcloud config set compute/zone ${CLUSTER_ZONE:?required}
 
 # Update kernel command line
-echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0\"/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0 cgroup_enable=memory swapaccount=1\"/g' /etc/default/grub.d/50-cloudimg-settings.cfg && sudo update-grub && reboot"
+echo "$instance_names" | xargs -${args}{} gcloud compute ssh {} -- "sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0\"/GRUB_CMDLINE_LINUX_DEFAULT=\"console=ttyS0 net.ifnames=0 cgroup_enable=memory swapaccount=1\"/g' /etc/default/grub.d/50-cloudimg-settings.cfg && sudo update-grub && sudo systemctl reboot -i"
 
 echo "Added swapaccounting and restarted the VMs"
 checkready
