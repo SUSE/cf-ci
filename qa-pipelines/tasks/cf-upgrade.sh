@@ -52,20 +52,13 @@ pxc_post_upgrade() {
   [[ "${HA}" == true ]]
 }
 
-# For now we will keep on using custom sizing for UAA.
-# Until CATs failures issue is addressed.
-export CUSTOM_UAA_SIZING=true
-
-# We can remove the custom scf sizing after 1.5 release.
-if pxc_post_upgrade; then
-  export CUSTOM_SCF_SIZING=true
-fi
-
 set_helm_params # Sets HELM_PARAMS.
 set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
-# Explicitly setting mysql count to 1 for pxc upgrade testing for uaa.
+# Explicitly setting uaa & mysql count to 1 for pxc upgrade testing for UAA.
 if pxc_post_upgrade; then
+  HELM_PARAMS+=(--set=config.HA_strict=false)
+  HELM_PARAMS+=(--set=sizing.uaa.count=1)
   HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
 
@@ -88,8 +81,9 @@ fi
 set_helm_params # Resets HELM_PARAMS.
 set_scf_params # Adds scf specific params to HELM_PARAMS.
 
-# Explicitly setting mysql count to 1 for pxc upgrade testing for scf.
+# Explicitly setting mysql count to 1 for pxc upgrade testing for SCF.
 if pxc_post_upgrade; then
+  HELM_PARAMS+=(--set=config.HA_strict=false)
   HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
 
@@ -118,16 +112,13 @@ helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
 wait_for_release scf
 
 if pxc_post_upgrade; then
-  echo "Deleting left-over PVCs for UAA..."
-  kubectl delete pvc -n uaa mysql-data-mysql-1
-  
-  echo "Deleting left-over PVCs for SCF..."
-  kubectl delete pvc -n scf mysql-data-mysql-1
-
-  # Restoring the HA configuration after mysql to pxc migration.
+  # Restoring the UAA HA configuration after mysql to pxc migration.
   echo "Applying actual UAA HA config..."
   set_helm_params # Resets HELM_PARAMS.
   set_uaa_params # Adds uaa specific params to HELM_PARAMS.
+   
+  HELM_PARAMS+=(--set=config.HA_strict=false)
+  HELM_PARAMS+=(--set=sizing.uaa.count=1)
   
   echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
   
@@ -138,14 +129,14 @@ if pxc_post_upgrade; then
 
   # Wait for UAA release
   wait_for_release uaa
-
-  # Now we can turn off custom sizing for scf to start using config.HA=true.
-  export CUSTOM_SCF_SIZING=false
   
+  # Restoring the SCF HA configuration after mysql to pxc migration.
   echo "Applying actual SCF HA config..."
   set_helm_params # Resets HELM_PARAMS.
   set_scf_params # Adds scf specific params to HELM_PARAMS.
+  
   echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+  
   helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
       --namespace "${CF_NAMESPACE}" \
       --timeout 3600 \

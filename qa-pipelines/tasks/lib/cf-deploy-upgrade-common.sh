@@ -231,13 +231,13 @@ set_helm_params() {
 
 # Method to customize UAA.
 set_uaa_params() {
-    if [[ "${HA}" == true ]]; then
-        if [[ ${CUSTOM_UAA_SIZING} == true ]]; then
-            if semver_is_gte "$(helm_chart_version)" 2.17.1; then
+    if [[ "${HA:-false}" == true ]]; then
+        if [[ "${CUSTOM_UAA_SIZING:-false}" == true ]]; then
+            if [[ "$(helm_chart_version)" == "2.17.1" ]]; then
+               HELM_PARAMS+=(--set=sizing.mysql.count=2)
+            else
                HELM_PARAMS+=(--set=sizing.mysql.count=3)
                HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
-            else
-               HELM_PARAMS+=(--set=sizing.mysql.count=2)
             fi
         else
             HELM_PARAMS+=(--set=config.HA=true)
@@ -250,20 +250,20 @@ set_scf_params() {
     if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
         HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
     fi
-    if [[ ${cap_platform} == "eks" ]] ; then
+    if [[ "${cap_platform}" == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
     fi
-    if [[ ${HA} == true ]]; then
-        if [[ ${CUSTOM_SCF_SIZING} == true ]]; then
+    if [[ "${HA:-false}" == true ]]; then
+        if [[ "${CUSTOM_SCF_SIZING:-false}" == true ]]; then
             HELM_PARAMS+=(
                 --set=sizing.diego_cell.count=3
-                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_cell,diego_ssh,doppler,locket,log_api,log_cache_scheduler,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
+                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_ssh,doppler,locket,log_api,log_cache_scheduler,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
             )
-            if semver_is_gte "$(helm_chart_version)" 2.17.1; then
+            if [[ "$(helm_chart_version)" == "2.17.1" ]]; then
+               HELM_PARAMS+=(--set=sizing.mysql.count=2)
+            else
                HELM_PARAMS+=(--set=sizing.mysql.count=3)
                HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
-            else
-               HELM_PARAMS+=(--set=sizing.mysql.count=2)
             fi
         else
             HELM_PARAMS+=(--set=config.HA=true)
