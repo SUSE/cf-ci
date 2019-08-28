@@ -116,6 +116,7 @@ fi
 
 if pxc_pre_upgrade; then
     echo "Downsizing UAA mysql node count to 1..."
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
     helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
         --reuse-values \
         --namespace "${UAA_NAMESPACE}" \
@@ -127,6 +128,7 @@ if pxc_pre_upgrade; then
     wait_for_release uaa
 
     echo "Downsizing SCF mysql node count to 1..."
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
     helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
         --reuse-values \
         --namespace "${CF_NAMESPACE}" \
