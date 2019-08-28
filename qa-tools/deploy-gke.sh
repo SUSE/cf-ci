@@ -13,10 +13,24 @@ usage() {
 EOF
 }
 
+print_pool_file() {
+cat << EOF
+Add the following config to your cf-ci-pools repo in the gke-kube-hosts branch
+
+---
+kind: ClusterReference
+platform: gke
+cluster-name: ${CLUSTER_NAME}
+cluster-zone: ${CLUSTER_ZONE}
+owner: $(whoami)
+
+EOF
+}
+
 if [ $# -lt 2 ]
 then
-	usage
-	exit 0
+  usage
+  exit 0
 fi
 
 
@@ -69,6 +83,7 @@ ${CLUSTER_ZONE} --num-nodes=$NODE_COUNT --no-enable-basic-auth --no-issue-client
 --no-enable-autoupgrade --metadata disable-legacy-endpoints=true \
 --labels=owner=$(gcloud config get-value account | tr [:upper:] [:lower:] | tr -c a-z0-9_- _ )
 
+print_pool_file
 # All future kubectl commands will be run in this container. This ensures the
 # correct version of kubectl is used, and that it matches the version used by CI
 docker container run \
