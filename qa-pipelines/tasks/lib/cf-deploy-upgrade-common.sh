@@ -233,7 +233,6 @@ set_helm_params() {
 set_uaa_params() {
     if [[ "${HA:-false}" == true ]]; then
         if [[ "${CUSTOM_UAA_SIZING:-false}" == true ]]; then
-            HELM_PARAMS+=(--set=sizing.uaa.count=2)
             if [[ "$(helm_chart_version)" == "2.17.1" ]]; then
                HELM_PARAMS+=(--set=sizing.mysql.count=2)
             else
