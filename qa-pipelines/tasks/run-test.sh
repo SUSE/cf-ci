@@ -141,7 +141,7 @@ if [[ ${TEST_NAME} == "acceptance-tests-brain" ]]; then
         end
 EOF
     if [[ -f "${test_non_pods_yml}" ]]; then
-        kubectl create --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
+        kubectl apply --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
     fi
 fi
 
