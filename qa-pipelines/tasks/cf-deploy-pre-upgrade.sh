@@ -115,16 +115,16 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
 fi
 
 if pxc_pre_upgrade; then
-    echo "Downsizing UAA mysql node count to 1..."
-    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
-        --reuse-values \
-        --namespace "${UAA_NAMESPACE}" \
-        --timeout 600 \
-        --set "sizing.mysql.count=1"
+    # echo "Downsizing UAA mysql node count to 1..."
+    # echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+    # helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+    #     --reuse-values \
+    #     --namespace "${UAA_NAMESPACE}" \
+    #     --timeout 600 \
+    #     --set "sizing.mysql.count=1"
 
-    # Wait for UAA release
-    wait_for_release uaa
+    # # Wait for UAA release
+    # wait_for_release uaa
 
     echo "Downsizing SCF mysql node count to 1..."
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
@@ -138,8 +138,8 @@ if pxc_pre_upgrade; then
     wait_for_release scf
 
     echo "Deleting left-over PVCs..."
-    kubectl delete pvc mysql-data-mysql-1 -n "${UAA_NAMESPACE}"
-    kubectl delete pvc mysql-data-mysql-1 -n "${CF_NAMESPACE}"
+    kubectl delete pvc --ignore-not-found mysql-data-mysql-1 -n "${UAA_NAMESPACE}"
+    kubectl delete pvc --ignore-not-found mysql-data-mysql-1 -n "${CF_NAMESPACE}"
 
     RETRY_COUNT=0
     while true; do
