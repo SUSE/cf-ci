@@ -78,7 +78,8 @@ sed -e "s%#~placeholder_stack~#%$(escapeSubst "$STACK")%g" \
     -e "s%#~placeholder_caasp_pattern~#%$(escapeSubst "$CAASP_PATTERN")%g" \
     "$(dirname "$0")/../cap-terraform/caasp4/terraform.tfvars.skel" > \
     "$WORKSPACE"/deployment/terraform.tfvars
-sed -i '/\"\${openstack_compute_secgroup_v2\.secgroup_worker\.name}\",/a \ \ \ \ "\${openstack_compute_secgroup_v2.secgroup_cap.name}",' "$WORKSPACE"/deployment/worker-instance.tf
+sed -i '/\"\${openstack_networking_secgroup_v2\.secgroup.common\.name}\",/a \ \ \ \ "\${openstack_compute_secgroup_v2.secgroup_cap.name}",' \
+    "$WORKSPACE"/deployment/worker-instance.tf
 
 cp -r "$(dirname "$0")/../cap-terraform/caasp4"/* "$WORKSPACE"/deployment/
 
