@@ -233,11 +233,12 @@ fi
 if [[ -f "${test_non_pods_yml}" ]]; then
     kubectl delete --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
 fi
-# Delete test pod if they pass. Required pre upgrade
-if [[ $pod_status -eq 0 ]]; then
-    trap "" EXIT
-    kubectl delete pod --namespace=scf ${TEST_NAME}
-else
-    echo "Test failed with status ${pod_status}"
-fi
-exit ${pod_status}
+# TODO
+# # Delete test pod if they pass. Required pre upgrade
+# if [[ $pod_status -eq 0 ]]; then
+#     trap "" EXIT
+#     kubectl delete pod --namespace=scf ${TEST_NAME}
+# else
+#     echo "Test failed with status ${pod_status}"
+# fi
+# exit ${pod_status}
