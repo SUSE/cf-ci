@@ -233,6 +233,8 @@ set_helm_params() {
 set_uaa_params() {
     if [[ "${HA:-false}" == true ]]; then
         HELM_PARAMS+=(--set=config.HA=true)
+        HELM_PARAMS+=(--set=config.HA_strict=false)
+        HELM_PARAMS+=(--set=sizing.mysql_proxy.count=1)
     fi
 }
 
@@ -246,6 +248,8 @@ set_scf_params() {
     fi
     if [[ "${HA:-false}" == true ]]; then
         HELM_PARAMS+=(--set=config.HA=true)
+        HELM_PARAMS+=(--set=config.HA_strict=false)
+        HELM_PARAMS+=(--set=sizing.mysql_proxy.count=1)
     fi
 }
 
