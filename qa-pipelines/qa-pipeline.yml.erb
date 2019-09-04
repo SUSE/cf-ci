@@ -228,7 +228,7 @@ jobs:
   - do:
     <% if enable_cf_deploy_pre_upgrade %>
     - task: cf-deploy-pre-upgrade
-      file: ci/qa-pipelines/tasks/cf-deploy-pre-upgrade.yml
+      file: ci/qa-pipelines/tasks/cf-deploy.yml
       params:
         << : *upgrade-task-params
         << : *deploy-upgrade-params
