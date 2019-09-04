@@ -88,6 +88,7 @@ Dir.chdir('../cloudfoundry/ci/pipelines') do
     pipeline-cf-openstack-validator
     pipeline-concourse-lftp-resource
     pipeline-concourse-obs-resource
+    pipeline-eirini-ci
     pipeline-helm-charts-check
     pipeline-helm-charts-sync
     pipeline-helm-charts-sync-container
