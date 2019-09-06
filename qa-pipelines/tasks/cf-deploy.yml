@@ -17,7 +17,7 @@ params:
   KUBE_ORGANIZATION: ""
   HA: false # true, false, or "scaled"
   MAGIC_DNS_SERVICE: xip.io
-  CAP_BUNDLE_URL: ""
+  CAP_BUNDLE_URL: "https://s3.amazonaws.com/cap-release-archives/master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb.zip"
 
 run:
   path: ci/qa-pipelines/tasks/cf-deploy.sh
