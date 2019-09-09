@@ -66,6 +66,11 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
         azure_wait_for_lbs_in_namespace uaa
         azure_set_record_sets_for_namespace uaa
     fi
+else
+    if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
+        az_login
+        azure_dns_clear
+    fi
 fi
 
 # Deploy CF.
@@ -83,10 +88,10 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
-# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:	
-if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then	
-    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
-    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
+# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
 fi
 
 echo "SCF customization..."
@@ -109,6 +114,7 @@ trap "upload_klogs_on_failure ${UAA_NAMESPACE} ${CF_NAMESPACE}" EXIT
 wait_for_release scf
 
 if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
+    az_login
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
 fi
@@ -122,9 +128,9 @@ if ha_deploy; then
     # Set uaa count to 1 till CATs failures are resolved.
     HELM_PARAMS+=(--set=config.HA_strict=false)
     HELM_PARAMS+=(--set=sizing.uaa.count=1)
-    
+
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    
+
     helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --timeout 600 \
@@ -136,9 +142,9 @@ if ha_deploy; then
     echo "Applying actual SCF HA config..."
     set_helm_params # Resets HELM_PARAMS.
     set_scf_params # Adds scf specific params to HELM_PARAMS.
-    
+
     echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    
+
     helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
         --namespace "${CF_NAMESPACE}" \
         --timeout 3600 \
