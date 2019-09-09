@@ -227,11 +227,11 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]]; then
    fi
 fi
 
-if [[ -f "${test_non_pods_yml}" ]]; then
-    kubectl delete --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
-fi
-# Delete test pod if they pass. Required pre upgrade
-if [[ $pod_status -eq 0 ]]; then
-    kubectl delete pod --namespace=scf ${TEST_NAME}
-fi
+# if [[ -f "${test_non_pods_yml}" ]]; then
+#     kubectl delete --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
+# fi
+# # Delete test pod if they pass. Required pre upgrade
+# if [[ $pod_status -eq 0 ]]; then
+#     kubectl delete pod --namespace=scf ${TEST_NAME}
+# fi
 exit $pod_status
