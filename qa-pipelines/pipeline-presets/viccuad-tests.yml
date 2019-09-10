@@ -1,0 +1,9 @@
+---
+
+enable-cf-deploy: true
+
+enable-cf-smoke-tests: false
+enable-cf-brain-tests: true
+enable-cf-acceptance-tests: false
+
+enable-cf-teardown: false
