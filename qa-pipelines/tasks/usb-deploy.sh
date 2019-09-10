@@ -119,7 +119,7 @@ cf bind-staging-security-group sidecar-net-workaround
 
 # Test POSTGRES
 helm install stable/postgresql \
-  --version 0.18.1             \
+  --version 4.0.0              \
   --namespace postgres         \
   --name postgres              \
   --set "service.externalIPs={${DB_EXTERNAL_IP}}"
