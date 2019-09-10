@@ -12,7 +12,7 @@ source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 set -o nounset
 set -o allexport
 # Set this to skip a test, e.g. 01[12] to skip tests 011 and 012
-EXCLUDE_BRAINS_REGEX=
+EXCLUDE_BRAINS_REGEX=01[17]
 # Set this to run only one test. If EXCLUDE and INCLUDE are both specified, EXCLUDE is applied after INCLUDE
 INCLUDE_BRAINS_REGEX=${INCLUDE_BRAINS_REGEX:-}
 # Set this to define number of parallel ginkgo nodes in the acceptance test pod

@@ -109,6 +109,7 @@ wait_for_release() {
     wait_for_jobs $release || exit 1
 
     # Wait for config map
+    sleep 360
     local secret_name=""
     while true ; do
         secret_name="$(kubectl get configmap -n "${namespace}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
@@ -279,7 +280,7 @@ set -o allexport
 
 public_ip="$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"] // ""')"
 
-if [[ -n "${public_ip}" ]]; then
+if [[ "${public_ip}" ]]; then
     # If we have a public IP in the config map, we assume this is openstack / bare metal / etc. and have
     # external IPs hard-coded.
     # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
