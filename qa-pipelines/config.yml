@@ -5,6 +5,7 @@ src-rails-example-repo: https://github.com/scf-samples/rails-example.git
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
 kube-pool-key: *github-private-key
 
+# Used by s3 resource for pulling latest RC
 s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
