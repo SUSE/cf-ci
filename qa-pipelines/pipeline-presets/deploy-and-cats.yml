@@ -1,6 +1,6 @@
 ---
 
-enable-cf-deploy: false
+enable-cf-deploy: true
 
 enable-cf-smoke-tests: false
 enable-cf-brain-tests: true
