@@ -11,6 +11,8 @@ pxc_pre_upgrade() {
             return 0    
         fi
         return 1
+      else
+       return 1
     fi
 }
 
