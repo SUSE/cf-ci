@@ -35,7 +35,7 @@ status-email-receiver: *ci-status-email-receiver
 # When deploying / upgrading, use the embedded UAA instead of the normal,
 # separately namespaced UAA.
 enable-embedded-uaa: false
-enable-autoscaler: true
+enable-autoscaler: false
 enable-credhub: true
 # The following two options test that ha strict mode works by adjusting the diego_api count to 1
 # This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true
