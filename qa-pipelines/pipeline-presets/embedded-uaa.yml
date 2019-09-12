@@ -5,7 +5,7 @@
 # (which performs an upgrade and all tests)
 
 # Use terraform to deploy AKS cluster
-enable-terraform: true
+terraform-platform: aks #aks or gke
 
 # Report status as steps complete
 status-reporting: false

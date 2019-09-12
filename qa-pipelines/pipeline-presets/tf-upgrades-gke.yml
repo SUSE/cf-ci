@@ -1,0 +1,16 @@
+---
+
+klog-collection-on-failure: true
+terraform-platform: gke #aks or gke
+
+enable-cf-deploy-pre-upgrade: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
+
+enable-cf-smoke-tests-pre-upgrade: true
+
+enable-cf-upgrade: true
+
+enable-cf-smoke-tests: true
+enable-cf-brain-tests: true
+enable-cf-acceptance-tests: true
+
+enable-cf-teardown: tru

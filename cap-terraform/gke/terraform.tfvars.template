@@ -1,0 +1,8 @@
+project             =   "placeholder" #GCP project id
+location            =   "placeholder" #GCP region
+node_pool_name      =   "placeholder" #Name for your nodepool
+vm_type             =   UBUNTU
+gke_sa_key          =   "placeholder" #path to your service account key
+gcp_dns_sa_key      =   "placeholder" #path to your dns service account key
+cluster_labels      =   {key = "placeholder"} #labels to be attached to cluster
+k8s_version	    = "latest"
