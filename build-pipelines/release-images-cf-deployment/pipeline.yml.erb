@@ -19,6 +19,21 @@ resources:
     branch: <%= cf_deployment_branch %>
     tag_filter: <%= cf_deployment_tag %>
 <% end %>
+- name: scf
+  type: git
+  source:
+    uri: <%= scf_repo %>
+    branch: <%= scf_branch %>
+    paths:
+    - <%= scf_ops_set_suse_buildpacks %>
+- name: bosh-cli
+  type: github-release
+  source:
+    owner: <%= bosh_cli_owner %>
+    repository: <%= bosh_cli_repository %>
+    tag: <%= bosh_cli_tag %>
+    globs:
+    - <%= bosh_cli_glob %>
 - name: s3.fissile-linux
   type: s3
   source:
@@ -33,7 +48,7 @@ resources:
     access_key_id: <%= s3_access_key %>
     secret_access_key: <%= s3_secret_key %>
     versioned_file: <%= stemcell_version_file %>
-    
+
 jobs:
 <% cf_deployment_tags.each do |cf_deployment_tag| %>
 - name: build-<%= cf_deployment_tag %>
@@ -46,6 +61,9 @@ jobs:
       trigger: true
     - get: s3.fissile-linux
       trigger: true
+    - get: scf
+      trigger: true
+    - get: bosh-cli
   - do:
     - task: build
       privileged: true
@@ -57,6 +75,8 @@ jobs:
         STEMCELL_REPOSITORY: <%= stemcell_repository %>
         STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
         CF_DEPLOYMENT_YAML: <%= cf_deployment_yaml %>
+        BOSH_CLI_GLOB: <%= bosh_cli_glob %>
+        SCF_OPS_SET_SUSE_BUILDPACKS: <%= scf_ops_set_suse_buildpacks %>
         DOCKER_REGISTRY: <%= docker_registry %>
         DOCKER_ORGANIZATION: <%= docker_organization %>
         DOCKER_TEAM_USERNAME: <%= docker_username %>

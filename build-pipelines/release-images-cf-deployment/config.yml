@@ -9,6 +9,13 @@ docker-image-resource-branch: master
 cf-deployment-repo: https://github.com/cloudfoundry/cf-deployment
 cf-deployment-branch: master
 cf-deployment-yaml: cf-deployment/cf-deployment.yml
+bosh-cli-owner: cloudfoundry
+bosh-cli-repository: bosh-cli
+bosh-cli-tag: v6.1.0
+bosh-cli-glob: bosh-cli-*-linux-amd64
+scf-repo: https://github.com/SUSE/scf
+scf-branch: v3-develop
+scf-ops-set-suse-buildpacks: scf/deploy/helm/scf/assets/operations/buildpacks/set_suse_buildpacks.yaml
 fissile-linux-s3-bucket: cf-opensusefs2
 stemcell-os: SLE
 stemcell-repository: *docker-internal-fissile-image
