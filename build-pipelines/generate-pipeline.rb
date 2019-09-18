@@ -34,4 +34,4 @@ class PipelineDeployer
     end
 end
 
-PipelineDeployer.new.render *ARGV.first(6)
+PipelineDeployer.new.render *ARGV.first(3)
