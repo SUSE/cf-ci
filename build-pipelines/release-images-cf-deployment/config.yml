@@ -3,7 +3,7 @@ cf-deployment-tags:
   - v9.2.0
   - v9.5.0
 ci-repo: https://github.com/suse/cf-ci
-ci-branch: bisingh/cf-operator-ci
+ci-branch: f0rmiga/set-suse-buildpacks-ops-file
 docker-image-resource-repo: https://github.com/concourse/docker-image-resource
 docker-image-resource-branch: master
 cf-deployment-repo: https://github.com/cloudfoundry/cf-deployment
@@ -14,7 +14,7 @@ bosh-cli-repository: bosh-cli
 bosh-cli-tag: v6.1.0
 bosh-cli-glob: bosh-cli-*-linux-amd64
 scf-repo: https://github.com/SUSE/scf
-scf-branch: v3-develop
+scf-branch: f0rmiga/set-suse-buildpacks
 scf-ops-set-suse-buildpacks: scf/deploy/helm/scf/assets/operations/buildpacks/set_suse_buildpacks.yaml
 fissile-linux-s3-bucket: cf-opensusefs2
 stemcell-os: SLE
