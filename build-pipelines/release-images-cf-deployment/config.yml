@@ -3,12 +3,16 @@ cf-deployment-tags:
   - v9.2.0
   - v9.5.0
 ci-repo: https://github.com/suse/cf-ci
-ci-branch: bisingh/cf-operator-ci
+ci-branch: develop
 docker-image-resource-repo: https://github.com/concourse/docker-image-resource
 docker-image-resource-branch: master
 cf-deployment-repo: https://github.com/cloudfoundry/cf-deployment
 cf-deployment-branch: master
 cf-deployment-yaml: cf-deployment/cf-deployment.yml
+bosh-cli-tag: 6.1.0
+scf-repo: https://github.com/SUSE/scf
+scf-branch: v3-develop
+scf-ops-set-suse-buildpacks: deploy/helm/scf/assets/operations/buildpacks/set_suse_buildpacks.yaml
 fissile-linux-s3-bucket: cf-opensusefs2
 stemcell-os: SLE
 stemcell-repository: *docker-internal-fissile-image
