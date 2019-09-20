@@ -5,4 +5,3 @@ provider "google" {
 	credentials = "${var.gke_sa_key}"
 	project     = "${var.project}"
 }
-
