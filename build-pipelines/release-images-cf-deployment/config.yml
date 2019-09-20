@@ -11,8 +11,7 @@ cf-deployment-branch: master
 cf-deployment-yaml: cf-deployment/cf-deployment.yml
 bosh-cli-tag: 6.1.0
 scf-repo: https://github.com/SUSE/scf
-# TODO: need to replace this with v3-develop once #2792 is merged.
-scf-branch: f0rmiga/set-suse-buildpacks
+scf-branch: v3-develop
 scf-ops-set-suse-buildpacks: deploy/helm/scf/assets/operations/buildpacks/set_suse_buildpacks.yaml
 fissile-linux-s3-bucket: cf-opensusefs2
 stemcell-os: SLE
