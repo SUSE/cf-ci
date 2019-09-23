@@ -66,6 +66,10 @@ if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
+# PR-2790
+HELM_PARAMS+=(--set "enable.eirini=true")
+HELM_PARAMS+=(--set "env.KUBE_CSR_AUTO_APPROVAL=true")
+
 # When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:
 if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
     HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
