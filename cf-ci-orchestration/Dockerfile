@@ -1,15 +1,14 @@
 #Base image for kube yaml installer
-FROM opensuse/leap:42.3
+FROM opensuse/leap:15.1
 
 # Install: ruby, unzip, openssh, sshpass, vim, nano, curl, kubectl
-# Install: wget, tar, helm, direnv
+# Install: wget, tar, helm, direnv, terraform, aws-cli, aws-iam-authenticator
 # Install python dependencies for az cli prerequisites
 # "zypper removerepo "OSS Update" is now required because that repo isn't reachable
 # NOTE: The `utilities` repo is added for access to `direnv`.
 #
 RUN true \
     && zypper removerepo "OSS Update" \
-    && zypper --non-interactive addrepo http://download.opensuse.org/repositories/utilities/openSUSE_Leap_42.3/utilities.repo \
     && zypper --non-interactive --gpg-auto-import-keys refresh \
     && zypper --non-interactive install ruby \
     unzip \
@@ -20,9 +19,15 @@ RUN true \
     curl \
     wget \
     tar \
+    gzip \
     direnv \
+    git-core \
     bash-completion docker-bash-completion systemd-bash-completion \
     python-xml python-pyOpenSSL python-devel \
+    && curl -LO "https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip" \
+    && unzip terraform_0.12.2_linux_amd64.zip \
+    && mv ./terraform /usr/local/bin/terraform \
+    && rm terraform_0.12.2_linux_amd64.zip \
     && curl -sS "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" \
     && unzip awscli-bundle.zip \
     && ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws \
@@ -75,6 +80,7 @@ RUN true \
     && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet
 
 COPY helm /usr/local/bin/helm
+
 RUN true \
     && chmod a+x /usr/local/bin/helm
 

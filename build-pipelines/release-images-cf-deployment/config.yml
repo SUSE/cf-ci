@@ -1,0 +1,27 @@
+cf-deployment-tags:
+  - v8.0.0
+  - v9.2.0
+  - v9.5.0
+ci-repo: https://github.com/suse/cf-ci
+ci-branch: develop
+docker-image-resource-repo: https://github.com/concourse/docker-image-resource
+docker-image-resource-branch: master
+cf-deployment-repo: https://github.com/cloudfoundry/cf-deployment
+cf-deployment-branch: master
+cf-deployment-yaml: cf-deployment/cf-deployment.yml
+bosh-cli-tag: 6.1.0
+scf-repo: https://github.com/SUSE/scf
+scf-branch: v3-develop
+scf-ops-set-suse-buildpacks: deploy/helm/scf/assets/operations/buildpacks/set_suse_buildpacks.yaml
+fissile-linux-s3-bucket: cf-opensusefs2
+stemcell-os: SLE
+stemcell-repository: *docker-internal-fissile-image
+stemcell-versions-s3-bucket: suse-bosh-sles-stemcells
+stemcell-version-file: VERSION.txt
+stemcell-s3-bucket-region: eu-central-1
+docker-registry: *docker-internal-registry
+docker-organization: *docker-org
+docker-username: *docker-internal-username
+docker-password: *docker-internal-password
+s3-access-key: *aws-capbot-access-key
+s3-secret-key: *aws-capbot-secret-key

@@ -3,9 +3,21 @@ set -o errexit
 set -o nounset
 
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
+source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
-set_helm_params # Sets HELM_PARAMS
-set_uaa_sizing_params # Adds uaa sizing params to HELM_PARAMS
+ha_deploy() {
+    [[ "${HA}" == true ]]
+}
+
+set_helm_params # Sets HELM_PARAMS.
+set_uaa_params # Adds uaa specific params to HELM_PARAMS.
+
+# Downsize mysql if its a UAA HA deploy scenario.
+if ha_deploy; then
+    HELM_PARAMS+=(--set=config.HA_strict=false)
+    HELM_PARAMS+=(--set=sizing.uaa.count=1)
+    HELM_PARAMS+=(--set=sizing.mysql.count=1)
+fi
 
 # Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
 kubectl delete psp --ignore-not-found suse.cap.psp
@@ -27,56 +39,71 @@ if [[ ${cap_platform} != "eks" ]]; then
     fi
 fi
 
-echo UAA customization ...
+echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-# Deploy UAA
-kubectl create namespace "${UAA_NAMESPACE}"
-if [[ "${PROVISIONER}" == "kubernetes.io/rbd" ]]; then
-    kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
+if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
+    # Deploy UAA.
+    kubectl create namespace "${UAA_NAMESPACE}"
+    if [[ "${PROVISIONER}" == "kubernetes.io/rbd" ]]; then
+        kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
+    fi
+
+    helm install ${CAP_DIRECTORY}/helm/uaa/ \
+        --namespace "${UAA_NAMESPACE}" \
+        --name uaa \
+        --timeout 1200 \
+        "${HELM_PARAMS[@]}"
+
+    trap "upload_klogs_on_failure ${UAA_NAMESPACE}" EXIT
+
+    # Wait for UAA release.
+    wait_for_release uaa
+
+    if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
+        az_login
+        azure_dns_clear
+        azure_wait_for_lbs_in_namespace uaa
+        azure_set_record_sets_for_namespace uaa
+    fi
 fi
 
-helm install ${CAP_DIRECTORY}/helm/uaa/ \
-    --namespace "${UAA_NAMESPACE}" \
-    --name uaa \
-    --timeout 600 \
-    "${HELM_PARAMS[@]}"
+# Deploy CF.
+set_helm_params # Resets HELM_PARAMS.
+set_scf_params # Adds scf specific params to HELM_PARAMS.
 
-# Wait for UAA release
-wait_for_release uaa
-
-if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
-    az_login
-    azure_dns_clear
-    azure_wait_for_lbs_in_namespace uaa
-    azure_set_record_sets_for_namespace uaa
+# Downsize mysql if its a SCF HA deploy scenario.
+if ha_deploy; then
+    HELM_PARAMS+=(--set=config.HA_strict=false)
+    HELM_PARAMS+=(--set=sizing.mysql.count=1)
 fi
-
-# Deploy CF
-CA_CERT="$(get_internal_ca_cert)"
-
-set_helm_params # Resets HELM_PARAMS
-set_scf_sizing_params # Adds scf sizing params to HELM_PARAMS
-
-echo SCF customization ...
-echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
+# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:	
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then	
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
+fi
+
+echo "SCF customization..."
+echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+
 helm install ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
-    --timeout 600 \
+    --timeout 1200 \
     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
     --set "env.UAA_HOST=${UAA_HOST}" \
     --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "secrets.UAA_CA_CERT=${CA_CERT}" \
     --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
     --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
     "${HELM_PARAMS[@]}"
+
+trap "upload_klogs_on_failure ${UAA_NAMESPACE} ${CF_NAMESPACE}" EXIT
 
 # Wait for CF release
 wait_for_release scf
@@ -85,3 +112,46 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
 fi
+
+if ha_deploy; then
+    # Restoring the HA configuration after mysql to pxc migration.
+    echo "Applying actual UAA HA config..."
+    set_helm_params # Resets HELM_PARAMS.
+    set_uaa_params # Adds uaa specific params to HELM_PARAMS.
+
+    # Set uaa count to 1 till CATs failures are resolved.
+    HELM_PARAMS+=(--set=config.HA_strict=false)
+    HELM_PARAMS+=(--set=sizing.uaa.count=1)
+    
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+    
+    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+        --namespace "${UAA_NAMESPACE}" \
+        --timeout 600 \
+        "${HELM_PARAMS[@]}"
+
+    # Wait for UAA release
+    wait_for_release uaa
+
+    echo "Applying actual SCF HA config..."
+    set_helm_params # Resets HELM_PARAMS.
+    set_scf_params # Adds scf specific params to HELM_PARAMS.
+    
+    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+    
+    helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+        --namespace "${CF_NAMESPACE}" \
+        --timeout 3600 \
+        --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+        --set "env.UAA_HOST=${UAA_HOST}" \
+        --set "env.UAA_PORT=${UAA_PORT}" \
+        --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
+        --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
+        --wait \
+        "${HELM_PARAMS[@]}"
+
+    # Wait for CF release
+    wait_for_release scf
+fi
+
+trap "" EXIT

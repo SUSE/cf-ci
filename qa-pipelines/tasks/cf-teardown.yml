@@ -7,6 +7,18 @@ image_resource:
     tag: latest
 inputs:
 - name: ci
+- name: meta
 - name: pool.kube-hosts
+- name: commit-id
+outputs:
+- name: klog
+params:
+  AZ_SP_APPID: ""
+  AZ_SP_PASSWORD: ""
+  AZ_SP_TENANT: ""
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  GKE_PRIVATE_KEY_BASE64: ""
+  KLOG_COLLECTION_ON_FAILURE: false
 run:
   path: ci/qa-pipelines/tasks/cf-teardown.sh

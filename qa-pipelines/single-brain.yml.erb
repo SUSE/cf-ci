@@ -1,10 +1,17 @@
-# Concourse pipeline to run a single brain test
+<%
+# Convert a multiline string into a string with literal '\n's for YAML to parse as multiline string
+class ::String
+  def yamlify()
+      self.sub("\n", '\n')
+  end
+end
+%>
 
 resources:
 - name: ci
   type: git
   source:
-    uri: ((src-ci-repo))
+    uri: <%= src_ci_repo %>
     branch: ((src-ci-branch))
     paths:
     - qa-pipelines/*
@@ -13,19 +20,19 @@ resources:
 - name: s3.scf-config-sles
   type: s3
   source:
-    endpoint: ((s3-config-endpoint))
-    access_key_id: ((s3-config-access-key))
-    secret_access_key: ((s3-config-secret-key))
-    bucket: ((s3-config-bucket-sles))
+    endpoint: <%= s3_config_endpoint %>
+    access_key_id: <%= s3_config_access_key %>
+    secret_access_key: <%= s3_config_secret_key %>
+    bucket: <%= s3_config_bucket_sles %>
     regexp: ((s3-config-prefix-sles))scf-sle-(.*)\.zip$
 
 - name: pool.kube-hosts
   type: pool
   source:
-    uri: ((kube-pool-repo))
-    private_key: ((kube-pool-key))
-    branch: ((kube-pool-branch))
-    pool: ((kube-pool-pool))
+    uri: <%= kube_pool_repo %>
+    private_key: "<%= kube_pool_key.yamlify %>"
+    branch: <%= kube_pool_branch %>
+    pool: <%= kube_pool_pool %>
 jobs:
 <% 18.times do |num| %>
 <% test_name = sprintf('%03i', num + 1) %>
@@ -46,18 +53,18 @@ jobs:
     - task: acceptance-tests-brain
       file: ci/qa-pipelines/tasks/run-test.yml
       params:
-        ENABLE_CF_BRAIN_TESTS: true
+        TEST_NAME: acceptance-tests-brain
         INCLUDE_BRAINS_REGEX: "<%= test_name %>"
 
         # AWS/EKS configuration
-        AZ_SP_APPID: ((az-sp-app-id))
-        AZ_SP_PASSWORD: ((az-sp-password))
-        AZ_SP_TENANT: ((az-sp-tenant))
-        AWS_ACCESS_KEY_ID: ((aws-jenkins-access-key))
-        AWS_SECRET_ACCESS_KEY: ((aws-jenkins-secret-key))
+        AZ_SP_APPID: <%= az_sp_app_id %>
+        AZ_SP_PASSWORD: <%= az_sp_password %>
+        AZ_SP_TENANT: <%= az_sp_tenant %>
+        AWS_ACCESS_KEY_ID: <%= aws_jenkins_access_key %>
+        AWS_SECRET_ACCESS_KEY: <%= aws_jenkins_secret_key %>
 
         # GCP/GKE configuration
-        GKE_PRIVATE_KEY_BASE64: ((gke-private-key-base64))
+        GKE_PRIVATE_KEY_BASE64: "<%= gke_private_key_base64.yamlify %>"
       input_mapping:
         s3.scf-config: s3.scf-config-sles
     - put: pool.kube-hosts

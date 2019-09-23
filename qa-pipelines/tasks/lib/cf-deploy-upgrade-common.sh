@@ -43,7 +43,7 @@ elif [[ ${cap_platform} == "eks" ]] && kubectl get storageclass | grep gp2 > /de
     PROVISIONER=$(kubectl get storageclasses ${STORAGECLASS} -o "jsonpath={.provisioner}")
     garden_rootfs_driver="overlay-xfs"
 else
-    echo "Your k8s cluster must have a SC named persitent or gp2"
+    echo "Your k8s cluster must have a SC named persistent or gp2"
     exit 1
 fi
 
@@ -54,13 +54,15 @@ UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 is_namespace_ready() {
     local namespace="$1"
 
-    # Check that all pods which were not created by jobs are ready
-    [[ true == $(2>/dev/null kubectl get pods --namespace=${namespace} --output=custom-columns=':.status.containerStatuses[].name,:.status.containerStatuses[].ready' \
-        | grep -vE 'secret-generation|post-deployment' \
-        | awk '{ print $2 }' \
-        | sed '/^ *$/d' \
-        | sort \
-        | uniq) ]]
+    # Check that all pods not from jobs are ready
+    if kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+        --output 'custom-columns=:.status.containerStatuses[*].ready' \
+        | grep --quiet false
+    then
+        return 1
+    fi
+
+    return 0
 }
 
 # Outputs a json representation of a yml document
@@ -99,22 +101,46 @@ wait_for_jobs() {
 }
 
 wait_for_release() {
+    local start now elapsed
     local release="$1"
     local namespace=$(helm list "${release}" | awk '$1=="'"$release"'" {print $NF}')
     start=$(date +%s)
+
     wait_for_jobs $release || exit 1
+
+    # Wait for config map
+    local secret_name=""
+    while true ; do
+        secret_name="$(kubectl get configmap -n "${namespace}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
+        if [[ -n "${secret_name}" ]] && kubectl get secrets -n "${namespace}" "${secret_name}" ; then
+            break
+        fi
+        now=$(date +%s)
+        elapsed="$((now - start))"
+        if (( elapsed > 4800 )) ; then
+            printf "\nTimed out waiting for %s config map (%s is %s seconds since start)\n" "${release}" "$(date --rfc-2822)" "${elapsed}"
+        fi
+        printf "\rWaiting for %s config map at %s (%ss)..." "${release}" "$(date --rfc-2822)" "${elapsed}"
+        sleep 10
+    done
+
     for (( i = 0  ; i < 480 ; i ++ )) ; do
         if is_namespace_ready "${namespace}" ; then
             break
         fi
         now=$(date +%s)
-        printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
+        printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((now - start))
         sleep 10
     done
+
     now=$(date +%s)
-    printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((${now} - ${start}))
+    printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((now - start))
     kubectl get pods --namespace="${namespace}"
     if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
+        kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+            --output 'custom-columns=NAME:.metadata.name,CONTAINERS:.status.containerStatuses[*].name,READY:.status.containerStatuses[*].ready' \
+            | grep -E 'READY|false' \
+            || true
         printf "%s pods are still pending after 80 minutes \n" "${release}"
         exit 1
     fi
@@ -141,23 +167,40 @@ function semver_is_gte() {
 # Get the version of the helm chart for uaa
 helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 
-generated_secrets_secret() { kubectl get --namespace "${UAA_NAMESPACE}" secrets --output "custom-columns=:.metadata.name" | grep -F "secrets-$(helm_chart_version)-" | sort | tail -n 1 ; }
-
-get_internal_ca_cert() (
-    set -o pipefail
-    local uaa_secret_name=$(generated_secrets_secret)
-    kubectl get secret ${uaa_secret_name} \
+get_uaa_ca_cert() (
+    local uaa_secret_name
+    uaa_secret_name="$(kubectl get configmap --namespace "${UAA_NAMESPACE}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
+    if [[ -z "${uaa_secret_name}" ]] ; then
+        echo "Failed to get UAA secret name" >&2
+        exit 1
+    fi
+    local cert_data
+    cert_data="$(kubectl get secret "${uaa_secret_name}" \
       --namespace "${UAA_NAMESPACE}" \
-      -o jsonpath="{.data['internal-ca-cert']}" \
-      | base64 -d
+      -o jsonpath="{.data['internal-ca-cert']}")"
+    if [[ -z "${cert_data}" ]]; then
+        echo "Failed to get UAA CA certificate from secret ${uaa_secret_name}" >&2
+        exit 1
+    fi
+    base64 -d <<< "${cert_data}"
 )
 
 # Helm parameters common to UAA and SCF, for helm install and upgrades
 set_helm_params() {
     HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
                  --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-                 --set "enable.autoscaler=true"
+                 --set "enable.autoscaler=${ENABLE_AUTOSCALER}"
                  --set "kube.storage_class.persistent=${STORAGECLASS}")
+
+    # CAP-370. Let the CC give brokers 10 minutes to respond with	
+    # their catalog. We have seen minibroker in the brain tests	
+    # require 4.5 minutes to assemble such, likely due to a slow	
+    # network. Doubling that should be generous enough. Together with	
+    # the doubled brain test timeout (see `run-test.sh`), such tests	
+    # will then still have the normal 10 minutes for any remaining	
+    # actions.	
+    HELM_PARAMS+=(--set "env.BROKER_CLIENT_TIMEOUT_SECONDS=600")
+    
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
         HELM_PARAMS+=(--set "env.GARDEN_APPARMOR_PROFILE=")
@@ -166,7 +209,7 @@ set_helm_params() {
     if [[ $(helm_chart_version) == "2.15.2" ]]; then
         HELM_PARAMS+=(--set "sizing.credhub_user.count=1")
     else
-        HELM_PARAMS+=(--set "enable.credhub=true")
+        HELM_PARAMS+=(--set "enable.credhub=${ENABLE_CREDHUB}")
     fi
 
     if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
@@ -177,53 +220,64 @@ set_helm_params() {
             HELM_PARAMS+=(--set "kube.external_ips[$i]=${external_ips[$i]}")
         done
     fi
-    if [ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]; then
+    if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
+        HELM_PARAMS+=(--set "enable.uaa=true")
+    fi
+    if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi
-    if [ -n "${KUBE_REGISTRY_USERNAME:-}" ]; then
+    if [[ -n "${KUBE_REGISTRY_USERNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
     fi
-    if [ -n "${KUBE_REGISTRY_PASSWORD:-}" ]; then
+    if [[ -n "${KUBE_REGISTRY_PASSWORD:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}")
     fi
-    if [ -n "${KUBE_ORGANIZATION:-}" ]; then
+    if [[ -n "${KUBE_ORGANIZATION:-}" ]]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
-set_uaa_sizing_params() {
-    return 0 # Sizing UAA up breaks CATS
-    if [[ "${HA}" == true ]]; then
-        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            # HA UAA not supported prior to 2.11.0
+# Method to customize UAA.
+set_uaa_params() {
+    if [[ "${HA:-false}" == true ]]; then
+        if [[ "${CUSTOM_UAA_SIZING:-false}" == true ]]; then
+            if [[ "$(helm_chart_version)" == "2.17.1" ]]; then
+               HELM_PARAMS+=(--set=sizing.mysql.count=2)
+            else
+               HELM_PARAMS+=(--set=sizing.mysql.count=3)
+               HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
+            fi
+        else
             HELM_PARAMS+=(--set=config.HA=true)
         fi
-    elif [[ ${SCALED_HA} == true ]]; then
-        HELM_PARAMS+=(--set=sizing.{uaa,mysql,mysql_proxy}.count=3)
     fi
 }
 
-set_scf_sizing_params() {
-    if [[ ${cap_platform} == "eks" ]] ; then
+# Method to customize SCF.
+set_scf_params() {
+    if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
+        HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
+    fi
+    if [[ "${cap_platform}" == "eks" ]] ; then
         HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
     fi
-    case "${HA}" in
-    true)
-        if semver_is_gte "$(helm_chart_version)" 2.11.0; then
-            HELM_PARAMS+=(--set=config.HA=true)
+    if [[ "${HA:-false}" == true ]]; then
+        if [[ "${CUSTOM_SCF_SIZING:-false}" == true ]]; then
+            HELM_PARAMS+=(
+                --set=sizing.diego_cell.count=3
+                --set=sizing.{adapter,api_group,autoscaler_actors,autoscaler_api,autoscaler_metrics,cc_clock,cc_uploader,cc_worker,cf_usb_group,diego_api,diego_brain,diego_ssh,doppler,locket,log_api,log_cache_scheduler,nats,nfs_broker,router,routing_api,syslog_scheduler,tcp_router}.count=2
+            )
+            if [[ "$(helm_chart_version)" == "2.17.1" ]]; then
+               HELM_PARAMS+=(--set=sizing.mysql.count=2)
+            else
+               HELM_PARAMS+=(--set=sizing.mysql.count=3)
+               HELM_PARAMS+=(--set=sizing.mysql_proxy.count=2)
+            fi
         else
-            HELM_PARAMS+=(--set=sizing.HA=true)
+            HELM_PARAMS+=(--set=config.HA=true)
         fi
-        ;;
-    scaled)
-        HELM_PARAMS+=(
-            --set=sizing.routing_api.count=1
-            --set=sizing.{api,cc_uploader,cc_worker,cf_usb,diego_access,diego_brain,doppler,loggregator,mysql,nats,router,syslog_adapter,syslog_rlp,tcp_router,mysql_proxy}.count=2
-            --set=sizing.{diego_api,diego_locket,diego_cell}.count=3
-        )
-        ;;
-    esac
+    fi
 }
 
 set -o allexport
@@ -232,19 +286,20 @@ set -o allexport
 # The external_ip is set to the internal ip of a worker node. When running on openstack or azure,
 # the public IP (used for DOMAIN) will be taken from the floating IP or load balancer IP.
 
-if [[ ${cap_platform} == openstack || ${cap_platform} == bare ]]; then
-  external_ips=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
-  public_ip=$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"]')
-fi
+public_ip="$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["public-ip"] // ""')"
 
-
-if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
-    source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
-    DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
-else
+if [[ -n "${public_ip}" ]]; then
+    # If we have a public IP in the config map, we assume this is openstack / bare metal / etc. and have
+    # external IPs hard-coded.
     # Domain for SCF. DNS for *.DOMAIN must point to the same kube node
     # referenced by external_ip.
     DOMAIN=${public_ip}.${MAGIC_DNS_SERVICE}
+    # We use external_ips in set_helm_params()
+    external_ips=($(kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type == "InternalIP").address'))
+else
+    # If we do _not_ have a public IP, assume this is in the cloud™ somewhere and we will use Azure DNS
+    source "ci/qa-pipelines/tasks/lib/azure-aks.sh"
+    DOMAIN=${AZURE_AKS_RESOURCE_GROUP}.${AZURE_DNS_ZONE_NAME}
 fi
 
 #Set INSECURE_DOCKER_REGISTRIES for brain test

@@ -1,0 +1,3 @@
+---
+kube-pool-branch: terraform-aks
+kube-pool-pool: azure-kube-hosts
