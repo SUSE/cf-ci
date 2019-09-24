@@ -3,25 +3,24 @@ set -o errexit
 set -o nounset
 
 cleanup() {
-    trap "" EXIT ERR
     set +o errexit
 
-    echo "Cleaning GKE terraform bits ..."
+    echo "Cleaning terraform bits ..."
     if [[ ${terraform_platform} == "aks" ]]; then
-    az group delete -n ${TF_VAR_az_resource_group} -y
+        az group delete -n ${TF_VAR_az_resource_group} -y
     fi
     if [[ ${terraform_platform} == "gke" ]]; then
-    gcloud auth activate-service-account --key-file=gke-key.json
-    gcloud config set project ${TF_VAR_project}
-    gcloud container clusters get-credentials  ${TF_VAR_cluster_name} --zone ${TF_VAR_location}
-    gcloud -q container clusters delete ${TF_VAR_cluster_name} --zone ${TF_VAR_location}
+        gcloud auth activate-service-account --key-file=gke-key.json
+        gcloud config set project ${TF_VAR_project}
+        gcloud container clusters get-credentials  ${TF_VAR_cluster_name} --zone ${TF_VAR_location}
+        gcloud -q container clusters delete ${TF_VAR_cluster_name} --zone ${TF_VAR_location}
     fi
     echo "Terraform bits cleaned"
 
     set -o errexit
     exit 1
 }
-trap cleanup EXIT ERR
+trap cleanup EXIT
 
 random_variable=$(hexdump -n 8 -e '2/4 "%08x"' /dev/urandom)
 
