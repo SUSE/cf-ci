@@ -1,0 +1,3 @@
+---
+kube-pool-branch: terraform-gke
+kube-pool-pool: gke-kube-hosts

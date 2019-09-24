@@ -1,7 +1,7 @@
 ---
 
+terraform-aks: true
 klog-collection-on-failure: true
-enable-terraform: true
 
 enable-cf-deploy-pre-upgrade: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
 
