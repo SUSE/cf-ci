@@ -22,6 +22,12 @@ end
 
 cap_install_url ||= nil
 cap_pre_upgrade_url ||= nil
+
+terraform_platform=nil
+terraform_platforms.each do |platform|
+  terraform_platform=platform if eval("terraform_#{platform}")
+end
+
 %>
 
 ---
@@ -85,6 +91,7 @@ aliases:
     TF_VAR_client_id: <%= arm_client_id %>
     TF_VAR_client_secret: <%= arm_client_secret %>
     TF_VAR_location: eastus
+    terraform_platform: aks
 
   # Terraform GKE Configuration
   terraform-gke-params: &terraform-gke-params
@@ -92,6 +99,7 @@ aliases:
     TF_VAR_vm_type: UBUNTU
     TF_VAR_k8s_version: latest
     TF_VAR_location: us-west1-a
+    terraform_platform: gke
 
 resource_types:
 - name: meta
@@ -194,26 +202,15 @@ jobs:
         trigger: true
       - get: s3.scf-config-sles
         trigger: true
-    <% if terraform_platform == "aks" %>
-    - task: terraform-deploy-aks
+    <% if terraform_platform %>
+    - task: terraform-deploy-<%= terraform_platform %>
       file: ci/qa-pipelines/tasks/terraform-deploy.yml
       params:
-        << : *terraform-aks-params
-        terraform_platform: aks
+        << : *terraform-<%= terraform_platform %>-params
     - put: pool.kube-hosts
       params: {add: kubeconfig-pool}
       timeout: 2m
-    <% end %> # terraform_platform == "aks"
-    <% if terraform_platform == "gke" %>
-    - task: terraform-deploy-gke
-      file: ci/qa-pipelines/tasks/terraform-deploy.yml
-      params:
-        << : *terraform-gke-params
-        terraform_platform: gke
-    - put: pool.kube-hosts
-      params: {add: kubeconfig-pool}
-      timeout: 2m
-    <% end %> # terraform_platform == "gke"
+    <% end %> # terraform_platform
     - put: pool.kube-hosts
       params: {acquire: true}
       timeout: 2m
@@ -234,28 +231,17 @@ jobs:
         state: pending
     <% end %> # status_reporting
     on_failure:
-      <% if terraform_platform == "aks" %>
+      <% if terraform_platform %>
       try:
         do:
           - task: clean_terraform_deploy
             file: ci/qa-pipelines/tasks/clean_terraform_deploy.yml
             params:
               << : *common-task-params
-              terraform_platform: aks
+              terraform_platform: <%= terraform_platform %>
           - put: pool.kube-hosts
             params: {remove: pool.kube-hosts}
-      <% end %> # terraform_platform == "aks"
-      <% if terraform_platform == "gke" %>
-      try:
-        do:
-          - task: clean_terraform_deploy
-            file: ci/qa-pipelines/tasks/clean_terraform_deploy.yml
-            params:
-              << : *common-task-params
-              terraform_platform: gke
-          - put: pool.kube-hosts
-            params: {remove: pool.kube-hosts}
-      <% end %> # terraform_platform == "gke"
+      <% end %> # terraform_platform
       <% if !terraform_platform %>
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}

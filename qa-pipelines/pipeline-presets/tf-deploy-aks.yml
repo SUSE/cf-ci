@@ -1,7 +1,7 @@
 ---
 
+terraform-aks: true
 klog-collection-on-failure: true
-terraform-platform: aks #aks or gke
 
 enable-cf-deploy: true
 
