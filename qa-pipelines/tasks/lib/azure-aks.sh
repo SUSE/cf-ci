@@ -22,6 +22,8 @@ AZURE_DNS_ZONE_NAME=susecap.net
 AZURE_DNS_RESOURCE_GROUP=susecap-domain
 if grep "eks.amazonaws.com" ~/.kube/config; then
     AZURE_AKS_RESOURCE_GROUP=$(y2j ~/.kube/config | jq -r .[0].clusters[0].name | cut -d / -f 2)
+elif grep "gke" ~/.kube/config; then
+     AZURE_AKS_RESOURCE_GROUP=${GKE_CLUSTER_NAME}
 else
     AZURE_AKS_RESOURCE_GROUP=$(kubectl get configmap -n kube-system -o json cap-values | jq -r '.data["resource-group"]')
 fi

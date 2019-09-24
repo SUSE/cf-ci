@@ -4,9 +4,6 @@
 # The settings in this file will also be valid for our most complete pipeline
 # (which performs an upgrade and all tests)
 
-# Use terraform to deploy AKS cluster
-enable-terraform: true
-
 # Update github commit status at various points, as well as success/failure.
 # Also send emails upon failure
 status-reporting: false
@@ -38,3 +35,6 @@ enable-cf-acceptance-tests: true
 
 # tear down CAP deployment when all tasks are successful
 enable-cf-teardown: true
+
+terraform-gke: false
+terraform-aks: false

@@ -22,6 +22,12 @@ end
 
 cap_install_url ||= nil
 cap_pre_upgrade_url ||= nil
+
+terraform_platform=nil
+terraform_platforms.each do |platform|
+  terraform_platform=platform if eval("terraform_#{platform}")
+end
+
 %>
 
 ---
@@ -48,6 +54,12 @@ aliases:
     # GCP/GKE configuration
     GKE_PRIVATE_KEY_BASE64: "<%= gke_private_key_base64.yamlify %>"
 
+    # AKS ARM credentials
+    ARM_CLIENT_ID: <%= arm_client_id %>
+    ARM_CLIENT_SECRET: <%= arm_client_secret %>
+    ARM_TENANT_ID: <%= az_sp_tenant %>
+    ARM_SUBSCRIPTION_ID: <%= arm_subscription_id %>
+
     CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", cap_install_url || enable_cf_deploy) %>
     <% if klog_collection_on_failure %>
     KLOG_COLLECTION_ON_FAILURE: <%= s3_config_bucket_sles %>-klogs-archive/((s3-klog-prefix))
@@ -57,30 +69,37 @@ aliases:
     <% if test_ha_strict_enable || test_ha_strict_disable %>
     HA_STRICT: <%= test_ha_strict_enable %>
     <% end %> # test_ha_strict_enable || test_ha_strict_disable %>
+
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params
     CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", cap_pre_upgrade_url || enable_cf_deploy_pre_upgrade) %>
+
   s3-common-params: &s3-common-params
     endpoint: <%= s3_config_endpoint %>
     access_key_id: <%= s3_config_access_key %>
     secret_access_key: <%= s3_config_secret_key %>
     bucket: <%= s3_config_bucket_sles %>
+
   deploy-upgrade-params: &deploy-upgrade-params
     ENABLE_CREDHUB: <%= enable_credhub == true %>
     ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
     EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
 
   # Terraform AKS Configuration
-  # Used in terraform-deploy-aks and delete-aks-resource-group
   terraform-aks-params: &terraform-aks-params
     << : *common-task-params
-    ARM_CLIENT_ID: <%= arm_client_id %>
-    ARM_CLIENT_SECRET: <%= arm_client_secret %>
-    ARM_TENANT_ID: <%= az_sp_tenant %>
-    ARM_SUBSCRIPTION_ID: <%= arm_subscription_id %>
     TF_VAR_client_id: <%= arm_client_id %>
     TF_VAR_client_secret: <%= arm_client_secret %>
     TF_VAR_location: eastus
+    terraform_platform: aks
+
+  # Terraform GKE Configuration
+  terraform-gke-params: &terraform-gke-params
+    << : *common-task-params
+    TF_VAR_vm_type: UBUNTU
+    TF_VAR_k8s_version: latest
+    TF_VAR_location: us-west1-a
+    terraform_platform: gke
 
 resource_types:
 - name: meta
@@ -183,14 +202,15 @@ jobs:
         trigger: true
       - get: s3.scf-config-sles
         trigger: true
-    <% if enable_terraform %>
-    - task: terraform-deploy-aks
+    <% if terraform_platform %>
+    - task: terraform-deploy-<%= terraform_platform %>
       file: ci/qa-pipelines/tasks/terraform-deploy.yml
       params:
-        << : *terraform-aks-params
+        << : *terraform-<%= terraform_platform %>-params
     - put: pool.kube-hosts
       params: {add: kubeconfig-pool}
-    <% end %> # enable_terraform
+      timeout: 2m
+    <% end %> # terraform_platform
     - put: pool.kube-hosts
       params: {acquire: true}
       timeout: 2m
@@ -211,20 +231,21 @@ jobs:
         state: pending
     <% end %> # status_reporting
     on_failure:
-      <% if enable_terraform %>
+      <% if terraform_platform %>
       try:
         do:
-          - task: delete-aks-resource-group
-            file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+          - task: clean_terraform_deploy
+            file: ci/qa-pipelines/tasks/clean_terraform_deploy.yml
             params:
-              << : *terraform-aks-params
+              << : *common-task-params
+              terraform_platform: <%= terraform_platform %>
           - put: pool.kube-hosts
             params: {remove: pool.kube-hosts}
-      <% end %> # enable_terraform
-      <% if !enable_terraform %>
+      <% end %> # terraform_platform
+      <% if !terraform_platform %>
       put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-      <% end %> # !enable_terraform
+      <% end %> # !terraform_platform
   - do:
     <% if enable_cf_deploy_pre_upgrade %>
     - task: cf-deploy-pre-upgrade
@@ -331,16 +352,16 @@ jobs:
     # We intentionally don't put the teardown and pool release steps in an ensure
     # block, so that when tests fail we have a chance of examining why things are
     # failing.
-    <% if enable_cf_teardown && !enable_terraform %>
+    <% if enable_cf_teardown && !terraform_platform %>
     - task: cf-teardown
       file: ci/qa-pipelines/tasks/cf-teardown.yml
       timeout: 1h
       params: *common-task-params
-    <% end %> # enable_cf_teardown && !enable_terraform
-    <% if !enable_terraform %>
+    <% end %> # enable_cf_teardown && !terraform_platform
+    <% if !terraform_platform %>
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-    <% end %> # !enable_terraform
+    <% end %> # !terraform_platform
     <% if status_reporting %>
     on_success:
       put: status.src
@@ -374,14 +395,26 @@ jobs:
           file: klog/klog-*.tar.gz
       <% end %> # klog_collection_on_failure
     <% end %> # status_reporting || klog_collection_on_failure
-    <% if enable_terraform %>
+    <% if terraform_platform == "aks" %>
     ensure:
       do:
-        - task: delete-aks-resource-group
-          file: ci/qa-pipelines/tasks/delete-aks-resource-group.yml
+        - task: clean_terraform_deploy
+          file: ci/qa-pipelines/tasks/clean_terraform_deploy.yml
           params:
-            << : *terraform-aks-params
+            << : *common-task-params
+            terraform_platform: aks
         - put: pool.kube-hosts
           params: {remove: pool.kube-hosts}
-    <% end %> # enable_terraform
+    <% end %> # terraform_platform == "aks"
+    <% if terraform_platform == "gke" %>
+    ensure:
+      do:
+        - task: clean_terraform_deploy
+          file: ci/qa-pipelines/tasks/clean_terraform_deploy.yml
+          params:
+            << : *common-task-params
+            terraform_platform: gke
+        - put: pool.kube-hosts
+          params: {remove: pool.kube-hosts}
+    <% end %> # terraform_platform == "gke"
 <% end %> # %w(SA HA).each

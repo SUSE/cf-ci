@@ -19,4 +19,4 @@ params:
   CAP_BUNDLE_URL: ""
 
 run:
-  path: ci/qa-pipelines/tasks/delete-aks-resource-group.sh
+  path: ci/qa-pipelines/tasks/clean_terraform_deploy.sh

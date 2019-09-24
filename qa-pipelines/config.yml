@@ -44,3 +44,5 @@ enable-credhub: true
 test-ha-strict-enable: false
 # test-ha-strict-enable sets HA_strict to false, and sets diego_api count to 1
 test-ha-strict-disable: false
+
+terraform-platforms: [gke, aks]

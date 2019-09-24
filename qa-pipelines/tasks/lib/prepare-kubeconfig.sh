@@ -47,6 +47,7 @@ if [[ $(read_yaml_key ${pool_file} kind) == "Config" ]]; then
     fi
 
 elif [[ $(read_yaml_key ${pool_file} platform) == "gke" ]]; then
+    cap_platform=gke
     export CLOUDSDK_PYTHON_SITEPACKAGES=1
     export GKE_CLUSTER_NAME=$(read_yaml_key ${pool_file} cluster-name)
     export GKE_CLUSTER_ZONE=$(read_yaml_key ${pool_file} cluster-zone)
