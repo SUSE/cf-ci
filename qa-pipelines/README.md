@@ -11,6 +11,7 @@ Table of Contents
   * [Additional considerations](#additional-considerations)
     * [Deploy a pipeline which does a non-upgrade test of a custom bundle (which is neither an RC or a release)](#deploy-a-pipeline-which-does-a-non-upgrade-test-of-a-custom-bundle-not-an-rc-or-a-release)
     * [Continue a test suite from where a previous build left off](#continue-a-test-suite-from-where-a-previous-build-left-off)
+    * [Terraform deployments](#terraform-deployments)
   * [Dev Nightly Upgrades CI](#dev-nightly-upgrades-ci)
   * [PR pipeline](#pr-pipeline)
   * [Single Brain Pipeline](#single-brain-pipeline)
@@ -113,6 +114,9 @@ In order to do this, set `enable-cf-deploy` to the URL of the custom bundle, and
 
 ## Continue a test suite from where a previous build left off.
 Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline
+
+## Terraform deployments
+For supported platforms, the QA CI can automatically spin up and tear down kube hosts via terraform. This will happen when the associated flag (following the naming convention `terraform-${platform_name}` is set to true in the preset file. When set, any pool flag (if also set) will be ignored, and the pipeline will use the pool branch/path `terraform-${platform_name}/${platform_name}-kube-hosts` instead
 
 # Dev Nightly Upgrades CI
 
