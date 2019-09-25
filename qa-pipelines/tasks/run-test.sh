@@ -88,6 +88,9 @@ kube_overrides() {
                 if env['name'] == "AUTOSCALER_SERVICE_BROKER_PASSWORD"
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
+                if env['name'] == "INTERNAL_CA_CERT"
+                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
+                end
             end
             if obj['metadata']['name'] == "acceptance-tests-brain"
                 unless exclude_brains_regex.empty?
