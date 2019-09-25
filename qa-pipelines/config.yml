@@ -22,7 +22,7 @@ magic-dns-service: omg.howdoi.website
 
 src-repo: SUSE/scf
 
-cap-pre-upgrade-url: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
+cap-pre-upgrade-url: master/scf-sle-2.18.0%2Bcf9.5.0.0.ga2697c75
 cap-install-url: null
 
 status-email-host: *ci-status-email-host
