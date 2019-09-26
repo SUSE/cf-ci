@@ -42,6 +42,7 @@ while true ; do
         --pool)      pool="${2}" ; shift 2 ;;
         -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
         --nightly)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=nightly/ ; shift 1 ;;
+        --master)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=master/"${2}" ; shift 2 ;;
         --pr)        [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=prs/PR-${2}- ; shift 2 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
