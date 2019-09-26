@@ -26,7 +26,7 @@ deploy a pipeline which will allow you to select an individual brain test.
 EOF
 }
 
-OPTS=$(getopt -o hp:t:b: --long help,nightly,pr:,pool:,prefix:,target:,branch: -- "$@")
+OPTS=$(getopt -o hp:t:b: --long help,nightly,master,pr:,pool:,prefix:,target:,branch: -- "$@")
 eval set -- "${OPTS}"
 
 pool=provo
@@ -42,7 +42,7 @@ while true ; do
         --pool)      pool="${2}" ; shift 2 ;;
         -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
         --nightly)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=nightly/ ; shift 1 ;;
-        --master)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=master/"${2}" ; shift 2 ;;
+        --master)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=master/ ; shift 1 ;;
         --pr)        [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=prs/PR-${2}- ; shift 2 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
