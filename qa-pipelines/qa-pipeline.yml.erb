@@ -90,7 +90,7 @@ aliases:
     << : *common-task-params
     TF_VAR_client_id: <%= arm_client_id %>
     TF_VAR_client_secret: <%= arm_client_secret %>
-    TF_VAR_location: eastus
+    TF_VAR_location: <%= terraform_aks_location %>
     terraform_platform: aks
 
   # Terraform GKE Configuration
@@ -98,7 +98,7 @@ aliases:
     << : *common-task-params
     TF_VAR_vm_type: UBUNTU
     TF_VAR_k8s_version: latest
-    TF_VAR_location: us-west1-a
+    TF_VAR_location: <%= terraform_gke_location %>
     terraform_platform: gke
 
 resource_types:
