@@ -154,8 +154,8 @@ resources:
   source:
     uri: <%= kube_pool_repo %>
     private_key: "<%= kube_pool_key.yamlify %>"
-    branch: <%= terraform_platform ? "terraform-#{terraform_platform}" : kube_pool_branch %>
-    pool: <%= terraform_platform ? "#{terraform_platform}-kube-hosts" : kube_pool_pool %>
+    branch: <%= kube_pool_name %>-kube-hosts
+    pool: <%= kube_pool_name %>-kube-hosts
 
 - name: meta
   type: meta

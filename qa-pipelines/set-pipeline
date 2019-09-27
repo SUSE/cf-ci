@@ -29,7 +29,6 @@ EOF
 OPTS=$(getopt -o hp:t:b: --long help,nightly,pr:,pool:,prefix:,target:,branch: -- "$@")
 eval set -- "${OPTS}"
 
-pool=provo
 src_ci_branch=$(git rev-parse --abbrev-ref HEAD)
 prefix=""
 target=""
@@ -53,17 +52,13 @@ if test -z "${1:-}" ; then
     usage
     exit 1
 fi
-pool_vars_file="config-${pool}.yml"
 preset_file="${1}"
 preset_name="$(basename ${preset_file} .yml)"
 pipeline_name="${prefix}${preset_name}"
 
 
-if ! test -r "${pool_vars_file}" ; then
-    usage >&2
-    if test -n "${1:-}" ; then
-        printf "Variables file %s is not readable\n" "${pool_vars_file}" >&2
-    fi
+if [[ -z "${pool:-}" ]]; then
+    printf "pool flag needs to be set"
     exit 1
 fi
 
@@ -89,6 +84,7 @@ pipeline_config() {
    echo "s3-config-prefix-sles: ${s3_config_prefix}"
    echo "s3-klog-prefix: ${s3_config_prefix%%/*}"
    echo "pipeline-name: ${pipeline_name}"
+   echo "kube-pool-name: ${pool}"
 }
 
 # generate_pipeline will emit the pipeline definition on STDOUT; this deals with
@@ -102,7 +98,7 @@ generate_pipeline() {
     preset_template='pipeline-presets/single-brain.yml'
     flags='pipeline-presets/single-brain.yml'
   fi
-  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" <(pipeline_config) "${pool_vars_file}" <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
+  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" <(pipeline_config) <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
 }
 
 # Branch is assumed to be the current branch if not specified, but the concourse git

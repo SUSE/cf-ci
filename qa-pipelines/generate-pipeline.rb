@@ -11,7 +11,7 @@ class PipelineDeployer
         k.tr('-', '_').to_sym
     end
 
-    def eval_context(flags_file='flags.yml', all_flags_file='flags.yml', config_file='config.yml', pool_config_file, secrets_file)
+    def eval_context(flags_file='flags.yml', all_flags_file='flags.yml', config_file='config.yml', secrets_file)
         # Load the configuration file
         @eval_context ||= binding.dup.tap do |context|
             flags = open(File.join(__dir__, all_flags_file), 'r', &YAML.method(:load))
@@ -20,7 +20,7 @@ class PipelineDeployer
                 context.local_variable_set fix_key(k), false
             end
             vars_file="---\n"
-            [secrets_file, flags_file, config_file, pool_config_file].each do |file|
+            [secrets_file, flags_file, config_file].each do |file|
                 vars_file += File.read(file).split("\n").select{ |line| line !~ /^---$/ }.join("\n") + "\n"
             end
             YAML.load(vars_file).each do |k, v|
@@ -29,14 +29,14 @@ class PipelineDeployer
         end
     end
 
-    def render(template_file, flags_file, all_flags_file, config_file, pool_config_file, secrets_file)
+    def render(template_file, flags_file, all_flags_file, config_file, secrets_file)
         # Render the template
         filename = File.join(__dir__, template_file)
         template = ERB.new(File.read(filename))
         template.filename = filename
-        result = YAML.load template.result(eval_context(flags_file, all_flags_file, config_file, pool_config_file, secrets_file))
+        result = YAML.load template.result(eval_context(flags_file, all_flags_file, config_file, secrets_file))
         puts result.to_yaml
     end
 end
 
-PipelineDeployer.new.render *ARGV.first(6)
+PipelineDeployer.new.render *ARGV.first(5)

@@ -52,10 +52,11 @@ Additionally, when deploying a pipeline, a `CONCOURSE_SECRETS_FILE` environment 
 
 # Pool requirements
 
-In our usage of [concourse pools](https://github.com/concourse/pool-resource), the lock files used by concourse signal which kubernetes deployments are available, but should also be valid kubernetes configs for accessing those kubernetes hosts. When a config is taken from the `unclaimed/` directory by a pipeline which is running a cf-deploy task (see [Additional considerations](#additional-considerations) for an example case where this may not be true), the cf-deploy task expects that the kubernetes deployment does not have existing `scf` or `uaa` namespaces, and that its tiller also does not have `scf` or `uaa` releases (even historical ones... this means they should be deleted with `helm delete --purge`)
+In our usage of [concourse pools](https://github.com/concourse/pool-resource), the lock files used by concourse signal which kubernetes deployments are available (and for some types of pools may also be valid kubernetes configs for accessing those kubernetes hosts). When a config is taken from the `unclaimed/` directory by a pipeline which is running a cf-deploy task (see [Additional considerations](#additional-considerations) for an example case where this may not be true), the cf-deploy task expects that the kubernetes deployment does not have existing `scf` or `uaa` namespaces, and that its tiller also does not have `scf` or `uaa` releases (even historical ones... this means they should be deleted with `helm delete --purge`)
 
-The pool-specific config file follows a `config-${POOL_NAME}.yml` naming convention, and is expected to contain some settings worth noting ([config-provo.yml](config-provo.yml) may be useful as a reference):
+Pipelines with terraform flags enabled may create the pool resource before inserting it into the selected pool.
 
+Pools should be contained in a branch named `${pool_name}-kube-hosts` with a path named `${pool_name}-kube-hosts/` which has `claimed/` and `unclaimed/` directories with an empty `.gitkeep` file
 ## s3 bucket location and path specifications, and access credentials.
 These are used for fetching the latest release of `s3-config-(bucket|prefix)-sles`. The appropriate path is used to determine the latest CAP config bundle for the `s3.scf-config-sles` resource defined in `qa-pipeline.yml`
 ## docker registry specification and access credentials.
@@ -76,9 +77,9 @@ This setting hould be public, or accessible via the `kube-pool-key` also include
         └── pool-resource-2
 ```
 
-The files placed in the `claimed/` and `unclaimed/` are the *lock files* in terms of [the concourse pool resource](https://github.com/concourse/pool-resource#git-repository-structure), but are also expected to be valid kubernetes configs for pipeline access of kubernetes hosts to deploy CAP to.
+The files placed in the `claimed/` and `unclaimed/` are the *lock files* in terms of [the concourse pool resource](https://github.com/concourse/pool-resource#git-repository-structure). These files may also be valid kubernetes configs for pipeline access of kubernetes hosts to deploy CAP to, or (such as for cloud-based services such as AKS, EKS, etc) may instead be files containing information which can be used (along with platform-specific credentials also embedded in the pipeline via the secrets file and CLI tools in the cf-ci-orchestration image) to obtain expiring configs to access clusters deployed to those platforms.
 
-For QA purposes, we prefer to use config files which will not 'expire', which means when using CaaSP, the configs which can be obtained from velum or the caasp-cli are generally not used. Instead, we create a `cap-qa` namespace and appropriate bindings to its service-account, via a [create-qa-config.sh](../qa-tools/create-qa-config.sh) script
+For CaaSP and kubernetes hosts that support it, we prefer to use kubeconfig files which will not expire. On kube hosts which support this type of access (such as CaaSP3 clusters), we may create a `cap-qa` namespace and appropriate bindings to its service-account, via a [create-qa-config.sh](../qa-tools/create-qa-config.sh) script
 
 # Preset file instructions
 
@@ -116,7 +117,7 @@ In order to do this, set `enable-cf-deploy` to the URL of the custom bundle, and
 Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline
 
 ## Terraform deployments
-For supported platforms, the QA CI can automatically spin up and tear down kube hosts via terraform. This will happen when the associated flag (following the naming convention `terraform-${platform_name}` is set to true in the preset file. When set, any pool flag (if also set) will be ignored, and the pipeline will use the pool branch/path `terraform-${platform_name}/${platform_name}-kube-hosts` instead
+For supported platforms, the QA CI can automatically spin up and tear down kube hosts via terraform. This will happen when the associated flag (following the naming convention `terraform-${platform_name}` is set to true in the preset file.
 
 # Dev Nightly Upgrades CI
 
