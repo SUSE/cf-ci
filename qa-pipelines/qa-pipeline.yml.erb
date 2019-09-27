@@ -62,7 +62,7 @@ aliases:
 
     CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", cap_install_url || enable_cf_deploy) %>
     <% if klog_collection_on_failure %>
-    KLOG_COLLECTION_ON_FAILURE: <%= s3_config_bucket_sles %>-klogs-archive/((s3-klog-prefix))
+    KLOG_COLLECTION_ON_FAILURE: <%= s3_config_bucket_sles %>-klogs-archive/<%= s3_klog_prefix %>
     <% else %>
     KLOG_COLLECTION_ON_FAILURE: false
     <% end %> # klog_collection_on_failure
@@ -123,7 +123,7 @@ resources:
   type: git
   source:
     uri: <%= src_ci_repo %>
-    branch: ((src-ci-branch))
+    branch: <%= src_ci_branch %>
     paths:
     - qa-pipelines/*
     - sample-apps/*
@@ -146,7 +146,7 @@ resources:
   type: s3
   source:
     << : *s3-common-params
-    regexp: ((s3-config-prefix-sles))scf-sle-(.*)\.zip$
+    regexp: <%= s3_config_prefix_sles %>scf-sle-(.*)\.zip$
 
 # Pool resource with kube cluster information
 - name: pool.kube-hosts
@@ -185,12 +185,12 @@ resources:
   source:
     << : *s3-common-params
     bucket: <%= s3_config_bucket_sles %>-klogs-archive
-    regexp: ((s3-klog-prefix))/klog-(.*)\.tar\.gz$
+    regexp: <%= s3_klog_prefix %>/klog-(.*)\.tar\.gz$
 <% end %> # klog_collection_on_failure
 
 jobs:
 <% %w(SA HA).each do |avail| %>
-- name: ((pipeline-name))-<%= avail %>
+- name: <%= pipeline_name %>-<%= avail %>
   plan:
   - do:
     - aggregate:
@@ -225,8 +225,8 @@ jobs:
     <% if status_reporting %>
     - put: status.src
       params: &status-params-<%= avail %>
-        context: ((pipeline-name))-<%= avail %>
-        description: "QA Pipeline: ((pipeline-name)) (SLES <%= avail %>)"
+        context: <%= pipeline_name %>-<%= avail %>
+        description: "QA Pipeline: <%= pipeline_name %> (SLES <%= avail %>)"
         path: commit-id/sha
         state: pending
     <% end %> # status_reporting

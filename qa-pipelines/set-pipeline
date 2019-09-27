@@ -83,6 +83,14 @@ if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     fi
 fi
 
+pipeline_config() {
+   cat "config.yml"
+   echo "src-ci-branch: ${src_ci_branch}"
+   echo "s3-config-prefix-sles: ${s3_config_prefix}"
+   echo "s3-klog-prefix: ${s3_config_prefix%%/*}"
+   echo "pipeline-name: ${pipeline_name}"
+}
+
 # generate_pipeline will emit the pipeline definition on STDOUT; this deals with
 # the single-brain special case.
 generate_pipeline() {
@@ -94,7 +102,7 @@ generate_pipeline() {
     preset_template='pipeline-presets/single-brain.yml'
     flags='pipeline-presets/single-brain.yml'
   fi
-  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" "config.yml" "${pool_vars_file}" <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
+  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" <(pipeline_config) "${pool_vars_file}" <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
 }
 
 # Branch is assumed to be the current branch if not specified, but the concourse git
@@ -150,11 +158,7 @@ fly \
     set-pipeline \
     --non-interactive \
     --pipeline="${pipeline_name}" \
-    --var pipeline-name="${pipeline_name}" \
-    --config=<(generate_pipeline) \
-    --var src-ci-branch=${src_ci_branch} \
-    --var s3-config-prefix-sles=${s3_config_prefix} \
-    --var s3-klog-prefix=${s3_config_prefix%%/*}
+    --config=<(generate_pipeline)
 
 fly \
     ${target:+"--target=$target"} \
