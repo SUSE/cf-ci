@@ -147,7 +147,6 @@ if ha_deploy; then
         --set "env.UAA_PORT=${UAA_PORT}" \
         --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
         --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
-        --wait \
         "${HELM_PARAMS[@]}"
 
     # Wait for CF release
