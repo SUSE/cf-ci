@@ -90,7 +90,7 @@ aliases:
     << : *common-task-params
     TF_VAR_client_id: <%= arm_client_id %>
     TF_VAR_client_secret: <%= arm_client_secret %>
-    TF_VAR_location: eastus
+    TF_VAR_location: <%= terraform_aks_location %>
     terraform_platform: aks
 
   # Terraform GKE Configuration
@@ -98,7 +98,7 @@ aliases:
     << : *common-task-params
     TF_VAR_vm_type: UBUNTU
     TF_VAR_k8s_version: latest
-    TF_VAR_location: us-west1-a
+    TF_VAR_location: <%= terraform_gke_location %>
     terraform_platform: gke
 
 resource_types:
@@ -154,8 +154,8 @@ resources:
   source:
     uri: <%= kube_pool_repo %>
     private_key: "<%= kube_pool_key.yamlify %>"
-    branch: <%= kube_pool_branch %>
-    pool: <%= kube_pool_pool %>
+    branch: <%= kube_pool_name %>-kube-hosts
+    pool: <%= kube_pool_name %>-kube-hosts
 
 - name: meta
   type: meta
@@ -395,26 +395,15 @@ jobs:
           file: klog/klog-*.tar.gz
       <% end %> # klog_collection_on_failure
     <% end %> # status_reporting || klog_collection_on_failure
-    <% if terraform_platform == "aks" %>
+    <% if terraform_platform %>
     ensure:
       do:
         - task: clean_terraform_deploy
           file: ci/qa-pipelines/tasks/clean_terraform_deploy.yml
           params:
             << : *common-task-params
-            terraform_platform: aks
+            terraform_platform: <%= terraform_platform %>
         - put: pool.kube-hosts
           params: {remove: pool.kube-hosts}
-    <% end %> # terraform_platform == "aks"
-    <% if terraform_platform == "gke" %>
-    ensure:
-      do:
-        - task: clean_terraform_deploy
-          file: ci/qa-pipelines/tasks/clean_terraform_deploy.yml
-          params:
-            << : *common-task-params
-            terraform_platform: gke
-        - put: pool.kube-hosts
-          params: {remove: pool.kube-hosts}
-    <% end %> # terraform_platform == "gke"
+    <% end %> # terraform_platform
 <% end %> # %w(SA HA).each

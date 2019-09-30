@@ -47,3 +47,5 @@ test-ha-strict-enable: false
 test-ha-strict-disable: false
 
 terraform-platforms: [gke, aks]
+terraform-gke-location: us-west1-a
+terraform-aks-location: eastus
