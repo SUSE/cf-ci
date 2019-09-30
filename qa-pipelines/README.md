@@ -1,4 +1,4 @@
-The CAP QA pipeline is a concourse pipeline which runs a series of tests intended to validate a build or release candidate generated from http://github.com/suse/scf. While the entire [qa-pipelines/](./) directory contains only [one pipeline configuration file](qa-pipeline.yml), the behaviour of the pipeline is customized according to how it's deployed. When deploying a pipeline via [set-pipeline](set-pipeline), the script expects the name of the [_pool_](#pool-requirements), and a file called a [_preset file_](#preset-file-instructions) containing parameters which specify the tasks to run.
+The CAP QA pipeline is a concourse pipeline which runs a series of tests intended to validate a build or release candidate generated from http://github.com/suse/scf. While the entire [qa-pipelines/](./) directory contains only [one pipeline definition file](qa-pipeline.yml), the behaviour of the pipeline is customized according to how it's deployed. When deploying a pipeline via [set-pipeline](set-pipeline), the script expects the name of the [_pool_](#pool-requirements), and a file called a [_preset file_](#preset-file-instructions) containing parameters which specify the tasks to run. Additionally, the pipeline will read values from the [pipeline configuration file](config.yml) which customize certain behaviours that affect how a task runs (such as what version of CAP to deploy pre-upgrade, or what version to upgrade to). See config.yml for comments on the available settings.
 
 Table of Contents
 =================
@@ -83,11 +83,11 @@ For CaaSP and kubernetes hosts that support it, we prefer to use kubeconfig file
 
 # Preset file instructions
 
-When deploying a pipeline, you'll need to provide a 'preset' file which contains a flag for each task you want to enable. The canonical list of flags with a description of what each one does can be seen in [flags.yml](flags.yml). This file is also symlinked from within the preset file [cap-qa-full-upgrades.yml](pipeline-presets/full-upgrades.yml) and has all the flags set to run our full, canonical, upgrade pipeline, which deploys a pre-upgrade version, runs smoke and brains, usb-deploy, upgrades the deployment to the latest release in the s3 path specified in the pipeline config file, usb-post-upgrade, smoke, brains, and cats, and finally the teardown task.
+When deploying a pipeline, you'll need to provide a 'preset' file which contains a flag for each task you want to enable. The canonical list of flags with a description of what each one does can be seen in [flags.yml](flags.yml). This file is also symlinked from within the preset file [full-upgrades.yml](pipeline-presets/full-upgrades.yml) and has all the flags set to run our full, canonical, upgrade pipeline, which deploys a pre-upgrade version, runs smoke and brains, usb-deploy, upgrades the deployment to the latest release in the s3 path specified in the pipeline config file, usb-post-upgrade, smoke, brains, and cats, and finally the teardown task.
 
 All tasks are run sequentially, so if any task encounters a failure, the build will abort and the kube resource will remain locked in the pool.
 
-- When testing deploys of new builds (rather than upgrades) we use [cap-qa-deployment.yml](pipeline-presets/cap-qa-deployment.yml) preset, which only has the last 5 tasks from the flags.yml enabled:
+- When testing deploys of new builds (rather than upgrades) we use [deploy.yml](pipeline-presets/deploy.yml) preset, which only has deploy, smoke, brains, cats, and teardown tasks enabled:
 ```
 # flags.yml:
 
@@ -111,10 +111,10 @@ enable-cf-teardown: true
 The composability of the pipeline tasks means there are some interesting things you can do, besides just running the full upgrade pipeline in a linear way. In addition to what's supported by the tracked preset files, you may want to do something like the following:
 
 ## Deploy a pipeline which does a non-upgrade test of a custom bundle (not an RC or a release).
-In order to do this, set `enable-cf-deploy` to the URL of the custom bundle, and set upgrade-from-version to `false`.
+In order to do this, set `cap-install-url` in the config.yml file to the URL of the custom bundle (or path in S3)
 
 ## Continue a test suite from where a previous build left off.
-Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline
+Sometimes running tests may fail for timing-related reasons which may be intermittent. If this happens, and you want to try to re-run the test and continue the build from where it left if, you can deploy a new pipeline with only the failed test and following tasks enabled, unlock the config which was used, and run a build from the new pipeline. Note, when re-running a failed test suite, you will need to delete the previous test running pod.
 
 ## Terraform deployments
 For supported platforms, the QA CI can automatically spin up and tear down kube hosts via terraform. This will happen when the associated flag (following the naming convention `terraform-${platform_name}` is set to true in the preset file.
