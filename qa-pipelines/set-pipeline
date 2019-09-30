@@ -98,7 +98,8 @@ generate_pipeline() {
     preset_template='pipeline-presets/single-brain.yml'
     flags='pipeline-presets/single-brain.yml'
   fi
-  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" <(pipeline_config) <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})}
+  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" <(pipeline_config) <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
+}
 
 # Branch is assumed to be the current branch if not specified, but the concourse git
 # resource doesn't allow commit references to be used directly.
