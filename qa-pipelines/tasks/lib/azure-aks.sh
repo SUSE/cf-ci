@@ -50,18 +50,35 @@ azure_dns_clear() {
 azure_check_lbs_ready_in_namespace() {
     # checks that all LoadBalancer type services in namespace have an ingress IP
     local namespace=$1
+    local lb_name=${2:-""}
     local lb_info lb_count lb_ready_count
-    lb_info=$(
-      kubectl get svc -n $namespace -o json |
-      jq -c '
-        [
-          .items[] | select(.spec.type == "LoadBalancer") | {
-            "svc": .metadata.name,
-            "ip": .status.loadBalancer.ingress[0].ip,
-            "hostname": .status.loadBalancer.ingress[0].hostname
-           }
-        ]'
-    )
+    if [[ -z "$lb_name" ]]; then
+        lb_info=$(
+          kubectl get svc -n $namespace -o json |
+          jq -c '
+            [
+              .items[] | select(.spec.type == "LoadBalancer") | {
+                "svc": .metadata.name,
+                "ip": .status.loadBalancer.ingress[0].ip,
+                "hostname": .status.loadBalancer.ingress[0].hostname
+               }
+            ]'
+        )
+    elif [[ ${lb_name} == "uaa-uaa-public" ]]; then
+        lb_info=$(
+          kubectl get svc -n $namespace -o json |
+          jq -c '
+            [
+              .items[] | select(.spec.type == "LoadBalancer") |
+              select(.metadata.name == "uaa-uaa-public") | {
+                "svc": .metadata.name,
+                "ip": .status.loadBalancer.ingress[0].ip,
+                "hostname": .status.loadBalancer.ingress[0].hostname
+               }
+            ]'
+        )
+    fi
+
     lb_count=$(echo "${lb_info}" | jq length)
     if [[ ${cap_platform} == "eks" ]]; then
         lb_ready_count=$(echo "${lb_info}" | jq -r '[.[] | select(.hostname)] | length')
@@ -73,9 +90,14 @@ azure_check_lbs_ready_in_namespace() {
 
 azure_wait_for_lbs_in_namespace() {
     local namespace=$1
+    local lb_name=${2:-""}
     local count=0
-    while ! azure_check_lbs_ready_in_namespace $namespace; do
-        sleep 30
+    while ! azure_check_lbs_ready_in_namespace $namespace $lb_name; do
+        if [[ -z "$lb_name" ]]; then
+            sleep 30
+        else
+            sleep 180
+        fi
         ((count++))
         if [[ $count -eq 10 ]]; then
             echo "Load balancers for $namespace not ready" >&2
@@ -131,8 +153,10 @@ azure_set_record_sets_for_namespace() {
     for lb_svc_obj in $(echo "${lb_info}" | jq -c '.[]'); do
         lb_svc=$(jq -r .svc <<< "${lb_svc_obj}")
         if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
-            azure_set_record uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
-            azure_set_record *.uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+            if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
+                azure_set_record uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+                azure_set_record *.uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+            fi
         elif [[ ${lb_svc} == diego-ssh-ssh-proxy-public ]]; then
             azure_set_record ssh.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
         elif [[ ${lb_svc} == tcp-router-tcp-router-public ]]; then
@@ -145,6 +169,33 @@ azure_set_record_sets_for_namespace() {
             echo "Skipping record-set for autoscaler.$AZURE_AKS_RESOURCE_GROUP"
         elif [[ ${lb_svc} == autoscaler-servicebroker-servicebroker-public ]]; then
             echo "Skipping record-set for autoscalerservicebroker.$AZURE_AKS_RESOURCE_GROUP"
+        else
+            echo "Unrecognized service name $lb_svc"
+            return 1
+        fi
+     done
+}
+
+azure_set_record_embedded_uaa() {
+    local namespace="scf"
+    local lb_info lb_ip
+    lb_info=$(
+      kubectl get svc -n $namespace -o json |
+      jq -c '
+        [
+          .items[] | select(.spec.type == "LoadBalancer") |
+          select(.metadata.name == "uaa-uaa-public") | {
+            "svc": .metadata.name,
+            "ip": .status.loadBalancer.ingress[0].ip,
+            "hostname": .status.loadBalancer.ingress[0].hostname
+           }
+        ]'
+    )
+    for lb_svc_obj in $(echo "${lb_info}" | jq -c '.[]'); do
+        lb_svc=$(jq -r .svc <<< "${lb_svc_obj}")
+        if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
+            azure_set_record uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+            azure_set_record *.uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
         else
             echo "Unrecognized service name $lb_svc"
             return 1
