@@ -92,8 +92,8 @@ if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
     if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
         az_login
         azure_dns_clear
-        azure_wait_for_lbs_in_namespace scf uaa-uaa-public
-        azure_set_record_embedded_uaa
+        azure_wait_for_lbs_in_namespace scf 'select(.metadata.name=="uaa-uaa-public")'
+        azure_set_record_sets_for_namespace scf 'select(.metadata.name=="uaa-uaa-public")'
     fi
 fi
 
