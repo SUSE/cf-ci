@@ -47,21 +47,28 @@ azure_dns_clear() {
     done
 }
 
+lb_info() {
+    # Takes 1 or 2 params, namespace, and filter (optional), outputs list of lbs in ns which match (optional) filter
+    local namespace=$1
+    local lb_filter=${2:-.}
+    kubectl get svc -n $namespace -o json |
+    jq '
+      [
+        .items[] | select(.spec.type == "LoadBalancer") | '"${lb_filter}"' | {
+          "svc": .metadata.name,
+          "ip": .status.loadBalancer.ingress[0].ip,
+          "hostname": .status.loadBalancer.ingress[0].hostname
+         }
+      ]'
+}
+
 azure_check_lbs_ready_in_namespace() {
     # checks that all LoadBalancer type services in namespace have an ingress IP
+    # If a second param is passed, use it as a jq filter for the LBs
     local namespace=$1
+    local lb_filter=${2:-.}
     local lb_info lb_count lb_ready_count
-    lb_info=$(
-      kubectl get svc -n $namespace -o json |
-      jq -c '
-        [
-          .items[] | select(.spec.type == "LoadBalancer") | {
-            "svc": .metadata.name,
-            "ip": .status.loadBalancer.ingress[0].ip,
-            "hostname": .status.loadBalancer.ingress[0].hostname
-           }
-        ]'
-    )
+    lb_info=$(lb_info ${namespace} "${lb_filter}")
     lb_count=$(echo "${lb_info}" | jq length)
     if [[ ${cap_platform} == "eks" ]]; then
         lb_ready_count=$(echo "${lb_info}" | jq -r '[.[] | select(.hostname)] | length')
@@ -73,11 +80,12 @@ azure_check_lbs_ready_in_namespace() {
 
 azure_wait_for_lbs_in_namespace() {
     local namespace=$1
+    local lb_filter=${2:-.}
     local count=0
-    while ! azure_check_lbs_ready_in_namespace $namespace; do
-        sleep 30
+    while ! azure_check_lbs_ready_in_namespace $namespace "${lb_filter}"; do
+        sleep 60 # if this is called in before pods are ready, we have to account for image pulls
         ((count++))
-        if [[ $count -eq 10 ]]; then
+        if [[ $count -eq 60 ]]; then
             echo "Load balancers for $namespace not ready" >&2
             return 1
         fi
@@ -116,18 +124,9 @@ azure_set_record() {
 
 azure_set_record_sets_for_namespace() {
     local namespace=$1
+    local lb_filter=${2:-.}
     local lb_info lb_ip
-    lb_info=$(
-      kubectl get svc -n $namespace -o json |
-      jq -c '
-        [
-          .items[] | select(.spec.type == "LoadBalancer") | {
-            "svc": .metadata.name,
-            "ip": .status.loadBalancer.ingress[0].ip,
-            "hostname": .status.loadBalancer.ingress[0].hostname
-           }
-        ]'
-    )
+    lb_info=$(lb_info ${namespace} "${lb_filter}")
     for lb_svc_obj in $(echo "${lb_info}" | jq -c '.[]'); do
         lb_svc=$(jq -r .svc <<< "${lb_svc_obj}")
         if [[ ${lb_svc} == "uaa-uaa-public" ]]; then

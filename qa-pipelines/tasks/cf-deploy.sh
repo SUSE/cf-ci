@@ -88,6 +88,15 @@ helm install ${CAP_DIRECTORY}/helm/cf/ \
 
 trap "upload_klogs_on_failure ${UAA_NAMESPACE} ${CF_NAMESPACE}" EXIT
 
+if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
+    if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
+        az_login
+        azure_dns_clear
+        azure_wait_for_lbs_in_namespace scf 'select(.metadata.name=="uaa-uaa-public")'
+        azure_set_record_sets_for_namespace scf 'select(.metadata.name=="uaa-uaa-public")'
+    fi
+fi
+
 # Wait for CF release
 wait_for_release scf
 
