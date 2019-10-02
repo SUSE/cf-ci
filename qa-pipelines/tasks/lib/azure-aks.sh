@@ -46,6 +46,29 @@ azure_dns_clear() {
             --name ${matching_record_set}
     done
 }
+lbs_info() {
+    kubectl get svc -n $namespace -o json |
+    jq -c '
+    [
+      .items[] | select(.spec.type == "LoadBalancer") | {
+        "svc": .metadata.name,
+        "ip": .status.loadBalancer.ingress[0].ip,
+        "hostname": .status.loadBalancer.ingress[0].hostname
+       }
+    ]'
+}
+uaa_lb_info() {
+    kubectl get svc -n $namespace -o json |
+    jq -c '
+    [
+      .items[] | select(.spec.type == "LoadBalancer") |
+      select(.metadata.name == "uaa-uaa-public") | {
+        "svc": .metadata.name,
+        "ip": .status.loadBalancer.ingress[0].ip,
+        "hostname": .status.loadBalancer.ingress[0].hostname
+       }
+    ]'
+}
 
 azure_check_lbs_ready_in_namespace() {
     # checks that all LoadBalancer type services in namespace have an ingress IP
@@ -53,30 +76,9 @@ azure_check_lbs_ready_in_namespace() {
     local lb_name=${2:-""}
     local lb_info lb_count lb_ready_count
     if [[ -z "$lb_name" ]]; then
-        lb_info=$(
-          kubectl get svc -n $namespace -o json |
-          jq -c '
-            [
-              .items[] | select(.spec.type == "LoadBalancer") | {
-                "svc": .metadata.name,
-                "ip": .status.loadBalancer.ingress[0].ip,
-                "hostname": .status.loadBalancer.ingress[0].hostname
-               }
-            ]'
-        )
+        lb_info=$(lbs_info)
     elif [[ ${lb_name} == "uaa-uaa-public" ]]; then
-        lb_info=$(
-          kubectl get svc -n $namespace -o json |
-          jq -c '
-            [
-              .items[] | select(.spec.type == "LoadBalancer") |
-              select(.metadata.name == "uaa-uaa-public") | {
-                "svc": .metadata.name,
-                "ip": .status.loadBalancer.ingress[0].ip,
-                "hostname": .status.loadBalancer.ingress[0].hostname
-               }
-            ]'
-        )
+        lb_info=$(uaa_lb_info)
     fi
 
     lb_count=$(echo "${lb_info}" | jq length)
@@ -139,17 +141,7 @@ azure_set_record() {
 azure_set_record_sets_for_namespace() {
     local namespace=$1
     local lb_info lb_ip
-    lb_info=$(
-      kubectl get svc -n $namespace -o json |
-      jq -c '
-        [
-          .items[] | select(.spec.type == "LoadBalancer") | {
-            "svc": .metadata.name,
-            "ip": .status.loadBalancer.ingress[0].ip,
-            "hostname": .status.loadBalancer.ingress[0].hostname
-           }
-        ]'
-    )
+    lb_info=$(lbs_info)
     for lb_svc_obj in $(echo "${lb_info}" | jq -c '.[]'); do
         lb_svc=$(jq -r .svc <<< "${lb_svc_obj}")
         if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
@@ -179,18 +171,7 @@ azure_set_record_sets_for_namespace() {
 azure_set_record_embedded_uaa() {
     local namespace="scf"
     local lb_info lb_ip
-    lb_info=$(
-      kubectl get svc -n $namespace -o json |
-      jq -c '
-        [
-          .items[] | select(.spec.type == "LoadBalancer") |
-          select(.metadata.name == "uaa-uaa-public") | {
-            "svc": .metadata.name,
-            "ip": .status.loadBalancer.ingress[0].ip,
-            "hostname": .status.loadBalancer.ingress[0].hostname
-           }
-        ]'
-    )
+    lb_info=$(uaa_lb_info)
     for lb_svc_obj in $(echo "${lb_info}" | jq -c '.[]'); do
         lb_svc=$(jq -r .svc <<< "${lb_svc_obj}")
         if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
