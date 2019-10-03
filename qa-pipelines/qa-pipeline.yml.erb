@@ -276,7 +276,7 @@ jobs:
         TEST_NAME: acceptance-tests-brain
       input_mapping:
         s3.scf-config: s3.scf-config-sles
-      timeout: 1h
+      timeout: 3h
     <% end %> # enable_cf_brain_tests_pre_upgrade
     <% if enable_cf_usb_upgrade_tests %>
     - task: usb-deploy-pre-upgrade
@@ -337,7 +337,7 @@ jobs:
         TEST_NAME: acceptance-tests-brain
       input_mapping:
         s3.scf-config: s3.scf-config-sles
-      timeout: 1h
+      timeout: 3h
     <% end %> # enable_cf_brain_tests
     <% if enable_cf_acceptance_tests %>
     - task: acceptance-tests
@@ -347,7 +347,7 @@ jobs:
         TEST_NAME: acceptance-tests
       input_mapping:
         s3.scf-config: s3.scf-config-sles
-      timeout: 2h
+      timeout: 3h
     <% end %> # enable_cf_acceptance_tests
     # We intentionally don't put the teardown and pool release steps in an ensure
     # block, so that when tests fail we have a chance of examining why things are
