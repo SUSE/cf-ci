@@ -11,6 +11,9 @@ UAA_NAMESPACE=uaa
 set +o allexport
 
 namespaces=("${CF_NAMESPACE}" "${UAA_NAMESPACE}")
+if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
+    namespaces+=( "external-db" )
+fi
 while [[ "${#namespaces[@]}" -gt 0 ]]; do
     # Upload klogs for any releases which have not yet been successfully deleted
     trap "upload_klogs_on_failure ${namespaces[*]}" EXIT
@@ -22,7 +25,7 @@ while [[ "${#namespaces[@]}" -gt 0 ]]; do
 done
 trap "" EXIT
 
-for namespace in "$CF_NAMESPACE" "$UAA_NAMESPACE" ; do
+for namespace in ${namespaces[@]} ; do
     while kubectl get namespace "${namespace}" 2>/dev/null; do
       kubectl delete namespace "${namespace}" ||:
       sleep 30

@@ -1,6 +1,7 @@
 ---
 
 enable-cf-deploy-pre-upgrade: true
+klog-collection-on-failure: true
 
 enable-cf-smoke-tests-pre-upgrade: true
 

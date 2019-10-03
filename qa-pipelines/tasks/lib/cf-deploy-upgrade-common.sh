@@ -223,6 +223,13 @@ set_helm_params() {
     if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
         HELM_PARAMS+=(--set "enable.uaa=true")
     fi
+    if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
+        HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=external-db-mariadb.external-db.svc.cluster.local")
+        HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=3306")
+        HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=root")
+        HELM_PARAMS+=(--set "enable.mysql=false")
+        HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
+    fi
     if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi

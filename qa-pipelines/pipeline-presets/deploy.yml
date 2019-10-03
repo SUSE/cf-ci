@@ -1,6 +1,7 @@
 ---
 
 enable-cf-deploy: true
+klog-collection-on-failure: true
 
 enable-cf-smoke-tests: true
 enable-cf-brain-tests: true

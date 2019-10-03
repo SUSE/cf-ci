@@ -43,6 +43,8 @@ aliases:
     KUBE_REGISTRY_PASSWORD: <%= registry_password %>
     KUBE_ORGANIZATION: <%= organization %>
     MAGIC_DNS_SERVICE: <%= magic_dns_service %>
+    # Used in deploy/pre-upgrade, upgrades, teardown
+    EXTERNAL_DB: <%= enable_external_uaa_scf_db == true %>
 
     # AWS/EKS configuration
     AZ_SP_APPID: <%= az_sp_app_id %>
@@ -357,11 +359,10 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-teardown.yml
       timeout: 1h
       params: *common-task-params
-    <% end %> # enable_cf_teardown && !terraform_platform
-    <% if !terraform_platform %>
+      # no point in releasing without teardown
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-    <% end %> # !terraform_platform
+    <% end %> # enable_cf_teardown && !terraform_platform
     <% if status_reporting %>
     on_success:
       put: status.src
