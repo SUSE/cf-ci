@@ -157,7 +157,7 @@ kubectl run \
     "${TEST_NAME}" ||:
 
 while [[ -z $(container_status ${TEST_NAME}) ]]; do
-    kubectl attach --namespace="${CF_NAMESPACE}" --container="${TEST_NAME}" "${TEST_NAME}" ||:
+    kubectl attach --stdin --namespace="${CF_NAMESPACE}" --container="${TEST_NAME}" "${TEST_NAME}" ||:
 done
 
 pod_status=$(container_status ${TEST_NAME})
