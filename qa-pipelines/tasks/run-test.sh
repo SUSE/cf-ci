@@ -50,11 +50,9 @@ function semver_is_gte() {
           tail -n 1
       )" == $1 ]]
 }
-if $(semver_is_gte $(helm_chart_version) 2.14.5); then
-    api_pod_name=api-group-0
-else
-    api_pod_name=api-0
-fi
+
+api_pod_name=api-group-0
+
 DOMAIN=$(kubectl get pods -o json --namespace "${CF_NAMESPACE}" ${api_pod_name} | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 generated_secrets_secret="$(kubectl get pod ${api_pod_name} --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
 SCF_LOG_HOST=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "SCF_LOG_HOST").value')
@@ -124,6 +122,25 @@ container_status() {
     | jq '.status.containerStatuses[0].state.terminated.exitCode | tonumber' 2>/dev/null
 }
 
+kubectl_attach_workaround_required() {
+  # Returns successfully if a workaround is required to display test logs (due to kubectl attach issues on CaaSP4)
+  # Until the CaaSP team gives us a better check, just check that the kube server version is 1.15.2
+  [[ $(kubectl version --output=json | jq -r .serverVersion.gitVersion) == "v1.15.2" ]]
+}
+
+kubectl_attach() {
+    if kubectl_attach_workaround_required; then
+        echo '`kubectl attach` is unsupported on CaaSP4. Logs will be displayed when test pod is finished'
+        while [[ -z $(container_status ${TEST_NAME}) ]]; do
+            sleep 10
+        done
+        kubectl logs --namespace=${CF_NAMESPACE} ${TEST_NAME}
+    else
+        while [[ -z $(container_status ${TEST_NAME}) ]]; do
+            kubectl attach --namespace="${CF_NAMESPACE}" --container="${TEST_NAME}" "${TEST_NAME}" ||:
+        done
+    fi
+}
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")
 
 test_pod_yml="${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml"
@@ -156,9 +173,7 @@ kubectl run \
     --overrides="$(kube_overrides "${test_pod_yml}")" \
     "${TEST_NAME}" ||:
 
-while [[ -z $(container_status ${TEST_NAME}) ]]; do
-    kubectl attach --namespace="${CF_NAMESPACE}" --container="${TEST_NAME}" "${TEST_NAME}" ||:
-done
+kubectl_attach ${TEST_NAME}
 
 pod_status=$(container_status ${TEST_NAME})
 export CATS_RERUN=1
@@ -213,9 +228,8 @@ if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
                 --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")" \
                 "${TEST_NAME}" ||:
 
-            while [[ -z $(container_status ${TEST_NAME}) ]]; do
-                kubectl attach --namespace=scf ${TEST_NAME} ||:
-            done
+            kubectl_attach ${TEST_NAME}
+
             pod_status=$(container_status ${TEST_NAME})
             ((CATS_RERUN+=1))
         fi
