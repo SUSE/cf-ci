@@ -95,6 +95,7 @@ Dir.chdir('../cloudfoundry/ci/pipelines') do
     pipeline-rootfs-publish
     pipeline-sle15-rootfs-publish
     pipeline-publish-release-notes
+    pipeline-publish-scf-tarball
     pipeline-suse-os-image-stemcell-builder
     pipeline-suse-packages
     pipeline-update-handling
