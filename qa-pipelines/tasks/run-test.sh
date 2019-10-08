@@ -150,6 +150,7 @@ fi
 
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
+    --leave-stdin-open \
     --attach \
     --restart=Never \
     --image="${image}" \
