@@ -48,6 +48,10 @@ instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | j
 monitor_file=$(mktemp -d)/downtime.log
 monitor_url "http://test-app.${DOMAIN}" "${monitor_file}" &
 
+if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
+    export EXTERNAL_DB_PASS="$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)"
+fi
+
 set_helm_params # Sets HELM_PARAMS.
 set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 

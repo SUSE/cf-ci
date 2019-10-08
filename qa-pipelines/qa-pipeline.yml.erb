@@ -84,6 +84,7 @@ aliases:
     ENABLE_CREDHUB: <%= enable_credhub == true %>
     ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
     EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
+    EXTERNAL_DB: <%= enable_external_uaa_scf_db == true %>
 
   # Terraform AKS Configuration
   terraform-aks-params: &terraform-aks-params
@@ -357,11 +358,10 @@ jobs:
       file: ci/qa-pipelines/tasks/cf-teardown.yml
       timeout: 1h
       params: *common-task-params
-    <% end %> # enable_cf_teardown && !terraform_platform
-    <% if !terraform_platform %>
+      # no point in releasing without teardown
     - put: pool.kube-hosts
       params: {release: pool.kube-hosts}
-    <% end %> # !terraform_platform
+    <% end %> # enable_cf_teardown && !terraform_platform
     <% if status_reporting %>
     on_success:
       put: status.src

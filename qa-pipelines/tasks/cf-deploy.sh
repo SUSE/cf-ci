@@ -25,6 +25,20 @@ if [[ ${cap_platform} != "eks" ]]; then
     fi
 fi
 
+# external db for uaa and scf db
+if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
+    helm init --client-only
+    helm repo add stable https://kubernetes-charts.storage.googleapis.com
+    helm install stable/mariadb \
+        --version 6.10.1 \
+        --name external-db \
+        --namespace external-db \
+        --set volumePermissions.enabled=true
+    kubectl wait --timeout=10m --namespace external-db --for=condition=ready pod/external-db-mariadb-master-0
+    export EXTERNAL_DB_PASS="$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)"
+fi
+
+
 set_helm_params # Sets HELM_PARAMS.
 set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
