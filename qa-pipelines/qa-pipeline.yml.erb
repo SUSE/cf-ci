@@ -43,8 +43,6 @@ aliases:
     KUBE_REGISTRY_PASSWORD: <%= registry_password %>
     KUBE_ORGANIZATION: <%= organization %>
     MAGIC_DNS_SERVICE: <%= magic_dns_service %>
-    # Used in deploy/pre-upgrade, upgrades, teardown
-    EXTERNAL_DB: <%= enable_external_uaa_scf_db == true %>
 
     # AWS/EKS configuration
     AZ_SP_APPID: <%= az_sp_app_id %>
@@ -86,6 +84,7 @@ aliases:
     ENABLE_CREDHUB: <%= enable_credhub == true %>
     ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
     EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
+    EXTERNAL_DB: <%= enable_external_uaa_scf_db == true %>
 
   # Terraform AKS Configuration
   terraform-aks-params: &terraform-aks-params

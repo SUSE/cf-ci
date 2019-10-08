@@ -20,6 +20,5 @@ params:
   AWS_SECRET_ACCESS_KEY: ""
   GKE_PRIVATE_KEY_BASE64: ""
   KLOG_COLLECTION_ON_FAILURE: false
-  EXTERNAL_DB: false # true or false
 run:
   path: ci/qa-pipelines/tasks/cf-teardown.sh

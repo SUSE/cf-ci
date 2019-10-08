@@ -3,27 +3,21 @@ set -o errexit -o nounset
 
 # Set kube config from pool
 source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
-source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
 set -o allexport
 CF_NAMESPACE=scf
 UAA_NAMESPACE=uaa
 set +o allexport
 
-namespaces=("${CF_NAMESPACE}" "${UAA_NAMESPACE}")
-if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
-    namespaces+=( "external-db" )
-fi
+namespaces=("${CF_NAMESPACE}" "${UAA_NAMESPACE}" "external-db" "stratos")
+
 while [[ "${#namespaces[@]}" -gt 0 ]]; do
-    # Upload klogs for any releases which have not yet been successfully deleted
-    trap "upload_klogs_on_failure ${namespaces[*]}" EXIT
     while [[ -n $(helm list --short --all ${namespaces[0]}) ]]; do
         helm delete --purge ${namespaces[0]} ||:
         sleep 10
     done
     namespaces=(${namespaces[@]:1})
 done
-trap "" EXIT
 
 for namespace in ${namespaces[@]} ; do
     while kubectl get namespace "${namespace}" 2>/dev/null; do
