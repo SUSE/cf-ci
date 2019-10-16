@@ -140,3 +140,8 @@ Dir.chdir('../buildpacks-ci') do
         './deploy.sh', 'buildpacks')
   end
 end
+
+Dir.chdir('../scf-eirini-ci') do
+  status 'deploying scf-eirini-ci pipeline'
+  run './set-pipeline.sh'
+end
