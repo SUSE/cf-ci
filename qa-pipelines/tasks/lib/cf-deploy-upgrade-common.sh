@@ -233,12 +233,6 @@ set_helm_params() {
     if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi
-    if [[ -n "${KUBE_REGISTRY_USERNAME:-}" ]]; then
-        HELM_PARAMS+=(--set "kube.registry.username=${KUBE_REGISTRY_USERNAME}")
-    fi
-    if [[ -n "${KUBE_REGISTRY_PASSWORD:-}" ]]; then
-        HELM_PARAMS+=(--set "kube.registry.password=${KUBE_REGISTRY_PASSWORD}")
-    fi
     if [[ -n "${KUBE_ORGANIZATION:-}" ]]; then
         HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
     fi
