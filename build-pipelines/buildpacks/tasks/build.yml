@@ -7,17 +7,17 @@ image_resource:
     tag: kubecf
 inputs:
 - name: ci
-- name: docker-image-resource
-- name: cf-deployment
+- name: build-image-resource
 - name: s3.stemcell-version
 - name: s3.fissile-linux
+- name: gh_release
 params:
   STEMCELL_REPOSITORY: ~
   STEMCELL_VERSIONED_FILE: ~
-  CF_DEPLOYMENT_YAML: ~
   REGISTRY_NAME: ~
   REGISTRY_ORG: ~
   REGISTRY_USER: ~
   REGISTRY_PASS: ~
+  RELEASE_NAME: ~
 run:
-  path: ci/build-pipelines/release-images-cf-deployment/tasks/build.sh
+  path: ci/build-pipelines/buildpacks/tasks/build.sh

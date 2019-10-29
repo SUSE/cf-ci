@@ -19,13 +19,6 @@ resources:
     branch: <%= cf_deployment_branch %>
     tag_filter: <%= cf_deployment_tag %>
 <% end %>
-- name: scf
-  type: git
-  source:
-    uri: <%= scf_repo %>
-    branch: <%= scf_branch %>
-    paths:
-    - <%= scf_ops_set_suse_buildpacks %>
 - name: s3.fissile-linux
   type: s3
   source:
@@ -49,8 +42,6 @@ jobs:
     - get: ci
     - get: docker-image-resource
     - get: cf-deployment-<%= cf_deployment_tag %>
-    - get: scf
-      trigger: true
     - get: s3.fissile-stemcell-version
       trigger: true
     - get: s3.fissile-linux
@@ -62,15 +53,12 @@ jobs:
         s3.stemcell-version: s3.fissile-stemcell-version
         cf-deployment: cf-deployment-<%= cf_deployment_tag %>
       params:
-        STEMCELL_OS: <%= stemcell_os %>
         STEMCELL_REPOSITORY: <%= stemcell_repository %>
         STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
         CF_DEPLOYMENT_YAML: <%= cf_deployment_yaml %>
-        BOSH_CLI_TAG: <%= bosh_cli_tag %>
-        SCF_OPS_SET_SUSE_BUILDPACKS: <%= scf_ops_set_suse_buildpacks %>
-        DOCKER_REGISTRY: <%= docker_registry %>
-        DOCKER_ORGANIZATION: <%= docker_organization %>
-        DOCKER_TEAM_USERNAME: <%= docker_username %>
-        DOCKER_TEAM_PASSWORD_RW: <%= docker_password %>
+        REGISTRY_NAME: <%= registry_name %>
+        REGISTRY_ORG: <%= registry_org %>
+        REGISTRY_USER: <%= registry_user %>
+        REGISTRY_PASS: <%= registry_pass %>
       file: ci/build-pipelines/release-images-cf-deployment/tasks/build.yml
 <% end %>
