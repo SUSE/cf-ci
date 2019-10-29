@@ -14,10 +14,8 @@ s3-config-bucket-sles: cap-release-archives
 
 s3-config-prefix-sidecars: brokers/
 
-registry-hostname: *docker-internal-registry
-registry-username: *docker-internal-username
-registry-password: *docker-internal-password
-organization: splatform
+registry-hostname: *docker-public-staging-registry
+organization: *docker-public-staging-org
 
 magic-dns-service: omg.howdoi.website
 

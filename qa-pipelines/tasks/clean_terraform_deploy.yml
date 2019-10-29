@@ -11,8 +11,6 @@ inputs:
 
 params:
   KUBE_REGISTRY_HOSTNAME: ""
-  KUBE_REGISTRY_USERNAME: ""
-  KUBE_REGISTRY_PASSWORD: ""
   KUBE_ORGANIZATION: ""
   HA: false # true, false, or "scaled"
   MAGIC_DNS_SERVICE: xip.io
