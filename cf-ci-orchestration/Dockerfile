@@ -85,3 +85,5 @@ RUN true \
     && chmod a+x /usr/local/bin/helm
 
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
+
+RUN zypper --non-interactive install make 
