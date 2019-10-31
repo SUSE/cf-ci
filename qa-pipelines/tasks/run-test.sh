@@ -42,19 +42,7 @@ esac
 
 # Replace the generated monit password with the name of the generated secrets secret
 helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
-function semver_is_gte() {
-  # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
-  # lexical comparison doesn't work on semvers, e.g. 10.0.0 > 2.0.0
-  [[ "$(echo -e "$1\n$2" |
-          sort -t '.' -k 1,1 -k 2,2 -k 3,3 -g |
-          tail -n 1
-      )" == $1 ]]
-}
-if $(semver_is_gte $(helm_chart_version) 2.14.5); then
-    api_pod_name=api-group-0
-else
-    api_pod_name=api-0
-fi
+api_pod_name=api-group-0
 DOMAIN=$(kubectl get pods -o json --namespace "${CF_NAMESPACE}" ${api_pod_name} | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 generated_secrets_secret="$(kubectl get pod ${api_pod_name} --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
 SCF_LOG_HOST=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "SCF_LOG_HOST").value')

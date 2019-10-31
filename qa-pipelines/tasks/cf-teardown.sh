@@ -38,9 +38,7 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
 fi
 
 kubectl delete --ignore-not-found \
-    --filename ci/qa-tools/cap-cr-privileged-2.14.5.yaml \
     --filename ci/qa-tools/cap-cr-privileged-2.15.1.yaml \
-    --filename ci/qa-tools/cap-crb-2.13.3.yaml \
     --filename ci/qa-tools/cap-crb-tests.yaml \
     --filename ci/qa-tools/cap-psp-nonprivileged.yaml \
     --filename ci/qa-tools/cap-psp-privileged.yaml
