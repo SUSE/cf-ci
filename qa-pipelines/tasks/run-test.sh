@@ -93,7 +93,7 @@ kube_overrides() {
                 # tests enough time for all their actions even when a
                 # slow network causes the broker to take up to 10
                 # minutes for the assembly/delivery of the catalog.
-                # See also `lib/cf-deploy-upgrade-common.sh` for the
+                # See also "lib/cf-deploy-upgrade-common.sh" for the
                 # corresponding CC change: BROKER_CLIENT_TIMEOUT_SECONDS.
                 container['env'].push name: "TIMEOUT", value: "1200"
             end
@@ -113,6 +113,10 @@ container_status() {
 }
 
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")
+if [[ ${image} == *"staging.registry.howdoi.website"* ]]; then
+    staging_registry="registry.suse.com/cap-staging"
+    image=${image/staging.registry.howdoi.website\/splatform/$staging_registry}
+fi
 
 test_pod_yml="${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml"
 test_non_pods_yml=
