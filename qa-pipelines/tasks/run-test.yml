@@ -23,5 +23,7 @@ params:
   AWS_SECRET_ACCESS_KEY: ""
   GKE_PRIVATE_KEY_BASE64: ""
   KLOG_COLLECTION_ON_FAILURE: false
+  KUBE_REGISTRY_HOSTNAME: ""
+  KUBE_REGISTRY_ORG: ""
 run:
   path: ci/qa-pipelines/tasks/run-test.sh

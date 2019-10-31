@@ -60,6 +60,7 @@ kube_overrides() {
         include_brains_regex = ENV["INCLUDE_BRAINS_REGEX"]
 
         obj = YAML.load_file('$1')
+        values_from_secrets = ["MONIT_PASSWORD", "UAA_CLIENTS_CF_SMOKE_TESTS_CLIENT_SECRET", "AUTOSCALER_SERVICE_BROKER_PASSWORD", "INTERNAL_CA_CERT"]
         obj['spec']['containers'].each do |container|
             container['env'].each do |env|
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
@@ -67,16 +68,7 @@ kube_overrides() {
                 env['value'] = '$SCF_LOG_HOST' if env['name'] == 'SCF_LOG_HOST'
                 env['value'] = '$STORAGECLASS' if env['name'] == 'KUBERNETES_STORAGE_CLASS_PERSISTENT'
                 env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
-                if env['name'] == "MONIT_PASSWORD"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
-                end
-                if env['name'] == "UAA_CLIENTS_CF_SMOKE_TESTS_CLIENT_SECRET"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
-                end
-                if env['name'] == "AUTOSCALER_SERVICE_BROKER_PASSWORD"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
-                end
-                if env['name'] == "INTERNAL_CA_CERT"
+                if values_from_secrets.include? env['name']
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
             end
@@ -102,6 +94,7 @@ kube_overrides() {
                 container['env'].push name: "CATS_RERUN", value: '${CATS_RERUN:-}'
             end
             container.delete "resources"
+            container['image'] = container['image'].gsub(/^.*\//, '${KUBE_REGISTRY_HOSTNAME}/${KUBE_ORGANIZATION}/')
         end
         puts obj.to_json
 EOF
@@ -114,7 +107,7 @@ container_status() {
 
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")
 if [[ ${image} == *"staging.registry.howdoi.website"* ]]; then
-    staging_registry="registry.suse.com/cap-staging"
+    staging_registry="${KUBE_REGISTRY_HOSTNAME}/${KUBE_ORGANIZATION}"
     image=${image/staging.registry.howdoi.website\/splatform/$staging_registry}
 fi
 
