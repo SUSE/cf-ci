@@ -27,11 +27,11 @@ if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
 fi
 
 
-set_helm_params # Sets HELM_PARAMS.
-set_uaa_params # Adds uaa specific params to HELM_PARAMS.
+#set_helm_params # Sets HELM_PARAMS.
+#set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
-echo "UAA customization..."
-echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+#echo "UAA customization..."
+#echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     # Deploy UAA.
@@ -60,8 +60,8 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
 fi
 
 # Deploy CF.
-set_helm_params # Resets HELM_PARAMS.
-set_scf_params # Adds scf specific params to HELM_PARAMS.
+#set_helm_params # Resets HELM_PARAMS.
+#set_scf_params # Adds scf specific params to HELM_PARAMS.
 
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
@@ -77,16 +77,25 @@ fi
 echo "SCF customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-helm install ${CAP_DIRECTORY}/helm/cf/ \
-    --namespace "${CF_NAMESPACE}" \
-    --name scf \
-    --timeout 1200 \
-    --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
-    --set "env.UAA_HOST=${UAA_HOST}" \
-    --set "env.UAA_PORT=${UAA_PORT}" \
-    --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
-    --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
-    "${HELM_PARAMS[@]}"
+# helm install ${CAP_DIRECTORY}/helm/cf/ \
+#     --namespace "${CF_NAMESPACE}" \
+#     --name scf \
+#     --timeout 1200 \
+#     --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
+#     --set "env.UAA_HOST=${UAA_HOST}" \
+#     --set "env.UAA_PORT=${UAA_PORT}" \
+#     --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
+#     --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
+#     "${HELM_PARAMS[@]}"
+helm install --name cf-operator \
+     --namespace cfo \
+     --set "operator.watchNamespace=kubecf" \
+     ${CF_OPERATOR_DIRECTORY}
+
+helm install --name kubecf \
+     --namespace "${CF_NAMESPACE}" \
+     ${CAP_DIRECTORY} \
+     --set "system_domain=${DOMAIN}"
 
 trap "upload_klogs_on_failure ${UAA_NAMESPACE} ${CF_NAMESPACE}" EXIT
 

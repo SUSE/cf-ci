@@ -10,9 +10,11 @@ s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
 
-s3-config-bucket-sles: cap-release-archives
+s3-config-bucket-sles: scf-v3
 
 s3-config-prefix-sidecars: brokers/
+
+s3-config-prefix-operator: cf-operators/helm-charts/
 
 registry-hostname: *docker-public-staging-registry
 organization: *docker-public-staging-org
@@ -34,8 +36,8 @@ status-email-receiver: *ci-status-email-receiver
 # When deploying / upgrading, use the embedded UAA instead of the normal,
 # separately namespaced UAA.
 enable-embedded-uaa: false
-enable-autoscaler: true
-enable-credhub: true
+enable-autoscaler: false
+enable-credhub: false
 enable-external-uaa-scf-db: false
 # The following two options test that ha strict mode works by adjusting the diego_api count to 1
 # This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true

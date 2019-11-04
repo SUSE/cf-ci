@@ -5,9 +5,10 @@ source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 UAA_PORT=2793
 
-CF_NAMESPACE=scf
+CF_NAMESPACE=kubecf
 UAA_NAMESPACE=uaa
 CAP_DIRECTORY=s3.scf-config
+CF_OPERATOR_DIRECTORY=s3.cf-operator
 
 # Set SCF_LOG_HOST for sys log brain tests
 log_uid=$(hexdump -n 8 -e '2/4 "%08x"' /dev/urandom)
@@ -16,15 +17,15 @@ SCF_LOG_HOST="log-${log_uid}.${CF_NAMESPACE}.svc.cluster.local"
 if [ -n "${CAP_BUNDLE_URL:-}" ]; then
     # For pre-upgrade deploys
     echo "Using CAP ${CAP_BUNDLE_URL}"
-    curl ${CAP_BUNDLE_URL} -Lo cap-install-version.zip
-    export CAP_DIRECTORY=cap-install-version
-    unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
-else
-    unzip ${CAP_DIRECTORY}/*scf-*.zip -d ${CAP_DIRECTORY}/
+    curl ${CAP_BUNDLE_URL} -Lo cap-install-version.tgz
+    export CAP_DIRECTORY=cap-install-version.tgz
+    #unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
+# else
+#     unzip ${CAP_DIRECTORY}/*scf-*.zip -d ${CAP_DIRECTORY}/
 fi
 
 # Check that the kube of the cluster is reasonable
-bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
+#bash ${CAP_DIRECTORY}/kube-ready-state-check.sh kube
 
 cap_platform=${cap_platform:-$(kubectl get configmap -n kube-system cap-values -o json | jq -r .data.platform)}
 

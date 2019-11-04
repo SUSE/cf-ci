@@ -127,6 +127,13 @@ resources:
     - qa-pipelines/*
     - sample-apps/*
 
+# CF Operator
+- name: s3.cf-operator
+  type: s3
+  source:
+    << : *s3-common-params
+    regexp: <%= s3_config_prefix_operator %>cf-operator-(.*)\.tgz$
+
 # USB sidecar archive for postgres
 - name: s3.pg-sidecar
   type: s3
@@ -145,8 +152,8 @@ resources:
   type: s3
   source:
     << : *s3-common-params
-    regexp: <%= s3_config_prefix_sles %>scf-sle-(.*)\.zip$
-
+    #regexp: <%= s3_config_prefix_sles %>scf-sle-(.*)\.zip$
+    regexp: <%= s3_config_prefix_sles %>kubecf-3.0.0-(.*)\.tgz$
 # Pool resource with kube cluster information
 - name: pool.kube-hosts
   type: pool
@@ -195,6 +202,8 @@ jobs:
     - aggregate:
       - get: ci
       - get: meta
+      - get: s3.cf-operator
+        trigger: true
       - get: s3.pg-sidecar
         trigger: true
       - get: s3.mysql-sidecar
