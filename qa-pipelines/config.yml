@@ -10,11 +10,13 @@ s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
 
-s3-config-bucket-sles: scf-v3
+s3-config-bucket-sles: cap-release-archives
+s3-config-bucket-cap2: scf-v3
+s3-config-bucket-operator: cf-operators
 
 s3-config-prefix-sidecars: brokers/
 
-s3-config-prefix-operator: cf-operators/helm-charts/
+s3-config-prefix-operator: helm-charts/
 
 registry-hostname: *docker-public-staging-registry
 organization: *docker-public-staging-org
