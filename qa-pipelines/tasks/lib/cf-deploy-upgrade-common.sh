@@ -7,8 +7,8 @@ UAA_PORT=2793
 
 CF_NAMESPACE=kubecf
 UAA_NAMESPACE=uaa
-CAP_DIRECTORY=s3.scf-config
-CF_OPERATOR_DIRECTORY=s3.cf-operator
+CAP_DIRECTORY=s3.scf-config/url
+CF_OPERATOR_DIRECTORY=s3.cf-operator/url
 
 # Set SCF_LOG_HOST for sys log brain tests
 log_uid=$(hexdump -n 8 -e '2/4 "%08x"' /dev/urandom)
@@ -17,8 +17,8 @@ SCF_LOG_HOST="log-${log_uid}.${CF_NAMESPACE}.svc.cluster.local"
 if [ -n "${CAP_BUNDLE_URL:-}" ]; then
     # For pre-upgrade deploys
     echo "Using CAP ${CAP_BUNDLE_URL}"
-    curl ${CAP_BUNDLE_URL} -Lo cap-install-version.tgz
-    export CAP_DIRECTORY=cap-install-version.tgz
+    #curl ${CAP_BUNDLE_URL} -Lo cap-install-version.tgz
+    export CAP_DIRECTORY=${CAP_BUNDLE_URL}
     #unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
 # else
 #     unzip ${CAP_DIRECTORY}/*scf-*.zip -d ${CAP_DIRECTORY}/
