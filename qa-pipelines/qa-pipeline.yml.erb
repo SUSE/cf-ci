@@ -329,7 +329,6 @@ jobs:
         HA: <%= avail == 'HA' %>
       input_mapping:
         s3.scf-config: s3.scf-config-sles
-        s3.cf-operator: s3.cf-operator
       timeout: 5h
     <% end %> # enable_cf_deploy
     <% if enable_cf_smoke_tests %>

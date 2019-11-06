@@ -11,6 +11,7 @@ inputs:
 - name: s3.scf-config
 - name: pool.kube-hosts
 - name: commit-id
+- name: s3.cf-operator
 outputs:
 - name: klog
 
