@@ -9,13 +9,11 @@ function build_release() {
   cf_version="${1}"
   registry="${2}"
   organization="${3}"
-  username="${4}"
-  password="${5}"
-  stemcell_image="${6}"
-  release_name="${7}"
-  release_url="${8}"
-  release_version="${9}"
-  release_sha1="${10}"
+  stemcell_image="${4}"
+  release_name="${5}"
+  release_url="${6}"
+  release_version="${7}"
+  release_sha1="${8}"
 
   echo -e "Release information:"
   echo -e "  - CF Version:      ${GREEN}${cf_version}${NC}"
@@ -36,7 +34,6 @@ function build_release() {
 
   built_image=$(fissile build release-images --dry-run "${build_args[@]}" | cut -d' ' -f3)
   built_image_tag="${built_image#*:}"
-  creds_string=""${username}":"${password}""
 
   # Only build and push the container image if doesn't exits already.
   if docker manifest inspect "${built_image}" 2>&1 >/dev/null | grep -q "no such manifest"; then

@@ -37,4 +37,4 @@ RELEASE_SHA=$(sha1sum ${base_dir}/s3.*/*.tgz | cut -d' ' -f1)
 popd
 
 source ${tasks_dir}/build_release.sh
-build_release "${REGISTRY_NAME}" "${REGISTRY_ORG}" "${REGISTRY_USER}" "${REGISTRY_PASS}" "${stemcell_image}" "${RELEASE_NAME}" "${RELEASE_URL}" "${RELEASE_VERSION}" "${RELEASE_SHA}"
+build_release "${REGISTRY_NAME}" "${REGISTRY_ORG}" "${stemcell_image}" "${RELEASE_NAME}" "${RELEASE_URL}" "${RELEASE_VERSION}" "${RELEASE_SHA}"

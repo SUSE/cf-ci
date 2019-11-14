@@ -21,7 +21,7 @@ NEW_URL=$3
 NEW_VERSION=$4
 NEW_SHA=$5
 
-PYTHON_CODE=$(cat <<END_HEREDOC 
+PYTHON_CODE=$(cat <<EOF 
 #!/usr/bin/python3
 
 import ruamel.yaml
@@ -42,7 +42,7 @@ for buildpack in buildpacks:
 with open("${KUBECF_OPS_SET_SUSE_BUILDPACKS}", 'w') as f:
     yaml.dump(buildpacks, f)
 
-END_HEREDOC
+EOF
 )
 
 python3 -c "${PYTHON_CODE}"

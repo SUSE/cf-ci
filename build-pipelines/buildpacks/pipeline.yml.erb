@@ -113,9 +113,7 @@ resources:
     owner: SUSE
     repository: <%= release[:uri].match(/.*\/(.*)\.git/)[1] %>
     access_token: <%= github_access_token %>
-<% end %>
 
-<% releases.each do |release| %>
 - name: suse-final-release-<%= release[:name] %>
   type: s3
   source:

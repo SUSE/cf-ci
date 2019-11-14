@@ -26,11 +26,6 @@ stemcell_version="$(cat s3.stemcell-version/"${STEMCELL_VERSIONED_FILE##*/}")"
 stemcell_image="${STEMCELL_REPOSITORY}:${stemcell_version}"
 docker pull "${stemcell_image}"
 
-# ---- Now that we have a separate pipeline for building suse buildpacks we don't need interpolation. ----
-# Apply buildpacks ops-file.
-# cf_deployment_yaml_with_suse_buildpacks="$(mktemp /tmp/buildpacks.XXXXXX)"
-# bosh interpolate "${CF_DEPLOYMENT_YAML}" --ops-file "scf/${SCF_OPS_SET_SUSE_BUILDPACKS}" > "${cf_deployment_yaml_with_suse_buildpacks}"
-
 # Build the releases.
 tasks_dir="$(dirname $0)"
-bash <(yq -r ".manifest_version as \$cf_version | .releases[] | \"source ${tasks_dir}/build_release.sh; build_release \\(\$cf_version|@sh) '${REGISTRY_NAME}' '${REGISTRY_ORG}' '${REGISTRY_USER}' '${REGISTRY_PASS}' '${stemcell_image}' \\(.name|@sh) \\(.url|@sh) \\(.version|@sh) \\(.sha1|@sh)\"" "${CF_DEPLOYMENT_YAML}")
+bash <(yq -r ".manifest_version as \$cf_version | .releases[] | \"source ${tasks_dir}/build_release.sh; build_release \\(\$cf_version|@sh) '${REGISTRY_NAME}' '${REGISTRY_ORG}' '${stemcell_image}' \\(.name|@sh) \\(.url|@sh) \\(.version|@sh) \\(.sha1|@sh)\"" "${CF_DEPLOYMENT_YAML}")
