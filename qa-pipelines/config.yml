@@ -48,3 +48,7 @@ test-ha-strict-disable: false
 terraform-platforms: [gke, aks]
 terraform-gke-location: us-west1-a
 terraform-aks-location: eastus
+
+# custom-cats takes a string with comma-separated test suites. Current options are:
+# apps,backend_compatibility,container_networking,detect,diego_docker,internet_dependent,persistent_app,privileged_container_support,route_services,routing,security_groups,services,diego_ssh,sso,tasks,v3,zipkin
+custom-cats: ~

@@ -344,6 +344,9 @@ jobs:
       params:
         << : *common-task-params
         TEST_NAME: acceptance-tests
+        <% if custom_cats && !custom_cats.empty? %>
+        CATS_SUITES: "=<%= custom_cats %>"
+        <% end %> # custom_cats && !custom_cats.empty?
       input_mapping:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h
