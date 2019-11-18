@@ -12,7 +12,7 @@ The configuration file "config.yml" must exist.
 
 Available options:
     -h, --help          Print this help and exit.
-    -p, --postfix=      Set additional pipeline postfix.
+    -p, --prefix=       Set additional pipeline prefix.
     -t, --target=       Set fly target concourse.
     -b, --branch=       Use a specific branch or tag. Defaults to the current branch.
     -d, --directory=    Name of the directory containing pipeline definition.
@@ -20,7 +20,7 @@ Available options:
 EOF
 }
 
-OPTS=$(getopt -o hd:p:t:b: --long help,postfix:,target:,branch:,directory: -- "$@")
+OPTS=$(getopt -o hd:p:t:b: --long help,prefix:,target:,branch:,directory: -- "$@")
 eval set -- "${OPTS}"
 
 src_ci_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -29,7 +29,7 @@ secrets_file=""
 while true ; do
     case "${1}" in
         -h|--help)   usage ; exit 0 ;;
-        -p|--postfix) postfix="${2}" ; shift 2 ;;
+        -p|--prefix) prefix="${2}" ; shift 2 ;;
         -t|--target) target="${2}" ; shift 2 ;;
         -d|--directory) directory="${2}" ; shift 2 ;;
         -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
@@ -95,7 +95,10 @@ if ! git ls-remote --exit-code $src_ci_remote $src_ci_branch; then
 fi
 
 # Append tag/branch name to pipeline name
-pipeline_name=${directory}-${postfix}
+pipeline_name=${directory}
+if [[ ! -z "${prefix:-}" ]]; then
+  pipeline_name=${prefix}-${pipeline_name}
+fi
 
 # Determine if pipeline already exists. This will be used to pause the jobs by default
 existing_pipeline_job_count=$(

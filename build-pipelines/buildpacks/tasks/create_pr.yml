@@ -1,0 +1,23 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: splatform/concourse-brats
+    tag: kubecf
+inputs:
+- name: ci
+- name: build-image-resource
+- name: gh_release
+- name: suse_final_release
+- name: kubecf
+params:
+  GITHUB_TOKEN: ~
+  GIT_MAIL: ~
+  GIT_USER: ~
+  RELEASE_NAME: ~
+  NAME_IN_ROLE_MANIFEST: ~
+  KUBECF_BRANCH: ~
+  KUBECF_OPS_SET_SUSE_BUILDPACKS: ~
+run:
+  path: ci/build-pipelines/buildpacks/tasks/create_pr.sh

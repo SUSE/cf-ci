@@ -6,17 +6,15 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 function build_release() {
-  cf_version="${1}"
-  registry="${2}"
-  organization="${3}"
-  stemcell_image="${4}"
-  release_name="${5}"
-  release_url="${6}"
-  release_version="${7}"
-  release_sha1="${8}"
+  registry="${1}"
+  organization="${2}"
+  stemcell_image="${3}"
+  release_name="${4}"
+  release_url="${5}"
+  release_version="${6}"
+  release_sha1="${7}"
 
   echo -e "Release information:"
-  echo -e "  - CF Version:      ${GREEN}${cf_version}${NC}"
   echo -e "  - Release name:    ${GREEN}${release_name}${NC}"
   echo -e "  - Release version: ${GREEN}${release_version}${NC}"
   echo -e "  - Release URL:     ${GREEN}${release_url}${NC}"
@@ -26,8 +24,8 @@ function build_release() {
     --stemcell="${stemcell_image}"
     --name="${release_name}"
     --version="${release_version}"
-    --sha1="${release_sha1}"
     --url="${release_url}"
+    --sha1="${release_sha1}"
     --docker-registry="${registry}"
     --docker-organization="${organization}"
   )
