@@ -101,8 +101,6 @@ resources:
   source:
     uri: <%= kubecf_repo %>
     branch: <%= kubecf_branch %>
-    paths:
-    - <%= kubecf_ops_set_suse_buildpacks %>
     private_key: |
       <%= github_private_key.gsub("\n", "\n      ") %>
 

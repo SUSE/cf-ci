@@ -76,6 +76,7 @@ COMMIT_TITLE="Bump ${NAME_IN_ROLE_MANIFEST} release to ${RELEASE_VERSION}"
 cp -r kubecf/. updated-kubecf/
 cd updated-kubecf
 
+git pull
 export GIT_BRANCH_NAME="bump_${NAME_IN_ROLE_MANIFEST}-`date +%Y%m%d%H%M%S`"
 git checkout -b "${GIT_BRANCH_NAME}"
 
