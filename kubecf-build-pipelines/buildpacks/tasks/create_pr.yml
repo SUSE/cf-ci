@@ -20,4 +20,4 @@ params:
   KUBECF_BRANCH: ~
   KUBECF_OPS_SET_SUSE_BUILDPACKS: ~
 run:
-  path: ci/build-pipelines/buildpacks/tasks/create_pr.sh
+  path: ci/kubecf-build-pipelines/buildpacks/tasks/create_pr.sh

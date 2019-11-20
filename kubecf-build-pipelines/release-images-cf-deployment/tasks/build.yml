@@ -20,4 +20,4 @@ params:
   REGISTRY_USER: ~
   REGISTRY_PASS: ~
 run:
-  path: ci/build-pipelines/release-images-cf-deployment/tasks/build.sh
+  path: ci/kubecf-build-pipelines/release-images-cf-deployment/tasks/build.sh
