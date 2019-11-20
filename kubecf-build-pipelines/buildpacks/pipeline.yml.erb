@@ -152,7 +152,7 @@ jobs:
         REGISTRY_USER: <%= registry_user %>
         REGISTRY_PASS: <%= registry_pass %>
         RELEASE_NAME: <%= release[:name] %>
-      file: ci/build-pipelines/buildpacks/tasks/build.yml
+      file: ci/kubecf-build-pipelines/buildpacks/tasks/build.yml
 
     - task: create-pr
       privileged: true
@@ -169,5 +169,5 @@ jobs:
         NAME_IN_ROLE_MANIFEST: <%= release[:name_in_role_manifest] %>
         KUBECF_BRANCH: <%= kubecf_branch %>
         KUBECF_OPS_SET_SUSE_BUILDPACKS: <%= kubecf_ops_set_suse_buildpacks %>
-      file: ci/build-pipelines/buildpacks/tasks/create_pr.yml
+      file: ci/kubecf-build-pipelines/buildpacks/tasks/create_pr.yml
 <% end %>
