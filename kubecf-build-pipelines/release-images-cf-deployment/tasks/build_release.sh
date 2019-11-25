@@ -36,7 +36,7 @@ function build_release() {
   built_image_tag="${built_image#*:}"
 
   # Only build and push the container image if doesn't exits already.
-  if docker manifest inspect "${built_image}" 2>&1 >/dev/null | grep -q "no such manifest"; then
+  if docker manifest inspect "${built_image}" 2>&1 | grep --quiet "no such manifest"; then
       # Build the release image.
       fissile build release-images "${build_args[@]}"
       echo -e "Built image: ${GREEN}${built_image}${NC}"
