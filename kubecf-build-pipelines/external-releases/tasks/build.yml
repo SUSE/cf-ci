@@ -21,4 +21,4 @@ params:
   RELEASE_VERSION: ~
   RELEASE_URL: ~
 run:
-  path: ci/kubecf-build-pipelines/buildpacks/tasks/build.sh
+  path: ci/kubecf-build-pipelines/external-releases/tasks/build.sh
