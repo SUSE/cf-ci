@@ -69,15 +69,12 @@ jobs:
         trigger: true
       - get: s3.fissile-linux
         trigger: true
-      - get: <%= release[:name] %>-gh-release
-        trigger: true
     - do:
     <% release[:versions].each do |version| %>
       - task: build-<%= version %>
         privileged: true
         input_mapping:
           s3.stemcell-version: s3.fissile-stemcell-version 
-          
         params:
           STEMCELL_REPOSITORY: <%= stemcell_repository %>
           STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>

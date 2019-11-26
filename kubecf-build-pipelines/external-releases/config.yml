@@ -1,5 +1,5 @@
 ci-repo: https://github.com/suse/cf-ci
-ci-branch: develop
+ci-branch: bisingh/external-releases-pipeline
 build-image-resource-repo: https://github.com/concourse/docker-image-resource
 build-image-resource-branch: master
 fissile-linux-s3-bucket: cf-opensusefs2
