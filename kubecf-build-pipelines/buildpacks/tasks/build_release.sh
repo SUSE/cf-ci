@@ -31,7 +31,6 @@ function build_release() {
   )
 
   built_image=$(fissile build release-images --dry-run "${build_args[@]}" | cut -d' ' -f3)
-  built_image_tag="${built_image#*:}"
 
   export DOCKER_CLI_EXPERIMENTAL=enabled;
   # Only build and push the container image if doesn't exits already.
