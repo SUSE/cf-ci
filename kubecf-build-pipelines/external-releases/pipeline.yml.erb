@@ -5,6 +5,24 @@
 
 external_releases = [
   {
+    name: "credhub-release",
+    url: "https://bosh.io/d/github.com/pivotal-cf/credhub-release",
+    versions:
+    [
+      "2.5.8",
+      "2.5.9"
+    ]
+  },
+  {
+    name: "cf-mysql-release",
+    url: "https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release",
+    versions:
+    [
+      "36.19.0",
+      "36.18.0"
+    ]
+  },
+  {
     name: "cf-sle15-release",
     url: "https://s3.amazonaws.com/suse-final-releases/sle15-release",
     versions: 
@@ -14,22 +32,23 @@ external_releases = [
     ]
   },
   {
-    name: "credhub-release",
-    url: "https://bosh.io/d/github.com/pivotal-cf/credhub-release",
+    name: "cf-acceptance-tests-release",
+    url: "https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release",
     versions:
     [
-      "2.5.8",
-      "2.5.9"
+      "0.0.7",
+      "0.0.6"
+    ]
+  },
+  {
+    name: "brains-tests-release",
+    url: "https://s3.amazonaws.com/suse-final-releases/brain-tests-release",
+    versions:
+    [
+      "0.0.1"
     ]
   }
 ]
-
-# Convert a multiline string into a string with literal '\n's for YAML to parse as multiline string
-class ::String
-  def yamlify()
-    self.gsub("\n", '\n')
-  end
-end
 %>
 
 resources:
