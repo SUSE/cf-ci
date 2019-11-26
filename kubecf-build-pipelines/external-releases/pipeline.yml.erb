@@ -70,21 +70,22 @@ jobs:
       - get: s3.fissile-linux
         trigger: true
     - do:
-    <% release[:versions].each do |version| %>
-      - task: build-<%= version %>
-        privileged: true
-        input_mapping:
-          s3.stemcell-version: s3.fissile-stemcell-version 
-        params:
-          STEMCELL_REPOSITORY: <%= stemcell_repository %>
-          STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
-          REGISTRY_NAME: <%= registry_name %>
-          REGISTRY_ORG: <%= registry_org %>
-          REGISTRY_USER: <%= registry_user %>
-          REGISTRY_PASS: <%= registry_pass %>
-          RELEASE_NAME: <%= release[:name] %>
-          RELEASE_VERSION: <%= version %>
-          RELEASE_URL: <%= release[:url] %>
-        file: ci/kubecf-build-pipelines/external-releases/tasks/build.yml
+      - in_parallel:
+      <% release[:versions].each do |version| %>
+        - task: build-<%= version %>
+          privileged: true
+          input_mapping:
+            s3.stemcell-version: s3.fissile-stemcell-version 
+          params:
+            STEMCELL_REPOSITORY: <%= stemcell_repository %>
+            STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
+            REGISTRY_NAME: <%= registry_name %>
+            REGISTRY_ORG: <%= registry_org %>
+            REGISTRY_USER: <%= registry_user %>
+            REGISTRY_PASS: <%= registry_pass %>
+            RELEASE_NAME: <%= release[:name] %>
+            RELEASE_VERSION: <%= version %>
+            RELEASE_URL: <%= release[:url] %>
+          file: ci/kubecf-build-pipelines/external-releases/tasks/build.yml
     <% end %>  
 <% end %>

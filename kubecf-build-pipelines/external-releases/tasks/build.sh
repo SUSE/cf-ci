@@ -31,7 +31,7 @@ tasks_dir="$(dirname $0)"
 base_dir=$(pwd)
 
 RELEASE_URL+=$([[ ${RELEASE_URL} == *"bosh.io"* ]] && echo ?v=$RELEASE_VERSION || echo -${RELEASE_VERSION}.tgz)
-curl -vL ${RELEASE_URL} --output ${base_dir}/${RELEASE_NAME}-${RELEASE_VERSION}.tgz
+curl -sL ${RELEASE_URL} --output ${base_dir}/${RELEASE_NAME}-${RELEASE_VERSION}.tgz
 RELEASE_SHA=$(sha1sum ${base_dir}/${RELEASE_NAME}-${RELEASE_VERSION}.tgz | cut -d' ' -f1)
 
 source ${tasks_dir}/build_release.sh
