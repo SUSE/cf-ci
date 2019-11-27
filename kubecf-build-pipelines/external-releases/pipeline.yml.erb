@@ -1,55 +1,4 @@
----
-<%
 # This pipeline is intended to build images for external releases using fissile.
-#
-
-external_releases = [
-  {
-    name: "credhub-release",
-    url: "https://bosh.io/d/github.com/pivotal-cf/credhub-release",
-    versions:
-    [
-      "2.5.8",
-      "2.5.9"
-    ]
-  },
-  {
-    name: "cf-mysql-release",
-    url: "https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release",
-    versions:
-    [
-      "36.19.0",
-      "36.18.0"
-    ]
-  },
-  {
-    name: "cf-sle15-release",
-    url: "https://s3.amazonaws.com/suse-final-releases/sle15-release",
-    versions: 
-    [
-      "10.68",
-      "10.69"
-    ]
-  },
-  {
-    name: "cf-acceptance-tests-release",
-    url: "https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release",
-    versions:
-    [
-      "0.0.7",
-      "0.0.6"
-    ]
-  },
-  {
-    name: "brains-tests-release",
-    url: "https://s3.amazonaws.com/suse-final-releases/brain-tests-release",
-    versions:
-    [
-      "v0.0.1"
-    ]
-  }
-]
-%>
 
 resources:
 - name: ci
@@ -76,35 +25,39 @@ resources:
     access_key_id: <%= s3_access_key %>
     secret_access_key: <%= s3_secret_key %>
     versioned_file: <%= stemcell_version_file %>
+- name: external-releases-yaml
+  type: git
+  source:
+    uri: <%= ci_repo %>
+    branch: <%= ci_branch %>
+    paths:
+    - <%= external_releases_yaml %>
+    private_key: |
+      <%= github_private_key.gsub("\n", "\n      ") %>
 
 jobs:
-<% external_releases.each do |release| %>
-  - name: build-image-<%= release[:name] %>
-    plan:
-    - in_parallel:
-      - get: ci
-      - get: build-image-resource
-      - get: s3.fissile-stemcell-version
-        trigger: true
-      - get: s3.fissile-linux
-        trigger: true
-    - do:
-      - in_parallel:
-      <% release[:versions].each do |version| %>
-        - task: build-<%= version %>
-          privileged: true
-          input_mapping:
-            s3.stemcell-version: s3.fissile-stemcell-version 
-          params:
-            STEMCELL_REPOSITORY: <%= stemcell_repository %>
-            STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
-            REGISTRY_NAME: <%= registry_name %>
-            REGISTRY_ORG: <%= registry_org %>
-            REGISTRY_USER: <%= registry_user %>
-            REGISTRY_PASS: <%= registry_pass %>
-            RELEASE_NAME: <%= release[:name] %>
-            RELEASE_VERSION: <%= version %>
-            RELEASE_URL: <%= release[:url] %>
-          file: ci/kubecf-build-pipelines/external-releases/tasks/build.yml
-    <% end %>  
-<% end %>
+- name: build-external-releases
+  plan:
+  - in_parallel:
+    - get: ci
+    - get: build-image-resource
+    - get: s3.fissile-stemcell-version
+      trigger: true
+    - get: s3.fissile-linux
+      trigger: true
+    - get: external-releases
+      trigger: true
+  - do:
+    - task: build
+      privileged: true
+      input_mapping:
+        s3.stemcell-version: s3.fissile-stemcell-version 
+      params:
+        STEMCELL_REPOSITORY: <%= stemcell_repository %>
+        STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
+        EXTERNAL_RELEASES_YAML: <%= external_releases_yaml %>
+        REGISTRY_NAME: <%= registry_name %>
+        REGISTRY_ORG: <%= registry_org %>
+        REGISTRY_USER: <%= registry_user %>
+        REGISTRY_PASS: <%= registry_pass %>
+      file: ci/kubecf-build-pipelines/external-releases/tasks/build.yml
