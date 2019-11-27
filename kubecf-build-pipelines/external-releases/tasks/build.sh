@@ -29,4 +29,4 @@ docker pull "${stemcell_image}"
 # Build the releases.
 tasks_dir="$(dirname $0)"
 base_dir=$(pwd)
-bash <(yq -r ".releases[] | \"source ${tasks_dir}/build_release.sh; build_release \\(\$cf_version|@sh) '${REGISTRY_NAME}' '${REGISTRY_ORG}' '${stemcell_image}' \\(.name|@sh) \\(.url|@sh) \\(.version|@sh) \\(.sha1|@sh)\"" "${base_dir}/external-releases/${EXTERNAL_RELEASES_YAML}")
+bash <(yq -r ".releases[] | \"source ${tasks_dir}/build_release.sh; build_release '${REGISTRY_NAME}' '${REGISTRY_ORG}' '${stemcell_image}' \\(.name|@sh) \\(.url|@sh) \\(.version|@sh) \\(.sha1|@sh)\"" "${base_dir}/external-releases/${EXTERNAL_RELEASES_YAML}")
