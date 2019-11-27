@@ -1,31 +1,25 @@
---- 
-releases: 
-  - 
-    name: credhub-release
-    url: "https://bosh.io/d/github.com/pivotal-cf/credhub-release"
-    versions: 
-      - "2.5.8"
-      - "2.5.9"
-  - 
-    name: cf-mysql-release
-    url: "https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release"
-    versions: 
-      - "36.19.0"
-      - "36.18.0"
-  - 
-    name: cf-sle15-release
-    url: "https://s3.amazonaws.com/suse-final-releases/sle15-release"
-    versions: 
-      - "10.68"
-      - "10.69"
-  - 
-    name: cf-acceptance-tests-release
-    url: "https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release"
-    versions: 
-      - "0.0.7"
-      - "0.0.6"
-  - 
-    name: brains-tests-release
-    url: "https://s3.amazonaws.com/suse-final-releases/brain-tests-release"
-    versions: 
-      - "v0.0.1"
+releases:
+- name: credhub-release
+  url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.5.9
+  version: 2.5.9
+  sha1: 225d508eed11c3f6f4a360118de068d5db9fa427
+- name: credhub-release
+  url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.5.8
+  version: 2.5.8
+  sha1: 03d6f7765a710b1503980d224f7f7664d5550e67
+- name: cf-mysql-release
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
+  version: 36.19.0
+  sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
+- name: cf-sle15-release
+  url: https://s3.amazonaws.com/suse-final-releases/sle15-release-10.70.tgz
+  version: 10.70
+  sha1: 2ce2d9cb1e2c54f81255a674c73bfb503134abdc
+- name: cf-acceptance-tests-release
+  url: https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release-0.0.7.tgz
+  version: 0.0.7
+  sha1: 6d3cd621c3eb011744d31c8746f3a96ecc804ea9
+- name: brains-tests-release
+  url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.1.tgz
+  version: v0.0.1
+  sha1: 81dfa411d47eddf1e7c74f9e9dd310056ea1dfc6

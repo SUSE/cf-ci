@@ -30,10 +30,6 @@ docker pull "${stemcell_image}"
 tasks_dir="$(dirname $0)"
 base_dir=$(pwd)
 
-RELEASE_URL+=$([[ ${RELEASE_URL} == *"bosh.io"* ]] && echo ?v=$RELEASE_VERSION || echo -${RELEASE_VERSION}.tgz)
-curl -sL ${RELEASE_URL} --output ${base_dir}/${RELEASE_NAME}-${RELEASE_VERSION}.tgz
-RELEASE_SHA=$(sha1sum ${base_dir}/${RELEASE_NAME}-${RELEASE_VERSION}.tgz | cut -d' ' -f1)
-
 # Build the releases.
 tasks_dir="$(dirname $0)"
-bash <(.releases[] | \"source ${tasks_dir}/build_release.sh; build_release \\(\$cf_version|@sh) '${REGISTRY_NAME}' '${REGISTRY_ORG}' '${stemcell_image}' \\(.name|@sh) \\(.url|@sh) \\(.version|@sh) \\(.sha1|@sh)\"" "${EXTERNAL_RELEASES_YAML}")
+bash <(yq -r ".releases[] | \"source ${tasks_dir}/build_release.sh; build_release \\(\$cf_version|@sh) '${REGISTRY_NAME}' '${REGISTRY_ORG}' '${stemcell_image}' \\(.name|@sh) \\(.url|@sh) \\(.version|@sh) \\(.sha1|@sh)\"" "${EXTERNAL_RELEASES_YAML}")
