@@ -1,5 +1,5 @@
 ci-repo: https://github.com/suse/cf-ci
-ci-branch: bisingh/external-releases-pipeline
+ci-branch: develop
 external-releases-yaml: kubecf-build-pipelines/external-releases/external-releases.yml
 build-image-resource-repo: https://github.com/concourse/docker-image-resource
 build-image-resource-branch: master
