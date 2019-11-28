@@ -11,6 +11,10 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
   version: 36.19.0
   sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
+- name: app-autoscaler
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/app-autoscaler-release?v=3.0.0
+  version: 3.0.0
+  sha1: eb532308d63a8a3db6645c118b3429d0ab2d5937
 - name: cf-sle15-release
   url: https://s3.amazonaws.com/suse-final-releases/sle15-release-10.70.tgz
   version: 10.70
