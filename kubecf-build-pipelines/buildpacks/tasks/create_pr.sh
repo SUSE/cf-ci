@@ -83,8 +83,7 @@ git checkout -b "${GIT_BRANCH_NAME}"
 update_buildpack_info "${KUBECF_OPS_SET_SUSE_BUILDPACKS}" "${NAME_IN_ROLE_MANIFEST}" "${RELEASE_URL}" "${RELEASE_VERSION}" "${RELEASE_SHA}"
 
 git commit "${KUBECF_OPS_SET_SUSE_BUILDPACKS}" -m "${COMMIT_TITLE}"
-git push origin "${GIT_BRANCH_NAME}"
 
 # Open a Pull Request
 PR_MESSAGE=`echo -e "${COMMIT_TITLE}"`
-hub pull-request -m "${PR_MESSAGE}" -b "${KUBECF_BRANCH}"
+hub pull-request -p -m "${PR_MESSAGE}" -b "${KUBECF_BRANCH}"
