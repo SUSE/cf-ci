@@ -1,0 +1,23 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    # derived from havener/build-environment
+    repository: registry.suse.com/cap-staging/cf-ci
+    tag: kubecf
+inputs:
+- name: ci
+- name: s3.stemcell-version
+- name: s3.fissile-linux
+- name: external-releases
+params:
+  STEMCELL_REPOSITORY: ~
+  STEMCELL_VERSIONED_FILE: ~
+  EXTERNAL_RELEASES_YAML: ~
+  REGISTRY_NAME: ~
+  REGISTRY_ORG: ~
+  REGISTRY_USER: ~
+  REGISTRY_PASS: ~
+run:
+  path: ci/kubecf-build-pipelines/external-releases/tasks/build.sh
