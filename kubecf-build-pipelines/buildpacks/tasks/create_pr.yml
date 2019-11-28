@@ -3,11 +3,10 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: splatform/concourse-brats
+    repository: registry.suse.com/cap-staging/cf-ci
     tag: kubecf
 inputs:
 - name: ci
-- name: build-image-resource
 - name: gh_release
 - name: suse_final_release
 - name: kubecf
