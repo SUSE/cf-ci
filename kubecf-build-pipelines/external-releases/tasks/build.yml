@@ -8,7 +8,6 @@ image_resource:
     tag: kubecf
 inputs:
 - name: ci
-- name: build-image-resource
 - name: s3.stemcell-version
 - name: s3.fissile-linux
 - name: external-releases
