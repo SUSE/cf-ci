@@ -6,11 +6,6 @@ resources:
   source:
     uri: <%= ci_repo %>
     branch: <%= ci_branch %>
-- name: docker-image-resource
-  type: git
-  source:
-    uri: <%= docker_image_resource_repo %>
-    branch: <%= docker_image_resource_branch %>
 <% cf_deployment_tags.each do |cf_deployment_tag| %>
 - name: cf-deployment-<%= cf_deployment_tag %>
   type: git
@@ -40,7 +35,6 @@ jobs:
   plan:
   - in_parallel:
     - get: ci
-    - get: docker-image-resource
     - get: cf-deployment-<%= cf_deployment_tag %>
     - get: s3.fissile-stemcell-version
       trigger: true
@@ -60,5 +54,5 @@ jobs:
         REGISTRY_ORG: <%= registry_org %>
         REGISTRY_USER: <%= registry_user %>
         REGISTRY_PASS: <%= registry_pass %>
-      file: ci/kubecf-build-pipelines/release-images-cf-deployment/tasks/build.yml
+      file: ci/kubecf-build-pipelines/cf-deployment/tasks/build.yml
 <% end %>
