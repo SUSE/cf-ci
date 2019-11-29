@@ -86,4 +86,4 @@ git commit "${KUBECF_OPS_SET_SUSE_BUILDPACKS}" -m "${COMMIT_TITLE}"
 
 # Open a Pull Request
 PR_MESSAGE=`echo -e "${COMMIT_TITLE}"`
-hub pull-request -p -m "${PR_MESSAGE}" -b "${KUBECF_BRANCH}"
+hub pull-request --push --message "${PR_MESSAGE}" --base "${KUBECF_BRANCH}"
