@@ -18,7 +18,7 @@ set -o allexport
 # # Set this to define number of parallel ginkgo nodes in the acceptance test pod
 # ACCEPTANCE_TEST_NODES=3
 # UAA_NAMESPACE=uaa
-# CF_NAMESPACE=scf
+CF_NAMESPACE=scf
 # source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 # trap "upload_klogs_on_failure ${CF_NAMESPACE} ${UAA_NAMESPACE}" EXIT
 # CAP_DIRECTORY=s3.scf-config
