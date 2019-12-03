@@ -6,6 +6,11 @@ mkdir /bosh-cache
 
 ROOT_DIR=$PWD
 
+# Some repositories host the bosh release in a subdirectory
+if [ -n "${RELEASE_DIRECTORY}" ]; then
+  pushd $RELEASE_DIRECTORY
+fi
+
 cat > config/private.yml <<EOF
 ---
 blobstore:
