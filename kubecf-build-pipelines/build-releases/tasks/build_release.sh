@@ -5,15 +5,6 @@ set -e
 mkdir /bosh-cache
 
 ROOT_DIR=$PWD
-WORKDIR=git_output
-# Prepare the git repository for the "put" task
-git clone --recurse-submodules release git_output
-pushd git_output
-
-# Some repositories host the bosh release in a subdirectory
-if [ -n "${RELEASE_DIRECTORY}" ]; then
-  pushd $RELEASE_DIRECTORY
-fi
 
 cat > config/private.yml <<EOF
 ---
@@ -47,23 +38,3 @@ RELEASE_TARBALL=$ROOT_DIR/release_tarball_dir/${RELEASE_TARBALL_BASE_NAME}
     --final \
     --version=${VERSION} \
     --tarball=${RELEASE_TARBALL}
-
-# Store the version for later tasks
-echo $VERSION > $ROOT_DIR/release_tarball_dir/VERSION
-SHA256SUM=$(sha256sum ${RELEASE_TARBALL} | cut -d' ' -f1)
-
-# GitHub release body text (will be used from the pipeline to push the GitHub release)
-# NOTE: Don't change the text unless you also change the crate-pr.sh task because this is parsed to extract the url and sha.
-cat << EOF > $ROOT_DIR/release_tarball_dir/release_body
-Release Tarball: https://s3.amazonaws.com/suse-final-releases/${RELEASE_TARBALL_BASE_NAME}
-\`sha256:${SHA256SUM}\`
-EOF
-
-git add .
-git config --global user.name "SUSE CFCIBot"
-git config --global user.email "cf-ci-bot@suse.de"
-
-git commit -m "Add version $VERSION" -m "$COMMIT_MESSAGE"
-# Store the commit that should be tagged when creating the GitHub release
-echo "master" > $ROOT_DIR/release_tarball_dir/target_commit
-popd

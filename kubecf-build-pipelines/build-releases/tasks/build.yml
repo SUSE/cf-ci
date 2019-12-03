@@ -14,6 +14,6 @@ params:
   ACCESS_KEY_ID: ~
   SECRET_ACCESS_KEY: ~
 run:
-  path: ci/kubecf-build-pipelines/build-releases/tasks/build_final_release.sh
+  path: ci/kubecf-build-pipelines/build-releases/tasks/build_release.sh
 outputs:
   - name: release_tarball_dir
