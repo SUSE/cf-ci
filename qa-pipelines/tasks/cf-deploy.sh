@@ -26,6 +26,15 @@ if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
     export EXTERNAL_DB_PASS="$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)"
 fi
 
+if [ -n "${CAP_BUNDLE_URL:-}" ]; then
+    # For pre-upgrade deploys
+    echo "Using CAP ${CAP_BUNDLE_URL}"
+    version=2.18.0
+    echo "Using helm chart version ${version}"
+else
+    version=2.19.1
+    echo "Using helm chart version ${version}"
+fi
 
 set_helm_params # Sets HELM_PARAMS.
 set_uaa_params # Adds uaa specific params to HELM_PARAMS.
@@ -40,7 +49,8 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
         kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
     fi
 
-    helm install ${CAP_DIRECTORY}/helm/uaa/ \
+    helm install suse/uaa \
+        --version "${version}" \
         --namespace "${UAA_NAMESPACE}" \
         --name uaa \
         --timeout 1200 \
@@ -77,7 +87,8 @@ fi
 echo "SCF customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-helm install ${CAP_DIRECTORY}/helm/cf/ \
+helm install suse/cf \
+    --version "${version}" \
     --namespace "${CF_NAMESPACE}" \
     --name scf \
     --timeout 1200 \

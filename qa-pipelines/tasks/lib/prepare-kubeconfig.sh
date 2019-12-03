@@ -68,3 +68,7 @@ helm_server_version="$(helm version --server | cut -d: -f3 | cut -d, -f1 | tr -d
 if [[ ${helm_server_version} == "v2.8.2" ]]; then
     export helm_version=v2.8.2
 fi
+
+helm init --client-only
+helm repo add suse https://kubernetes-charts.suse.com/
+helm search suse

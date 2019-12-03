@@ -59,7 +59,7 @@ echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
-  helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+  helm upgrade uaa suse/uaa \
       --namespace "${UAA_NAMESPACE}" \
       --recreate-pods \
       --timeout 3600 \
@@ -83,7 +83,7 @@ fi
 echo "SCF customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
+helm upgrade scf suse/cf \
     --namespace "${CF_NAMESPACE}" \
     --recreate-pods \
     --timeout 3600 \

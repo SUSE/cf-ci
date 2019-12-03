@@ -230,12 +230,12 @@ set_helm_params() {
         HELM_PARAMS+=(--set "enable.mysql=false")
         HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
     fi
-    if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
-        HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
-    fi
-    if [[ -n "${KUBE_ORGANIZATION:-}" ]]; then
-        HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
-    fi
+    # if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
+    #     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
+    # fi
+    # if [[ -n "${KUBE_ORGANIZATION:-}" ]]; then
+    #     HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
+    # fi
     HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
