@@ -1,6 +1,7 @@
 ci-repo: https://github.com/suse/cf-ci
 ci-branch: bisingh/add-garden-runc-release
 releases-bucket: temporary-objects
+releases-bucket-region: ca-central-1
 s3-access-key: *aws-capbot-access-key
 s3-secret-key: *aws-capbot-secret-key
 github-access-token: *github-access-token

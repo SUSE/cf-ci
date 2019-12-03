@@ -37,25 +37,14 @@ resources:
   type: s3
   source:
     bucket: <%= releases_bucket %>
+    region_name: <%= releases_bucket_region %>
     regexp: <%= release[:name] %>-release-(.*).tgz
-    access_key_id: <%= aws_access_key %>
-    secret_access_key: <%= aws_secret_key %>
+    access_key_id: <%= s3_access_key %>
+    secret_access_key: <%= s3_secret_key %>
     private_key: |
       <%= github_private_key.gsub("\n", "\n      ") %>
 
-- name: <%= release[:name] %>-gh-release
-  type: github-release
-  source:
-    owner: SUSE
-    repository: <%= release[:uri].match(/.*\/(.*)\.git/)[1] %>
-    access_token: ((github-access-token))
 <% end %>
-
-- name: git.scf
-  type: git
-  source:
-    uri: git@github.com:SUSE/scf.git
-    branch: develop
 
 jobs:
 <% releases.each do |release| %>
@@ -69,6 +58,7 @@ jobs:
       <% if release[:trigger_path] %>
       trigger: true
       <% end %>
+  
   - task: build_final_release
     input_mapping: { release: git.<%= release[:name] %>-release }
     params:
@@ -76,16 +66,11 @@ jobs:
       RELEASE_DIRECTORY: <%= release[:release_dir].to_s.inspect %>
       ACCESS_KEY_ID: <%= release[:aws_access_key] %>
       SECRET_ACCESS_KEY: <%= release[:aws_secret_key] %>
+    file: ci/kubecf-build-pipelines/build-releases/tasks/build.yml
+  
   - put: s3.suse-final-release-<%= release[:name] %>
     params:
       file: release_tarball_dir/<%= release[:name] %>-release-*.tgz
       acl: public-read
-  - put: git.push-<%= release[:name] %>-release
-    params: { repository: "git_output" }
-  - put: <%= release[:name] %>-gh-release
-    params:
-      name: "release_tarball_dir/VERSION"
-      tag: "release_tarball_dir/VERSION"
-      commitish: "release_tarball_dir/target_commit"
-      body: "release_tarball_dir/release_body"
+
 <% end %>
