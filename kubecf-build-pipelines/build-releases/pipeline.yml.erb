@@ -13,6 +13,7 @@ releases = [
     branch: "v1.19.5-bump-automake",
     trigger_path: "config/blobs.yml",
     name_in_role_manifest: "garden-runc"
+    release_dir: "release"
   }
 ]
 %>
@@ -56,17 +57,14 @@ jobs:
       params:
         submodules: none
     - get: git.<%= release[:name] %>-release
-      <% if release[:trigger_path] %>
-      trigger: true
-      <% end %>
   
   - task: build_release
     input_mapping: { release: git.<%= release[:name] %>-release }
     params:
       RELEASE_NAME: <%= release[:name] %>
       RELEASE_DIRECTORY: <%= release[:release_dir].to_s.inspect %>
-      ACCESS_KEY_ID: <%= release[:s3_access_key] %>
-      SECRET_ACCESS_KEY: <%= release[:s3_secret_key] %>
+      ACCESS_KEY_ID: <%= s3_access_key %>
+      SECRET_ACCESS_KEY: <%= s3_secret_key %>
     file: ci/kubecf-build-pipelines/build-releases/tasks/build.yml
   
   - put: s3.suse-release-<%= release[:name] %>
