@@ -15,8 +15,6 @@ outputs:
 - name: klog
 params:
   KUBE_REGISTRY_HOSTNAME: ""
-  KUBE_REGISTRY_USERNAME: ""
-  KUBE_REGISTRY_PASSWORD: ""
   KUBE_ORGANIZATION: ""
   HA: false # true, false, or "scaled"
   MAGIC_DNS_SERVICE: xip.io
@@ -30,6 +28,7 @@ params:
   EMBEDDED_UAA: false # true or false
   ENABLE_CREDHUB: true
   ENABLE_AUTOSCALER: true
+  EXTERNAL_DB: false # true or false
   HA_STRICT: "" # set to true or false when testing HA_strict
 
 run:

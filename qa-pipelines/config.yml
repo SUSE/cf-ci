@@ -5,6 +5,7 @@ src-rails-example-repo: https://github.com/scf-samples/rails-example.git
 kube-pool-repo: git@github.com:SUSE/cf-ci-pools.git
 kube-pool-key: *github-private-key
 
+# Used by s3 resource for pulling latest RC
 s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
@@ -13,16 +14,14 @@ s3-config-bucket-sles: cap-release-archives
 
 s3-config-prefix-sidecars: brokers/
 
-registry-hostname: *docker-internal-registry
-registry-username: *docker-internal-username
-registry-password: *docker-internal-password
-organization: splatform
+registry-hostname: *docker-public-staging-registry
+organization: *docker-public-staging-org
 
 magic-dns-service: omg.howdoi.website
 
 src-repo: SUSE/scf
 
-cap-pre-upgrade-url: master/scf-sle-2.17.1%2Bcf7.11.0.4.ga6c993eb
+cap-pre-upgrade-url: master/scf-sle-2.19.1-rc2%2Bcf9.5.0.0.gd8c18ede
 cap-install-url: null
 
 status-email-host: *ci-status-email-host
@@ -37,6 +36,7 @@ status-email-receiver: *ci-status-email-receiver
 enable-embedded-uaa: false
 enable-autoscaler: true
 enable-credhub: true
+enable-external-uaa-scf-db: false
 # The following two options test that ha strict mode works by adjusting the diego_api count to 1
 # This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true
 # For non-upgrade pipelines, this affects cf-deploy, and for upgrade pipelines, it affects the upgrade step
@@ -44,3 +44,7 @@ enable-credhub: true
 test-ha-strict-enable: false
 # test-ha-strict-enable sets HA_strict to false, and sets diego_api count to 1
 test-ha-strict-disable: false
+
+terraform-platforms: [gke, aks]
+terraform-gke-location: us-west1-a
+terraform-aks-location: eastus

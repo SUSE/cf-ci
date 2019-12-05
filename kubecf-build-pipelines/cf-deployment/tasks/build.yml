@@ -1,0 +1,22 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: registry.suse.com/cap-staging/cf-ci
+    tag: kubecf
+inputs:
+- name: ci
+- name: cf-deployment
+- name: s3.stemcell-version
+- name: s3.fissile-linux
+params:
+  STEMCELL_REPOSITORY: ~
+  STEMCELL_VERSIONED_FILE: ~
+  CF_DEPLOYMENT_YAML: ~
+  REGISTRY_NAME: ~
+  REGISTRY_ORG: ~
+  REGISTRY_USER: ~
+  REGISTRY_PASS: ~
+run:
+  path: ci/kubecf-build-pipelines/cf-deployment/tasks/build.sh

@@ -27,7 +27,7 @@ OSB-API compliant helm-based service broker; see upstream at https://github.com/
 and [master pipeline](https://concourse.ca-west-1.howdoi.website/teams/main/pipelines/minibroker-master).
 
 ## [qa-pipelines](qa-pipelines/)
-This is full of magic, please ask QA for now.
+This is full of magic, refer to [qa-pipelines README](qa-pipelines/README.md)
 
 ## [qa-tools](qa-tools/)
 Various scripts for QA (not CI)

@@ -5,39 +5,30 @@ set -o nounset
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
-ha_deploy() {
-    [[ "${HA}" == true ]]
-}
-
-set_helm_params # Sets HELM_PARAMS.
-set_uaa_params # Adds uaa specific params to HELM_PARAMS.
-
-# Downsize mysql if its a UAA HA deploy scenario.
-if ha_deploy; then
-    HELM_PARAMS+=(--set=config.HA_strict=false)
-    HELM_PARAMS+=(--set=sizing.uaa.count=1)
-    HELM_PARAMS+=(--set=sizing.mysql.count=1)
-fi
-
 # Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
 kubectl delete psp --ignore-not-found suse.cap.psp
 kubectl delete clusterrolebinding --ignore-not-found cap:clusterrole
 if [[ ${cap_platform} != "eks" ]]; then
-    if semver_is_gte "$(helm_chart_version)" 2.15.1; then
-        kubectl delete --ignore-not-found --filename=ci/qa-tools/cap-{psp-{,non}privileged,cr-privileged-2.14.5}.yaml
-        kubectl apply --filename ci/qa-tools/cap-cr-privileged-2.15.1.yaml
-    else
-        kubectl replace --force --filename=ci/qa-tools/cap-{psp-privileged,psp-nonprivileged,cr-privileged-2.14.5,crb-tests}.yaml
-    fi
-
+    kubectl apply --filename ci/qa-tools/cap-cr-privileged-2.15.1.yaml
     kubectl replace --force --filename=ci/qa-tools/cap-crb-tests.yaml
-
-    if semver_is_gte "$(helm_chart_version)" 2.14.5; then
-        kubectl delete --ignore-not-found --filename ci/qa-tools/cap-crb-2.13.3.yaml
-    else
-        kubectl replace --filename ci/qa-tools/cap-crb-2.13.3.yaml
-    fi
 fi
+
+# external db for uaa and scf db
+if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
+    helm init --client-only
+    helm repo add stable https://kubernetes-charts.storage.googleapis.com
+    helm install stable/mariadb \
+        --version 6.10.1 \
+        --name external-db \
+        --namespace external-db \
+        --set volumePermissions.enabled=true
+    kubectl wait --timeout=10m --namespace external-db --for=condition=ready pod/external-db-mariadb-master-0
+    export EXTERNAL_DB_PASS="$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)"
+fi
+
+
+set_helm_params # Sets HELM_PARAMS.
+set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
 echo "UAA customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
@@ -72,21 +63,15 @@ fi
 set_helm_params # Resets HELM_PARAMS.
 set_scf_params # Adds scf specific params to HELM_PARAMS.
 
-# Downsize mysql if its a SCF HA deploy scenario.
-if ha_deploy; then
-    HELM_PARAMS+=(--set=config.HA_strict=false)
-    HELM_PARAMS+=(--set=sizing.mysql.count=1)
-fi
-
 kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
 fi
 
-# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:	
-if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then	
-    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")	
-    HELM_PARAMS+=(--set "sizing.diego_api.count=1")	
+# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:
+if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
+    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
+    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
 fi
 
 echo "SCF customization..."
@@ -105,53 +90,21 @@ helm install ${CAP_DIRECTORY}/helm/cf/ \
 
 trap "upload_klogs_on_failure ${UAA_NAMESPACE} ${CF_NAMESPACE}" EXIT
 
+if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
+    if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
+        az_login
+        azure_dns_clear
+        azure_wait_for_lbs_in_namespace scf 'select(.metadata.name=="uaa-uaa-public")'
+        azure_set_record_sets_for_namespace scf 'select(.metadata.name=="uaa-uaa-public")'
+    fi
+fi
+
 # Wait for CF release
 wait_for_release scf
 
 if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     azure_wait_for_lbs_in_namespace scf
     azure_set_record_sets_for_namespace scf
-fi
-
-if ha_deploy; then
-    # Restoring the HA configuration after mysql to pxc migration.
-    echo "Applying actual UAA HA config..."
-    set_helm_params # Resets HELM_PARAMS.
-    set_uaa_params # Adds uaa specific params to HELM_PARAMS.
-
-    # Set uaa count to 1 till CATs failures are resolved.
-    HELM_PARAMS+=(--set=config.HA_strict=false)
-    HELM_PARAMS+=(--set=sizing.uaa.count=1)
-    
-    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    
-    helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
-        --namespace "${UAA_NAMESPACE}" \
-        --timeout 600 \
-        "${HELM_PARAMS[@]}"
-
-    # Wait for UAA release
-    wait_for_release uaa
-
-    echo "Applying actual SCF HA config..."
-    set_helm_params # Resets HELM_PARAMS.
-    set_scf_params # Adds scf specific params to HELM_PARAMS.
-    
-    echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
-    
-    helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
-        --namespace "${CF_NAMESPACE}" \
-        --timeout 3600 \
-        --set "secrets.CLUSTER_ADMIN_PASSWORD=${CLUSTER_ADMIN_PASSWORD:-changeme}" \
-        --set "env.UAA_HOST=${UAA_HOST}" \
-        --set "env.UAA_PORT=${UAA_PORT}" \
-        --set "env.SCF_LOG_HOST=${SCF_LOG_HOST}" \
-        --set "env.INSECURE_DOCKER_REGISTRIES=${INSECURE_DOCKER_REGISTRIES}" \
-        --wait \
-        "${HELM_PARAMS[@]}"
-
-    # Wait for CF release
-    wait_for_release scf
 fi
 
 trap "" EXIT

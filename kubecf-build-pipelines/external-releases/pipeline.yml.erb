@@ -1,0 +1,57 @@
+# This pipeline is intended to build images for external releases using fissile.
+
+resources:
+- name: ci
+  type: git
+  source:
+    uri: <%= ci_repo %>
+    branch: <%= ci_branch %>
+- name: s3.fissile-linux
+  type: s3
+  source:
+    bucket: <%= fissile_linux_s3_bucket %>
+    private: true
+    regexp: fissile/develop/fissile-(.*)\.tgz
+- name: s3.fissile-stemcell-version
+  type: s3
+  source:
+    bucket: <%= stemcell_versions_s3_bucket %>
+    region_name: <%= stemcell_s3_bucket_region %>
+    access_key_id: <%= s3_access_key %>
+    secret_access_key: <%= s3_secret_key %>
+    versioned_file: <%= stemcell_version_file %>
+- name: external-releases
+  type: git
+  source:
+    uri: <%= ci_repo %>
+    branch: <%= ci_branch %>
+    paths:
+    - <%= external_releases_yaml %>
+    private_key: |
+      <%= github_private_key.gsub("\n", "\n      ") %>
+
+jobs:
+- name: build-external-releases
+  plan:
+  - in_parallel:
+    - get: ci
+    - get: s3.fissile-stemcell-version
+      trigger: true
+    - get: s3.fissile-linux
+      trigger: true
+    - get: external-releases
+      trigger: true
+  - do:
+    - task: build
+      privileged: true
+      input_mapping:
+        s3.stemcell-version: s3.fissile-stemcell-version 
+      params:
+        STEMCELL_REPOSITORY: <%= stemcell_repository %>
+        STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
+        EXTERNAL_RELEASES_YAML: <%= external_releases_yaml %>
+        REGISTRY_NAME: <%= registry_name %>
+        REGISTRY_ORG: <%= registry_org %>
+        REGISTRY_USER: <%= registry_user %>
+        REGISTRY_PASS: <%= registry_pass %>
+      file: ci/kubecf-build-pipelines/external-releases/tasks/build.yml

@@ -1,0 +1,10 @@
+# References file with names of pools shared by QA
+# Users may use their own custom pools which do not need to be tracked.
+# When using a pool "some-pool" the branch "some-pool" in the pools repo will be used, and the paths "some-pool/claimed" and "some-pool/unclaimed" will be used as well
+provo
+gke
+eks
+ecp
+cap-ci
+terraform-aks
+terraform-gke

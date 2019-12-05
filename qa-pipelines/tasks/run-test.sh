@@ -42,19 +42,7 @@ esac
 
 # Replace the generated monit password with the name of the generated secrets secret
 helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
-function semver_is_gte() {
-  # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
-  # lexical comparison doesn't work on semvers, e.g. 10.0.0 > 2.0.0
-  [[ "$(echo -e "$1\n$2" |
-          sort -t '.' -k 1,1 -k 2,2 -k 3,3 -g |
-          tail -n 1
-      )" == $1 ]]
-}
-if $(semver_is_gte $(helm_chart_version) 2.14.5); then
-    api_pod_name=api-group-0
-else
-    api_pod_name=api-0
-fi
+api_pod_name=api-group-0
 DOMAIN=$(kubectl get pods -o json --namespace "${CF_NAMESPACE}" ${api_pod_name} | jq -r '.spec.containers[0].env[] | select(.name == "DOMAIN").value')
 generated_secrets_secret="$(kubectl get pod ${api_pod_name} --namespace "${CF_NAMESPACE}" -o jsonpath='{@.spec.containers[0].env[?(@.name=="MONIT_PASSWORD")].valueFrom.secretKeyRef.name}')"
 SCF_LOG_HOST=$(kubectl get pods -o json --namespace scf api-group-0 | jq -r '.spec.containers[0].env[] | select(.name == "SCF_LOG_HOST").value')
@@ -72,6 +60,7 @@ kube_overrides() {
         include_brains_regex = ENV["INCLUDE_BRAINS_REGEX"]
 
         obj = YAML.load_file('$1')
+        values_from_secrets = ["MONIT_PASSWORD", "UAA_CLIENTS_CF_SMOKE_TESTS_CLIENT_SECRET", "AUTOSCALER_SERVICE_BROKER_PASSWORD", "INTERNAL_CA_CERT"]
         obj['spec']['containers'].each do |container|
             container['env'].each do |env|
                 env['value'] = '$DOMAIN'     if env['name'] == 'DOMAIN'
@@ -79,13 +68,7 @@ kube_overrides() {
                 env['value'] = '$SCF_LOG_HOST' if env['name'] == 'SCF_LOG_HOST'
                 env['value'] = '$STORAGECLASS' if env['name'] == 'KUBERNETES_STORAGE_CLASS_PERSISTENT'
                 env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
-                if env['name'] == "MONIT_PASSWORD"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
-                end
-                if env['name'] == "UAA_CLIENTS_CF_SMOKE_TESTS_CLIENT_SECRET"
-                    env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
-                end
-                if env['name'] == "AUTOSCALER_SERVICE_BROKER_PASSWORD"
+                if values_from_secrets.include? env['name']
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
             end
@@ -102,7 +85,7 @@ kube_overrides() {
                 # tests enough time for all their actions even when a
                 # slow network causes the broker to take up to 10
                 # minutes for the assembly/delivery of the catalog.
-                # See also `lib/cf-deploy-upgrade-common.sh` for the
+                # See also "lib/cf-deploy-upgrade-common.sh" for the
                 # corresponding CC change: BROKER_CLIENT_TIMEOUT_SECONDS.
                 container['env'].push name: "TIMEOUT", value: "1200"
             end
@@ -111,6 +94,7 @@ kube_overrides() {
                 container['env'].push name: "CATS_RERUN", value: '${CATS_RERUN:-}'
             end
             container.delete "resources"
+            container['image'] = container['image'].gsub(/^.*\//, '${KUBE_REGISTRY_HOSTNAME}/${KUBE_ORGANIZATION}/')
         end
         puts obj.to_json
 EOF
@@ -122,6 +106,10 @@ container_status() {
 }
 
 image=$(awk '$1 == "image:" { gsub(/"/, "", $2); print $2 }' "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")
+if [[ ${image} == *"staging.registry.howdoi.website"* ]]; then
+    staging_registry="${KUBE_REGISTRY_HOSTNAME}/${KUBE_ORGANIZATION}"
+    image=${image/staging.registry.howdoi.website\/splatform/$staging_registry}
+fi
 
 test_pod_yml="${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml"
 test_non_pods_yml=
@@ -147,6 +135,7 @@ fi
 
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
+    --leave-stdin-open \
     --attach \
     --restart=Never \
     --image="${image}" \
@@ -154,7 +143,7 @@ kubectl run \
     "${TEST_NAME}" ||:
 
 while [[ -z $(container_status ${TEST_NAME}) ]]; do
-    kubectl attach --namespace=scf ${TEST_NAME} ||:
+    kubectl attach --stdin --namespace="${CF_NAMESPACE}" --container="${TEST_NAME}" "${TEST_NAME}" ||:
 done
 
 pod_status=$(container_status ${TEST_NAME})

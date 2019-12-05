@@ -1,0 +1,17 @@
+ci-repo: https://github.com/suse/cf-ci
+ci-branch: develop
+kubecf-repo: git@github.com:SUSE/kubecf.git
+kubecf-branch: master
+kubecf-ops-set-suse-buildpacks: deploy/helm/kubecf/assets/operations/buildpacks/set_suse_buildpacks.yaml
+fissile-linux-s3-bucket: cf-opensusefs2
+stemcell-repository: registry.suse.com/cap-staging/fissile-stemcell-sle12
+stemcell-versions-s3-bucket: suse-bosh-sles-stemcells
+stemcell-version-file: VERSION.txt
+stemcell-s3-bucket-region: eu-central-1
+registry-name: *docker-public-staging-registry
+registry-org: *docker-public-staging-org
+registry-user: *docker-public-staging-username
+registry-pass: *docker-public-staging-password
+s3-access-key: *aws-capbot-access-key
+s3-secret-key: *aws-capbot-secret-key
+github-access-token: *github-access-token

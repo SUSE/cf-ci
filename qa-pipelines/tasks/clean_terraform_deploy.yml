@@ -7,10 +7,7 @@ image_resource:
     tag: latest
 inputs:
 - name: ci
-
-outputs:
-- name: kubeconfig-pool
-  path: kubeconfig-pool
+- name: pool.kube-hosts
 
 params:
   KUBE_REGISTRY_HOSTNAME: ""
@@ -20,4 +17,4 @@ params:
   CAP_BUNDLE_URL: ""
 
 run:
-  path: ci/qa-pipelines/tasks/terraform-deploy.sh
+  path: ci/qa-pipelines/tasks/clean_terraform_deploy.sh

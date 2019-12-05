@@ -1,8 +1,9 @@
 ---
 
-enable-cf-deploy-pre-upgrade: true
+terraform-aks: true
 klog-collection-on-failure: true
 
+enable-cf-deploy-pre-upgrade: true
 enable-cf-smoke-tests-pre-upgrade: true
 
 enable-cf-upgrade: true

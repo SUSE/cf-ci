@@ -1,0 +1,20 @@
+cf-deployment-tags:
+  - v8.0.0
+  - v9.2.0
+  - v9.5.0
+ci-repo: https://github.com/suse/cf-ci
+ci-branch: develop
+cf-deployment-repo: https://github.com/cloudfoundry/cf-deployment
+cf-deployment-branch: master
+cf-deployment-yaml: cf-deployment/cf-deployment.yml
+fissile-linux-s3-bucket: cf-opensusefs2
+stemcell-repository: registry.suse.com/cap-staging/fissile-stemcell-sle12
+stemcell-versions-s3-bucket: suse-bosh-sles-stemcells
+stemcell-version-file: VERSION.txt
+stemcell-s3-bucket-region: eu-central-1
+registry-name: *docker-public-staging-registry
+registry-org: *docker-public-staging-org
+registry-user: *docker-public-staging-username
+registry-pass: *docker-public-staging-password
+s3-access-key: *aws-capbot-access-key
+s3-secret-key: *aws-capbot-secret-key

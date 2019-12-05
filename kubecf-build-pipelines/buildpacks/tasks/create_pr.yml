@@ -1,0 +1,22 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: registry.suse.com/cap-staging/cf-ci
+    tag: kubecf
+inputs:
+- name: ci
+- name: gh_release
+- name: suse_final_release
+- name: kubecf
+params:
+  GITHUB_TOKEN: ~
+  GIT_MAIL: ~
+  GIT_USER: ~
+  RELEASE_NAME: ~
+  NAME_IN_ROLE_MANIFEST: ~
+  KUBECF_BRANCH: ~
+  KUBECF_OPS_SET_SUSE_BUILDPACKS: ~
+run:
+  path: ci/kubecf-build-pipelines/buildpacks/tasks/create_pr.sh

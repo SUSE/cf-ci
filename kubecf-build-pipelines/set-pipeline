@@ -5,69 +5,45 @@ set -o errexit -o nounset
 usage() {
     cat <<EOF
 
-${0} [options] <feature-flags preset file>
+${0} [options]
 
-The pipeline configuration file "qa-pipeline.yml" must exist.
-The configuration file "config-<config variant>.yml" must exist.
+The pipeline configuration file "pipeline.yml.erb" must exist.
+The configuration file "config.yml" must exist.
 
 Available options:
-    -h, --help          Print this help and exit
-    -p, --prefix=       Set additional pipeline prefix
-    --pool=provo        Pool to take pool config and kube config from. Default is 'provo'
-    -t, --target=       Set fly target concourse
-    -b, --branch=       Use a specific branch or tag. Defaults to the current branch
-    --nightly           Deploy pipeline that triggers when new nightly builds are released
-    --pr=               Deploy pipeline that tests a build from a specific PR
+    -h, --help          Print this help and exit.
+    -p, --prefix=       Set additional pipeline prefix.
+    -t, --target=       Set fly target concourse.
+    -b, --branch=       Use a specific branch or tag. Defaults to the current branch.
+    -d, --directory=    Name of the directory containing pipeline definition.
 
-Note: --pr and --nightly flags cannot be used together
-
-Note: Using the special preset file "pipeline-presets/single-brain.yml" will
-deploy a pipeline which will allow you to select an individual brain test.
 EOF
 }
 
-OPTS=$(getopt -o hp:t:b: --long help,nightly,pr:,pool:,prefix:,target:,branch: -- "$@")
+OPTS=$(getopt -o hd:p:t:b: --long help,prefix:,target:,branch:,directory: -- "$@")
 eval set -- "${OPTS}"
 
 src_ci_branch=$(git rev-parse --abbrev-ref HEAD)
-prefix=""
 target=""
 secrets_file=""
 while true ; do
-    case "$1" in
+    case "${1}" in
         -h|--help)   usage ; exit 0 ;;
-        -p|--prefix) prefix="${2%-}-" ; shift 2 ;;
+        -p|--prefix) prefix="${2}" ; shift 2 ;;
         -t|--target) target="${2}" ; shift 2 ;;
-        --pool)      pool="${2}" ; shift 2 ;;
+        -d|--directory) directory="${2}" ; shift 2 ;;
         -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
-        --nightly)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=nightly/ ; shift 1 ;;
-        --pr)        [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=prs/PR-${2}- ; shift 2 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
     esac
 done
-s3_config_prefix=${s3_config_prefix:-rc/}
 
-if test -z "${1:-}" ; then
+if [[ -z "${target}" ]] || [[ -z "${directory}" ]]; then
     usage
     exit 1
 fi
-preset_file="${1}"
-preset_name="$(basename ${preset_file} .yml)"
-pipeline_name="${prefix}${preset_name}"
 
-
-if [[ -z "${pool:-}" ]]; then
-    printf "pool flag needs to be set"
-    exit 1
-fi
-
-# If a concourse secrets file named after the pool exists, use that instead.
-# This is useful for local testing (for alternative pool / s3 storage / etc.)
-alt_secrets_file="CONCOURSE_SECRETS_FILE_${pool//-/_}"
-if test -n "${!alt_secrets_file:-}" -a -r "${!alt_secrets_file:-}" ; then
-    CONCOURSE_SECRETS_FILE="${!alt_secrets_file:-}"
-fi
+pipeline_config="${directory}/config.yml"
 
 if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     if test -r "${CONCOURSE_SECRETS_FILE:-}" ; then
@@ -78,27 +54,10 @@ if test -n "${CONCOURSE_SECRETS_FILE:-}"; then
     fi
 fi
 
-pipeline_config() {
-   cat "config.yml"
-   echo "src-ci-branch: ${src_ci_branch}"
-   echo "s3-config-prefix-sles: ${s3_config_prefix}"
-   echo "s3-klog-prefix: ${s3_config_prefix%%/*}"
-   echo "pipeline-name: ${pipeline_name}"
-   echo "kube-pool-name: ${pool}"
-}
-
-# generate_pipeline will emit the pipeline definition on STDOUT; this deals with
-# the single-brain special case.
+# generate_pipeline will emit the pipeline definition on STDOUT
 generate_pipeline() {
-  local pipeline_template='qa-pipeline.yml.erb'
-  local preset_template="${preset_file}"
-  local flags='flags.yml'
-  if [[ "${preset_file}" == "pipeline-presets/single-brain.yml" ]]; then
-    pipeline_template='single-brain.yml.erb'
-    preset_template='pipeline-presets/single-brain.yml'
-    flags='pipeline-presets/single-brain.yml'
-  fi
-  ruby generate-pipeline.rb "${pipeline_template}" "${preset_template}" "${flags}" <(pipeline_config) <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
+  local pipeline_template="${directory}/pipeline.yml.erb"
+  ruby generate-pipeline.rb "${pipeline_template}" "${pipeline_config}" <(${secrets_file:+gpg --decrypt --batch ${secrets_file}})
 }
 
 # Branch is assumed to be the current branch if not specified, but the concourse git
@@ -115,7 +74,7 @@ fi
 
 src_ci_repo=$(
   #Remove anchor references from vars file as they break parsing
-  grep -v '\*' config.yml \
+  grep -v '\*' ${pipeline_config} \
   | ruby -r yaml -e "puts YAML.load(STDIN.read)['src-ci-repo']"
 )
 src_ci_remote=$(git remote -v | grep -F "$src_ci_repo (fetch)" | cut -f1 | head -1)
@@ -136,7 +95,10 @@ if ! git ls-remote --exit-code $src_ci_remote $src_ci_branch; then
 fi
 
 # Append tag/branch name to pipeline name
-pipeline_name=${pipeline_name}-${src_ci_branch//\//-}
+pipeline_name=${directory}
+if [[ ! -z "${prefix:-}" ]]; then
+  pipeline_name=${prefix}-${pipeline_name}
+fi
 
 # Determine if pipeline already exists. This will be used to pause the jobs by default
 existing_pipeline_job_count=$(
@@ -154,7 +116,8 @@ fly \
     set-pipeline \
     --non-interactive \
     --pipeline="${pipeline_name}" \
-    --config=<(generate_pipeline)
+    --config=<(generate_pipeline) \
+    --var src-ci-branch=${src_ci_branch}
 
 fly \
     ${target:+"--target=$target"} \
