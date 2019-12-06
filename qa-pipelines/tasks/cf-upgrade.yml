@@ -25,7 +25,7 @@ params:
   AWS_SECRET_ACCESS_KEY: ""
   GKE_PRIVATE_KEY_BASE64: ""
   KLOG_COLLECTION_ON_FAILURE: false
-  EMBEDDED_UAA: false # true or false
+  # EMBEDDED_UAA: false # true or false
   ENABLE_CREDHUB: true
   ENABLE_AUTOSCALER: true
   EXTERNAL_DB: false # true or false

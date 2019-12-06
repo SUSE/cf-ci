@@ -11,7 +11,7 @@ def bundle_url_from_version(domain, version)
   end
 end
 
-is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || enable_cf_usb_upgrade_tests
+is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade
 
 # Convert a multiline string into a string with literal '\n's for YAML to parse as multiline string
 class ::String
@@ -81,7 +81,6 @@ aliases:
   deploy-upgrade-params: &deploy-upgrade-params
     ENABLE_CREDHUB: <%= enable_credhub == true %>
     ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
-    EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
     EXTERNAL_DB: <%= enable_external_uaa_scf_db == true %>
 
   # Terraform AKS Configuration
@@ -126,19 +125,6 @@ resources:
     paths:
     - qa-pipelines/*
     - sample-apps/*
-
-# USB sidecar archive for postgres
-- name: s3.pg-sidecar
-  type: s3
-  source:
-    << : *s3-common-params
-    regexp: <%= s3_config_prefix_sidecars %>cf-usb-sidecar-postgres-(.*)\.tgz$
-# USB sidecar archive for MySQL
-- name: s3.mysql-sidecar
-  type: s3
-  source:
-    << : *s3-common-params
-    regexp: <%= s3_config_prefix_sidecars %>cf-usb-sidecar-mysql-(.*)\.tgz$
 
 # SCF bundle to install from (upgrade target, if upgrading)
 - name: s3.scf-config-sles
@@ -195,10 +181,6 @@ jobs:
     - aggregate:
       - get: ci
       - get: meta
-      - get: s3.pg-sidecar
-        trigger: true
-      - get: s3.mysql-sidecar
-        trigger: true
       - get: s3.scf-config-sles
         trigger: true
     <% if terraform_platform %>
@@ -277,12 +259,6 @@ jobs:
         s3.scf-config: s3.scf-config-sles
       timeout: 3h
     <% end %> # enable_cf_brain_tests_pre_upgrade
-    <% if enable_cf_usb_upgrade_tests %>
-    - task: usb-deploy-pre-upgrade
-      file: ci/qa-pipelines/tasks/usb-deploy.yml
-      params:
-        << : *upgrade-task-params
-    <% end %> # enable_cf_usb_upgrade_tests
     <% if status_reporting %>
     - task: cf-get-commit-id
       file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
@@ -300,11 +276,6 @@ jobs:
         s3.scf-config: s3.scf-config-sles
       timeout: 5h
     <% end %> # enable_cf_upgrade
-    <% if enable_cf_usb_upgrade_tests %>
-    - task: usb-post-upgrade
-      file: ci/qa-pipelines/tasks/usb-post-upgrade.yml
-      params: *common-task-params
-    <% end %> # enable_cf_usb_upgrade_tests
     # When this is _not_ an upgrade pipeline, we may wish to deploy CF before
     # running the tests.
     <% if enable_cf_deploy %>

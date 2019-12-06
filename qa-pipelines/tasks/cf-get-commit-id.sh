@@ -6,7 +6,7 @@
 #   commit-id/sha: commit id to use (may be shortened)
 
 if [[ -n ${CAP_BUNDLE_URL} ]]; then
-    echo ${CAP_BUNDLE_URL} | sed 's/.*scf-sle-\(.*\).zip/\1/g' > version
+    echo ${CAP_BUNDLE_URL} | sed 's/.*bundle-\(.*\).tgz/\1/g' > version
     VERSION_FILE=version
 else
     VERSION_FILE=s3.archive/version

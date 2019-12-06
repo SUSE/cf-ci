@@ -10,18 +10,17 @@ s3-config-endpoint: ~
 s3-config-access-key: *aws-access-key
 s3-config-secret-key: *aws-secret-key
 
-s3-config-bucket-sles: cap-release-archives
+s3-config-bucket-sles: scf-v3
 
-s3-config-prefix-sidecars: brokers/
 
 registry-hostname: *docker-public-staging-registry
 organization: *docker-public-staging-org
 
 magic-dns-service: omg.howdoi.website
 
-src-repo: SUSE/scf
+src-repo: SUSE/kubecf
 
-cap-pre-upgrade-url: master/scf-sle-2.19.1-rc2%2Bcf9.5.0.0.gd8c18ede
+cap-pre-upgrade-url: bundle-2.0-0aa03f3
 cap-install-url: null
 
 status-email-host: *ci-status-email-host
@@ -31,11 +30,8 @@ status-email-password: *ci-status-email-password
 status-email-sender: *ci-status-email-sender
 status-email-receiver: *ci-status-email-receiver
 
-# When deploying / upgrading, use the embedded UAA instead of the normal,
-# separately namespaced UAA.
-enable-embedded-uaa: false
-enable-autoscaler: true
-enable-credhub: true
+enable-autoscaler: false
+enable-credhub: false
 enable-external-uaa-scf-db: false
 # The following two options test that ha strict mode works by adjusting the diego_api count to 1
 # This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true

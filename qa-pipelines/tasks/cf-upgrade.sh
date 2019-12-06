@@ -52,23 +52,23 @@ if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
     export EXTERNAL_DB_PASS="$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)"
 fi
 
-set_helm_params # Sets HELM_PARAMS.
-set_uaa_params # Adds uaa specific params to HELM_PARAMS.
+# set_helm_params # Sets HELM_PARAMS.
+# set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
-echo "UAA customization..."
-echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+# echo "UAA customization..."
+# echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
-  helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
-      --namespace "${UAA_NAMESPACE}" \
-      --recreate-pods \
-      --timeout 3600 \
-      --wait \
-      "${HELM_PARAMS[@]}"
+# if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
+#   helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
+#       --namespace "${UAA_NAMESPACE}" \
+#       --recreate-pods \
+#       --timeout 3600 \
+#       --wait \
+#       "${HELM_PARAMS[@]}"
 
-  # Wait for UAA release
-  wait_for_release uaa
-fi
+#   # Wait for UAA release
+#   wait_for_release uaa
+# fi
 
 # Deploy CF
 set_helm_params # Resets HELM_PARAMS.
