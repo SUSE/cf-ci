@@ -131,7 +131,7 @@ resources:
   type: s3
   source:
     << : *s3-common-params
-    regexp: <%= s3_config_prefix_sles %>scf-sle-(.*)\.zip$
+    regexp: <%= s3_config_prefix_sles %>bundle-(.*)\.tgz$
 
 # Pool resource with kube cluster information
 - name: pool.kube-hosts

@@ -40,13 +40,13 @@ while true ; do
         -t|--target) target="${2}" ; shift 2 ;;
         --pool)      pool="${2}" ; shift 2 ;;
         -b|--branch) src_ci_branch="${2}" ; shift 2 ;;
-        --nightly)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=nightly/ ; shift 1 ;;
-        --pr)        [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix=prs/PR-${2}- ; shift 2 ;;
+        --nightly)   [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix= ; shift 1 ;;
+        --pr)        [[ -z ${s3_config_prefix:-} ]] ; s3_config_prefix= ; shift 2 ;;
         --)          shift ; break ;;
         *)           printf "Internal error: unexpected arguments %s\n" "$*" >&2 ; exit 1 ;;
     esac
 done
-s3_config_prefix=${s3_config_prefix:-rc/}
+s3_config_prefix=${s3_config_prefix:-}
 
 if test -z "${1:-}" ; then
     usage
