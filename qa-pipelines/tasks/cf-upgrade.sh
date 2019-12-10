@@ -42,7 +42,7 @@ instance_count=$(kubectl get statefulsets -o json diego-cell --namespace scf | j
 # push app in subshell to avoid changing directory
 (
   cd ci/sample-apps/test-app
-  cf push -i ${instance_count}
+  cf push -i ${instance_count} test-app
 )
 
 monitor_file=$(mktemp -d)/downtime.log
