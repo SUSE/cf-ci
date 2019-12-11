@@ -3,11 +3,11 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    # derived from havener/build-environment
-    repository: registry.suse.com/cap-staging/cf-ci
+    repository: splatform/base-ci
     tag: kubecf
 inputs:
 - name: ci
+- name: build-image-resource
 - name: s3.stemcell-version
 - name: s3.fissile-linux
 - name: external-releases

@@ -6,6 +6,11 @@ resources:
   source:
     uri: <%= ci_repo %>
     branch: <%= ci_branch %>
+- name: build-image-resource	
+  type: git	
+  source:	
+    uri: <%= build_image_resource_repo %>	
+    branch: <%= build_image_resource_branch %>
 <% cf_deployment_tags.each do |cf_deployment_tag| %>
 - name: cf-deployment-<%= cf_deployment_tag %>
   type: git
@@ -35,6 +40,7 @@ jobs:
   plan:
   - in_parallel:
     - get: ci
+    - get: build-image-resource
     - get: cf-deployment-<%= cf_deployment_tag %>
     - get: s3.fissile-stemcell-version
       trigger: true

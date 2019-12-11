@@ -77,6 +77,11 @@ resources:
   source:
     uri: <%= ci_repo %>
     branch: <%= ci_branch %>
+- name: build-image-resource	
+  type: git	
+  source:	
+    uri: <%= build_image_resource_repo %>	
+    branch: <%= build_image_resource_branch %>
 - name: s3.fissile-linux
   type: s3
   source:
@@ -124,6 +129,7 @@ jobs:
   plan:
   - in_parallel:
     - get: ci
+    - get: build-image-resource
     - get: s3.fissile-stemcell-version
       trigger: true
     - get: s3.fissile-linux
