@@ -4,9 +4,9 @@ set -o errexit -o nounset
 
 # Start Docker Daemon (and set a trap to stop it once this script is done)
 echo 'DOCKER_OPTS="--data-root /scratch/docker --max-concurrent-downloads 10"' >/etc/default/docker
-service docker start
-service docker status
-trap 'service docker stop' EXIT
+systemctl docker start
+systemctl docker status
+trap 'systemctl docker stop' EXIT
 sleep 10
 
 # Login to the Docker registry.
