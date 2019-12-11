@@ -3,8 +3,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    # derived from havener/build-environment
-    repository: registry.suse.com/cap-staging/cf-ci
+    repository: splatform/base-ci
     tag: kubecf
 inputs:
 - name: ci
