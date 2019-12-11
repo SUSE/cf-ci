@@ -1,5 +1,7 @@
 ci-repo: https://github.com/suse/cf-ci
 ci-branch: develop
+build-image-resource-repo: https://github.com/concourse/docker-image-resource
+build-image-resource-branch: master
 kubecf-repo: git@github.com:SUSE/kubecf.git
 kubecf-branch: master
 kubecf-ops-set-suse-buildpacks: deploy/helm/kubecf/assets/operations/buildpacks/set_suse_buildpacks.yaml
