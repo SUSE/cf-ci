@@ -6,7 +6,7 @@ source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 UAA_PORT=2793
 
 CF_NAMESPACE=kubecf
-UAA_NAMESPACE=cfo
+CFO_NAMESPACE=cfo
 CAP_DIRECTORY=s3.scf-config
 
 # Set SCF_LOG_HOST for sys log brain tests
@@ -20,9 +20,9 @@ if [ -n "${CAP_BUNDLE_URL:-}" ]; then
     export CAP_DIRECTORY=cap-install-version
     mkdir ${CAP_BUNDLE_URL}
     #unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
-    tar -xvzf ${CAP_DIRECTORY}.tgz -C ${CAP_DIRECTORY}
+    tar -xvzf ${CAP_DIRECTORY}.tgz -C ${CAP_DIRECTORY}/
 else
-    tar -xvzf ${CAP_DIRECTORY}/*.tgz -C ${CAP_DIRECTORY}
+    tar -xvzf ${CAP_DIRECTORY}/*.tgz -C ${CAP_DIRECTORY}/
 fi
 
 # Check that the kube of the cluster is reasonable
@@ -169,80 +169,29 @@ function semver_is_gte() {
 # Get the version of the helm chart for uaa
 helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 
-# Helm parameters common to UAA and SCF, for helm install and upgrades
+# Helm parameters common to cfo and kubecf, for helm install and upgrades
 set_helm_params() {
     :
-    # HELM_PARAMS=(--set "env.DOMAIN=${DOMAIN}"
-    #              --set "secrets.UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET}"
-    #              --set "enable.autoscaler=${ENABLE_AUTOSCALER}"
-    #              --set "kube.storage_class.persistent=${STORAGECLASS}")
-
-    # # CAP-370. Let the CC give brokers 10 minutes to respond with
-    # # their catalog. We have seen minibroker in the brain tests
-    # # require 4.5 minutes to assemble such, likely due to a slow
-    # # network. Doubling that should be generous enough. Together with
-    # # the doubled brain test timeout (see `run-test.sh`), such tests
-    # # will then still have the normal 10 minutes for any remaining
-    # # actions.
-    # HELM_PARAMS+=(--set "env.BROKER_CLIENT_TIMEOUT_SECONDS=600")
-
-    # if [[ ${cap_platform} == "eks" ]] ; then
-    #     HELM_PARAMS+=(--set "kube.storage_class.shared=${STORAGECLASS}")
-    #     HELM_PARAMS+=(--set "env.GARDEN_APPARMOR_PROFILE=")
-    # fi
-
-    # if [[ $(helm_chart_version) == "2.15.2" ]]; then
-    #     HELM_PARAMS+=(--set "sizing.credhub_user.count=1")
-    # else
-    #     HELM_PARAMS+=(--set "enable.credhub=${ENABLE_CREDHUB}")
-    # fi
-
-    # if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
-    #  [[ ${cap_platform} == "eks" ]]; then
-    #     HELM_PARAMS+=(--set "services.loadbalanced=true")
-    # else
-    #     for (( i=0; i < ${#external_ips[@]}; i++ )); do
-    #         HELM_PARAMS+=(--set "kube.external_ips[$i]=${external_ips[$i]}")
-    #     done
-    # fi
-    # if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
-    #     HELM_PARAMS+=(--set "enable.uaa=true")
-    # fi
-    # if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
-    #     HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=external-db-mariadb.external-db.svc.cluster.local")
-    #     HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=3306")
-    #     HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=root")
-    #     HELM_PARAMS+=(--set "enable.mysql=false")
-    #     HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
-    # fi
-    # if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
-    #     HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
-    # fi
-    # if [[ -n "${KUBE_ORGANIZATION:-}" ]]; then
-    #     HELM_PARAMS+=(--set "kube.organization=${KUBE_ORGANIZATION}")
-    # fi
-    # HELM_PARAMS+=(--set "env.GARDEN_ROOTFS_DRIVER=${garden_rootfs_driver}")
 }
 
-# Method to customize UAA.
-# set_uaa_params() {
-#     if [[ "${HA:-false}" == true ]]; then
-#         HELM_PARAMS+=(--set=config.HA=true)
-#     fi
-# }
-
-# Method to customize SCF.
-set_scf_params() {
+# Method to customize kubecf.
+set_kubecf_params() {
     HELM_PARAMS=(--set "system_domain=${DOMAIN}")
-    # if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
-    #     HELM_PARAMS+=(--set "secrets.UAA_CA_CERT=$(get_uaa_ca_cert)")
-    # fi
-    # if [[ "${cap_platform}" == "eks" ]] ; then
-    #     HELM_PARAMS+=(--set=sizing.{cc_uploader,nats,routing_api,router,diego_brain,diego_api,diego_ssh}.capabilities[0]="SYS_RESOURCE")
-    # fi
-    # if [[ "${HA:-false}" == true ]]; then
-    #     HELM_PARAMS+=(--set=config.HA=true)
-    # fi
+    if [[ "${HA:-false}" == true ]]; then
+        #HELM_PARAMS+=(--set=config.HA=true)
+        echo "HA is not yet implemented. This is SA deployment"
+    fi
+    #HELM_PARAMS+=(--set "enable.credhub=${ENABLE_CREDHUB}")
+    #HELM_PARAMS+=(--set "enable.autoscaler=${ENABLE_AUTOSCALER}")
+    if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
+        echo "EXTERNAL_DB is not yet implemented in CI"
+        # HELM_PARAMS+=(--set "features.external_database.enabled=true")
+        # HELM_PARAMS+=(--set "features.external_database.host=external-db-mariadb.external-db.svc.cluster.local")
+        # HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=3306")
+        # HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=root")
+        # HELM_PARAMS+=(--set "enable.mysql=false")
+        # HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
+    fi
 }
 
 set -o allexport

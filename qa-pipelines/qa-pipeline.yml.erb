@@ -64,9 +64,6 @@ aliases:
     <% else %>
     KLOG_COLLECTION_ON_FAILURE: false
     <% end %> # klog_collection_on_failure
-    <% if test_ha_strict_enable || test_ha_strict_disable %>
-    HA_STRICT: <%= test_ha_strict_enable %>
-    <% end %> # test_ha_strict_enable || test_ha_strict_disable %>
 
   upgrade-task-params: &upgrade-task-params
     << : *common-task-params

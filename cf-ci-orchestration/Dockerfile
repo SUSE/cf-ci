@@ -38,18 +38,13 @@ RUN true \
     && rpm --import https://packages.microsoft.com/keys/microsoft.asc \
     && zypper addrepo --name 'Azure CLI' --check https://packages.microsoft.com/yumrepos/azure-cli azure-cli \
     && zypper --non-interactive install --from azure-cli azure-cli \
-    && helm_version=v2.8.2 \
+    && helm_version=v2.16.1 \
     && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
-    && mv /usr/local/bin/helm /usr/local/bin/helm_${helm_version} \
-    && chmod a+x /usr/local/bin/helm_${helm_version} \
-    && helm_version=v2.11.0 \
-    && wget https://kubernetes-helm.storage.googleapis.com/helm-${helm_version}-linux-amd64.tar.gz -O - | tar xz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
-    && mv /usr/local/bin/helm /usr/local/bin/helm_${helm_version} \
-    && chmod a+x /usr/local/bin/helm_${helm_version} \
+    && chmod a+x /usr/local/bin/helm \
     && echo "eval \"\$(direnv hook bash)\"" >> ~/.bashrc \
     && echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc \
     && echo "source <(helm completion bash)" >> ~/.bashrc \
-    && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.8/bin/linux/amd64/kubectl \
+    && curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.14.8/bin/linux/amd64/kubectl \
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl \
     && echo "source <(kubectl completion bash)" >> ~/.bashrc \
@@ -79,11 +74,6 @@ RUN true \
     && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
     && /usr/local/gcloud/google-cloud-sdk/install.sh --quiet
 
-COPY helm /usr/local/bin/helm
-
-RUN true \
-    && chmod a+x /usr/local/bin/helm
-
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
-RUN zypper --non-interactive install make 
+RUN zypper --non-interactive install make

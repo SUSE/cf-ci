@@ -33,13 +33,6 @@ status-email-receiver: *ci-status-email-receiver
 enable-autoscaler: false
 enable-credhub: false
 enable-external-uaa-scf-db: false
-# The following two options test that ha strict mode works by adjusting the diego_api count to 1
-# This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true
-# For non-upgrade pipelines, this affects cf-deploy, and for upgrade pipelines, it affects the upgrade step
-# test-ha-strict-enable leaves the default HA_strict setting (true), and sets diego_api count to 1
-test-ha-strict-enable: false
-# test-ha-strict-enable sets HA_strict to false, and sets diego_api count to 1
-test-ha-strict-disable: false
 
 terraform-platforms: [gke, aks]
 terraform-gke-location: us-west1-a

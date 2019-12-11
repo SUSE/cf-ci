@@ -3,7 +3,7 @@ set -o errexit
 set -o nounset
 
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
-source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
+#source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 
 # Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
 kubectl delete psp --ignore-not-found suse.cap.psp
@@ -26,35 +26,31 @@ if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
     export EXTERNAL_DB_PASS="$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)"
 fi
 
-helm install ${CAP_DIRECTORY}/cf-operator.tgz \
-    --namespace "${UAA_NAMESPACE}" \
+helm install ${CAP_DIRECTORY}/cf-operator-*.tgz \
+    --namespace "${CFO_NAMESPACE}" \
     --name cfo \
     --set global.operator.watchNamespace="${CF_NAMESPACE}" \
     --timeout 1200
 
-# Wait for UAA release.
-wait_for_release cfo
-
+# Wait for cfo release.
+kubectl wait --timeout=10m --namespace "${CFO_NAMESPACE}" --for=condition=ready pod --all
+helm list
+kubectl get ns
+kubectl get pods --namespace "${CFO_NAMESPACE}"
 
 # Deploy CF.
 # set_helm_params # Resets HELM_PARAMS.
-set_scf_params # Adds scf specific params to HELM_PARAMS.
+set_kubecf_params # Adds scf specific params to HELM_PARAMS.
 
-kubectl create namespace "${CF_NAMESPACE}"
+#kubectl create namespace "${CF_NAMESPACE}"
 if [[ ${PROVISIONER} == kubernetes.io/rbd ]]; then
     kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${CF_NAMESPACE}/g" | kubectl create -f -
-fi
-
-# When this deploy task is running in a deploy (non-upgrade) pipeline, the deploy is HA, and we want to test config.HA_strict:
-if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]] && [[ -z "${CAP_BUNDLE_URL:-}" ]]; then
-    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
-    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
 fi
 
 echo "kubecf customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
-helm install ${CAP_DIRECTORY}/kubecf.tgz \
+helm install ${CAP_DIRECTORY}/kubecf-*.tgz \
     --namespace "${CF_NAMESPACE}" \
     --name kubecf \
     --timeout 1200 \

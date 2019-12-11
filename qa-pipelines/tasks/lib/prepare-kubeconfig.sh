@@ -63,8 +63,9 @@ elif [[ $(read_yaml_key ${pool_file} platform) == "gke" ]]; then
     fi
 fi
 
-# Maintain different helm versions
-helm_server_version="$(helm version --server | cut -d: -f3 | cut -d, -f1 | tr -d '"')"
-if [[ ${helm_server_version} == "v2.8.2" ]]; then
-    export helm_version=v2.8.2
-fi
+echo "kubectl version:"
+kubectl version
+helm init --upgrade
+kubectl wait --timeout=10m --namespace kube-system --for=condition=ready pod --all
+echo "helm/tiller version:"
+helm version

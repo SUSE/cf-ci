@@ -71,16 +71,10 @@ fi
 # fi
 
 # Deploy CF
-set_helm_params # Resets HELM_PARAMS.
-set_scf_params # Adds scf specific params to HELM_PARAMS.
+#set_helm_params # Resets HELM_PARAMS.
+set_kubecf_params # Adds scf specific params to HELM_PARAMS.
 
-# When this upgrade task is running in an HA job, and we want to test config.HA_strict:
-if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]]; then
-    HELM_PARAMS+=(--set "config.HA_strict=${HA_STRICT}")
-    HELM_PARAMS+=(--set "sizing.diego_api.count=1")
-fi
-
-echo "SCF customization..."
+echo "kubecf customization..."
 echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
