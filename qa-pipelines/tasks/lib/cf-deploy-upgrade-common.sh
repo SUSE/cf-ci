@@ -49,23 +49,34 @@ else
     exit 1
 fi
 
+eks_lb_workaround() {
+    # For eks clusters, use a kubectl patch to set health check port
+    # Otherwise, AWS loadbalancer health checks fail when the TCP service doesn't expose port 8080
+    if [[ ${cap_platform} == "eks" &&  ${namespace} == "kubecf" ]]; then
+        healthcheck_port=$(kubectl get service kubecf-tcp-router-public -o jsonpath='{.spec.ports[?(@.name == "healthcheck")].port}' --namespace kubecf)
+        if [ -z "${healthcheck_port}" ]; then
+            kubectl patch service kubecf-tcp-router-public --namespace kubecf --type strategic --patch '{"spec": {"ports": [{"name": "healthcheck", "port": 8080}]}}'
+        fi
+    fi
+}
+
 # Password for SCF to authenticate with UAA
 #UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 
 # Wait until CF namespaces are ready
-is_namespace_ready() {
-    local namespace="$1"
+# is_namespace_ready() {
+#     local namespace="$1"
 
-    # Check that all pods not from jobs are ready
-    if kubectl get pods --namespace "${namespace}" --selector '!job-name' \
-        --output 'custom-columns=:.status.containerStatuses[*].ready' \
-        | grep --quiet false
-    then
-        return 1
-    fi
+#     # Check that all pods not from jobs are ready
+#     if kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+#         --output 'custom-columns=:.status.containerStatuses[*].ready' \
+#         | grep --quiet false
+#     then
+#         return 1
+#     fi
 
-    return 0
-}
+#     return 0
+# }
 
 # Outputs a json representation of a yml document
 y2j() {
@@ -147,14 +158,6 @@ y2j() {
 #         exit 1
 #     fi
 
-#     # For eks clusters, use a kubectl patch to set health check port
-#     # Otherwise, AWS loadbalancer health checks fail when the TCP service doesn't expose port 8080
-#     if [[ ${cap_platform} == "eks" &&  ${namespace} == "scf" ]]; then
-#         healthcheck_port=$(kubectl get service tcp-router-tcp-router-public -o jsonpath='{.spec.ports[?(@.name == "healthcheck")].port}' --namespace scf)
-#         if [ -z "${healthcheck_port}" ]; then
-#             kubectl patch service tcp-router-tcp-router-public --namespace scf --type strategic --patch '{"spec": {"ports": [{"name": "healthcheck", "port": 8080}]}}'
-#         fi
-#     fi
 # }
 
 function semver_is_gte() {

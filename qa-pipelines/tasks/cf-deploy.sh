@@ -83,6 +83,7 @@ if [[ ${cap_platform} =~ ^azure$|^gke$|^eks$ ]]; then
     az_login
     azure_dns_clear
     azure_wait_for_lbs_in_namespace kubecf
+    eks_lb_workaround
     azure_set_record_sets_for_namespace kubecf
 fi
 
