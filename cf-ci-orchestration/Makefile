@@ -1,5 +1,5 @@
 IMAGE ?= splatform/cf-ci-orchestration
-TAG ?= latest
+TAG ?= cap2
 
 build:
 	docker build -t ${IMAGE}:${TAG} .

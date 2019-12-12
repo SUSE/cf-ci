@@ -129,21 +129,21 @@ azure_set_record_sets_for_namespace() {
     lb_info=$(lb_info ${namespace} "${lb_filter}")
     for lb_svc_obj in $(echo "${lb_info}" | jq -c '.[]'); do
         lb_svc=$(jq -r .svc <<< "${lb_svc_obj}")
-        if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
-            azure_set_record uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
-            azure_set_record *.uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
-        elif [[ ${lb_svc} == diego-ssh-ssh-proxy-public ]]; then
+        # if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
+        #     azure_set_record uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+        #     azure_set_record *.uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
+        if [[ ${lb_svc} == kubecf-ssh-proxy-public ]]; then
             azure_set_record ssh.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
-        elif [[ ${lb_svc} == tcp-router-tcp-router-public ]]; then
+        elif [[ ${lb_svc} == kubecf-tcp-router-public ]]; then
             azure_set_record tcp.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
             azure_set_record *.tcp.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
-        elif [[ ${lb_svc} == router-gorouter-public ]]; then
+        elif [[ ${lb_svc} == kubecf-router-public ]]; then
             azure_set_record $AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
             azure_set_record *.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
-        elif [[ ${lb_svc} == autoscaler-api-apiserver-public ]]; then
-            echo "Skipping record-set for autoscaler.$AZURE_AKS_RESOURCE_GROUP"
-        elif [[ ${lb_svc} == autoscaler-servicebroker-servicebroker-public ]]; then
-            echo "Skipping record-set for autoscalerservicebroker.$AZURE_AKS_RESOURCE_GROUP"
+        # elif [[ ${lb_svc} == autoscaler-api-apiserver-public ]]; then
+        #     echo "Skipping record-set for autoscaler.$AZURE_AKS_RESOURCE_GROUP"
+        # elif [[ ${lb_svc} == autoscaler-servicebroker-servicebroker-public ]]; then
+        #     echo "Skipping record-set for autoscalerservicebroker.$AZURE_AKS_RESOURCE_GROUP"
         else
             echo "Unrecognized service name $lb_svc"
             return 1

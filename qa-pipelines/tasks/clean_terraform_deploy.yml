@@ -4,7 +4,7 @@ image_resource:
   type: docker-image
   source:
     repository: splatform/cf-ci-orchestration
-    tag: latest
+    tag: cap2
 inputs:
 - name: ci
 - name: pool.kube-hosts

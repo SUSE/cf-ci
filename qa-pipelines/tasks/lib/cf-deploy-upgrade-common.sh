@@ -3,7 +3,7 @@
 # Set kube config from pool
 source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
-UAA_PORT=2793
+#UAA_PORT=2793
 
 CF_NAMESPACE=kubecf
 CFO_NAMESPACE=cfo
@@ -50,7 +50,7 @@ else
 fi
 
 # Password for SCF to authenticate with UAA
-UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
+#UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
 
 # Wait until CF namespaces are ready
 is_namespace_ready() {
@@ -76,86 +76,86 @@ y2j() {
     fi
 }
 
-wait_for_jobs() {
-    local release=${1}
-    local namespace=$(helm status ${release} -o json | jq -r .namespace)
-    local jobs_in_namespace=$(helm get manifest ${release} | y2j | jq -r '.[] | select(.kind=="Job").metadata.name')
-    local job seconds_remaining time_since_start kubectl_wait_status
-    local start=$(date +%s)
-    for job in ${jobs_in_namespace}; do
-        echo "waiting for job ${job}"
-        seconds_remaining=$(( 4800 + ${start} - $(date +%s) ))
-        set +o errexit
-        kubectl wait job ${job} --namespace ${namespace} --for=condition=complete --timeout ${seconds_remaining}s
-        kubectl_wait_status=$?
-        set -o errexit
-        time_since_start=$(( $(date +%s) - ${start} ))
-        if [[ ${kubectl_wait_status} -eq 0 ]]; then
-            echo "Done waiting for ${release} jobs at $(date --rfc-2822) (${time_since_start}s)"
-        elif [[ ${time_since_start} -ge 4800 ]]; then
-            echo "${release} job ${job} not completed due to timeout"
-            return 1
-        else
-            echo "waiting for ${release} job ${job} failed with exit status ${kubectl_wait_status}"
-            return 1
-        fi
-    done
-}
+# wait_for_jobs() {
+#     local release=${1}
+#     local namespace=$(helm status ${release} -o json | jq -r .namespace)
+#     local jobs_in_namespace=$(helm get manifest ${release} | y2j | jq -r '.[] | select(.kind=="Job").metadata.name')
+#     local job seconds_remaining time_since_start kubectl_wait_status
+#     local start=$(date +%s)
+#     for job in ${jobs_in_namespace}; do
+#         echo "waiting for job ${job}"
+#         seconds_remaining=$(( 4800 + ${start} - $(date +%s) ))
+#         set +o errexit
+#         kubectl wait job ${job} --namespace ${namespace} --for=condition=complete --timeout ${seconds_remaining}s
+#         kubectl_wait_status=$?
+#         set -o errexit
+#         time_since_start=$(( $(date +%s) - ${start} ))
+#         if [[ ${kubectl_wait_status} -eq 0 ]]; then
+#             echo "Done waiting for ${release} jobs at $(date --rfc-2822) (${time_since_start}s)"
+#         elif [[ ${time_since_start} -ge 4800 ]]; then
+#             echo "${release} job ${job} not completed due to timeout"
+#             return 1
+#         else
+#             echo "waiting for ${release} job ${job} failed with exit status ${kubectl_wait_status}"
+#             return 1
+#         fi
+#     done
+# }
 
-wait_for_release() {
-    local start now elapsed
-    local release="$1"
-    local namespace=$(helm list "${release}" | awk '$1=="'"$release"'" {print $NF}')
-    start=$(date +%s)
+# wait_for_release() {
+#     local start now elapsed
+#     local release="$1"
+#     local namespace=$(helm list "${release}" | awk '$1=="'"$release"'" {print $NF}')
+#     start=$(date +%s)
 
-    wait_for_jobs $release || exit 1
+#     wait_for_jobs $release || exit 1
 
-    # Wait for config map
-    local secret_name=""
-    while true ; do
-        secret_name="$(kubectl get configmap -n "${namespace}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
-        if [[ -n "${secret_name}" ]] && kubectl get secrets -n "${namespace}" "${secret_name}" ; then
-            break
-        fi
-        now=$(date +%s)
-        elapsed="$((now - start))"
-        if (( elapsed > 4800 )) ; then
-            printf "\nTimed out waiting for %s config map (%s is %s seconds since start)\n" "${release}" "$(date --rfc-2822)" "${elapsed}"
-        fi
-        printf "\rWaiting for %s config map at %s (%ss)..." "${release}" "$(date --rfc-2822)" "${elapsed}"
-        sleep 10
-    done
+#     # Wait for config map
+#     local secret_name=""
+#     while true ; do
+#         secret_name="$(kubectl get configmap -n "${namespace}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
+#         if [[ -n "${secret_name}" ]] && kubectl get secrets -n "${namespace}" "${secret_name}" ; then
+#             break
+#         fi
+#         now=$(date +%s)
+#         elapsed="$((now - start))"
+#         if (( elapsed > 4800 )) ; then
+#             printf "\nTimed out waiting for %s config map (%s is %s seconds since start)\n" "${release}" "$(date --rfc-2822)" "${elapsed}"
+#         fi
+#         printf "\rWaiting for %s config map at %s (%ss)..." "${release}" "$(date --rfc-2822)" "${elapsed}"
+#         sleep 10
+#     done
 
-    for (( i = 0  ; i < 480 ; i ++ )) ; do
-        if is_namespace_ready "${namespace}" ; then
-            break
-        fi
-        now=$(date +%s)
-        printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((now - start))
-        sleep 10
-    done
+#     for (( i = 0  ; i < 480 ; i ++ )) ; do
+#         if is_namespace_ready "${namespace}" ; then
+#             break
+#         fi
+#         now=$(date +%s)
+#         printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((now - start))
+#         sleep 10
+#     done
 
-    now=$(date +%s)
-    printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((now - start))
-    kubectl get pods --namespace="${namespace}"
-    if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
-        kubectl get pods --namespace "${namespace}" --selector '!job-name' \
-            --output 'custom-columns=NAME:.metadata.name,CONTAINERS:.status.containerStatuses[*].name,READY:.status.containerStatuses[*].ready' \
-            | grep -E 'READY|false' \
-            || true
-        printf "%s pods are still pending after 80 minutes \n" "${release}"
-        exit 1
-    fi
+#     now=$(date +%s)
+#     printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((now - start))
+#     kubectl get pods --namespace="${namespace}"
+#     if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
+#         kubectl get pods --namespace "${namespace}" --selector '!job-name' \
+#             --output 'custom-columns=NAME:.metadata.name,CONTAINERS:.status.containerStatuses[*].name,READY:.status.containerStatuses[*].ready' \
+#             | grep -E 'READY|false' \
+#             || true
+#         printf "%s pods are still pending after 80 minutes \n" "${release}"
+#         exit 1
+#     fi
 
-    # For eks clusters, use a kubectl patch to set health check port
-    # Otherwise, AWS loadbalancer health checks fail when the TCP service doesn't expose port 8080
-    if [[ ${cap_platform} == "eks" &&  ${namespace} == "scf" ]]; then
-        healthcheck_port=$(kubectl get service tcp-router-tcp-router-public -o jsonpath='{.spec.ports[?(@.name == "healthcheck")].port}' --namespace scf)
-        if [ -z "${healthcheck_port}" ]; then
-            kubectl patch service tcp-router-tcp-router-public --namespace scf --type strategic --patch '{"spec": {"ports": [{"name": "healthcheck", "port": 8080}]}}'
-        fi
-    fi
-}
+#     # For eks clusters, use a kubectl patch to set health check port
+#     # Otherwise, AWS loadbalancer health checks fail when the TCP service doesn't expose port 8080
+#     if [[ ${cap_platform} == "eks" &&  ${namespace} == "scf" ]]; then
+#         healthcheck_port=$(kubectl get service tcp-router-tcp-router-public -o jsonpath='{.spec.ports[?(@.name == "healthcheck")].port}' --namespace scf)
+#         if [ -z "${healthcheck_port}" ]; then
+#             kubectl patch service tcp-router-tcp-router-public --namespace scf --type strategic --patch '{"spec": {"ports": [{"name": "healthcheck", "port": 8080}]}}'
+#         fi
+#     fi
+# }
 
 function semver_is_gte() {
   # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
@@ -167,7 +167,7 @@ function semver_is_gte() {
 }
 
 # Get the version of the helm chart for uaa
-helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
+#helm_chart_version() { grep "^version:"  ${CAP_DIRECTORY}/helm/uaa/Chart.yaml  | sed 's/version: *//g' ; }
 
 # Helm parameters common to cfo and kubecf, for helm install and upgrades
 set_helm_params() {
@@ -220,6 +220,6 @@ fi
 INSECURE_DOCKER_REGISTRIES=\"insecure-registry.tcp.${DOMAIN}:20005\"
 
 # UAA host/port that SCF will talk to.
-UAA_HOST=uaa.${DOMAIN}
+#UAA_HOST=uaa.${DOMAIN}
 
 set +o allexport
