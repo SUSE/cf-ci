@@ -7,7 +7,6 @@ if [[ -z "${TEST_NAME:-}" ]] ; then
 fi
 
 # Set kube config from pool
-source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 set -o nounset
 set -o allexport
@@ -19,19 +18,8 @@ INCLUDE_BRAINS_REGEX=${INCLUDE_BRAINS_REGEX:-}
 ACCEPTANCE_TEST_NODES=3
 UAA_NAMESPACE=uaa
 CF_NAMESPACE=scf
-source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
-trap "upload_klogs_on_failure ${CF_NAMESPACE} ${UAA_NAMESPACE}" EXIT
 CAP_DIRECTORY=s3.scf-config
 set +o allexport
-
-# For upgrade tests
-if [[ -n "${CAP_BUNDLE_URL:-}" ]]; then
-    curl "${CAP_BUNDLE_URL}" -Lo cap-install-version.zip
-    export CAP_DIRECTORY=cap-install-version
-    unzip "${CAP_DIRECTORY}.zip" -d "${CAP_DIRECTORY}/"
-else
-    unzip "${CAP_DIRECTORY}"/*scf-*.zip -d "${CAP_DIRECTORY}/"
-fi
 
 # Pre-set PSPs
 case "${TEST_NAME}" in
@@ -222,11 +210,4 @@ fi
 if [[ -f "${test_non_pods_yml}" ]]; then
     kubectl delete --namespace "${CF_NAMESPACE}" --filename "${test_non_pods_yml}"
 fi
-# Delete test pod if they pass. Required pre upgrade
-if [[ $pod_status -eq 0 ]]; then
-    trap "" EXIT
-    kubectl delete pod --namespace=scf ${TEST_NAME}
-else
-    echo "Test failed with status ${pod_status}"
-fi
-exit ${pod_status}
+kubectl delete pod --namespace=scf ${TEST_NAME}
