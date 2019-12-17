@@ -3,4 +3,4 @@
 	url = https://github.com/scf-samples/rails-example.git
 [submodule "sample-apps/test-app"]
 	path = sample-apps/test-app
-	url = https://github.com/bikramnehra/test-app.git
+	url = https://github.com/scf-samples/12factor.git
