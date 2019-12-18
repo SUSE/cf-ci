@@ -3,7 +3,7 @@ cf-deployment-tags:
   - v9.2.0
   - v9.5.0
 ci-repo: https://github.com/suse/cf-ci
-ci-branch: bisingh/sle15-stemcell
+ci-branch: develop
 build-image-resource-repo: https://github.com/concourse/docker-image-resource	
 build-image-resource-branch: master
 cf-deployment-repo: https://github.com/cloudfoundry/cf-deployment
