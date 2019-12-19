@@ -69,8 +69,6 @@ end
 
 Dir.chdir('../bosh-linux-stemcell-builder-ci') do
   %w[
-    develop-fissile
-    develop-os-images
     release-fissile
     release-os-images
     release-sles-os-images
