@@ -85,28 +85,6 @@ ensure
   run 'make', 'post'
 end
 
-Dir.chdir('../cf-buildpacks-ci') do
-  def update(*args)
-    run({ 'CONCOURSE_TARGET_NAME' => 'suse.de' }, 'bin/update-pipelines', *args)
-  end
-  %w[sle12 opensuse42].each do |stack|
-    status "deploying #{stack}-binary-builder pipeline"
-    update(*(%w[--include binary-builder --exclude new --stack] + [stack]))
-  end
-  status 'deploying buildpack builder pipelines'
-  update(*'--template buildpack --exclude apt-buildpack --stack sle12'.split)
-end
-
-# Java pipeline is special
-Dir.chdir('../cf-java-buildpack-dependency-builder/ci') do
-  status 'deploying Java dependencies pipeline'
-  run './set-master.sh', 'suse.de'
-end
-Dir.chdir('../cf-java-buildpack/ci') do
-  status 'deploying Java buildpack pipeline'
-  run './set-master.sh', 'suse.de'
-end
-
 Dir.chdir('../buildpacks-ci') do
   # We need to decode the secrets for this pipeline manually
   status 'deploying buildpacks pipeline'
