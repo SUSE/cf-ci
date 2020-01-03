@@ -192,14 +192,14 @@ jobs:
     - put: pool.kube-hosts
       params: {acquire: true}
       timeout: 2m
-    - task: cf-get-commit-id
-      file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
-      <% if is_upgrade_pipeline %>
-      params:
-        CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", enable_cf_deploy_pre_upgrade) %>
-      <% end %> # is_upgrade_pipeline
-      input_mapping:
-        s3.archive: s3.scf-config-sles
+    #- task: cf-get-commit-id
+    #  file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
+    #  <% if is_upgrade_pipeline %>
+    #  params:
+    #    CAP_BUNDLE_URL: <%= bundle_url_from_version("#{s3_config_bucket_sles}.s3.amazonaws.com", enable_cf_deploy_pre_upgrade) %>
+    #  <% end %> # is_upgrade_pipeline
+    #  input_mapping:
+    #    s3.archive: s3.scf-config-sles
     <% if status_reporting %>
     - put: status.src
       params: &status-params-<%= avail %>
@@ -257,10 +257,10 @@ jobs:
       timeout: 3h
     <% end %> # enable_cf_brain_tests_pre_upgrade
     <% if status_reporting %>
-    - task: cf-get-commit-id
-      file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
-      input_mapping:
-        s3.archive: s3.scf-config-sles
+    #- task: cf-get-commit-id
+    #  file: ci/qa-pipelines/tasks/cf-get-commit-id.yml
+    #  input_mapping:
+    #    s3.archive: s3.scf-config-sles
     <% end %> # status_reporting
     <% if enable_cf_upgrade %>
     - task: cf-upgrade

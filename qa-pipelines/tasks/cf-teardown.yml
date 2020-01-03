@@ -9,7 +9,7 @@ inputs:
 - name: ci
 - name: meta
 - name: pool.kube-hosts
-- name: commit-id
+#- name: commit-id
 outputs:
 - name: klog
 params:
