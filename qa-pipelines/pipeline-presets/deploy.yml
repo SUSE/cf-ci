@@ -3,8 +3,8 @@
 enable-cf-deploy: true
 #klog-collection-on-failure: true
 
-# enable-cf-smoke-tests: true
+#enable-cf-smoke-tests: true
 # enable-cf-brain-tests: true
-# enable-cf-acceptance-tests: true
+#enable-cf-acceptance-tests: true
 
-# enable-cf-teardown: true
+#enable-cf-teardown: true

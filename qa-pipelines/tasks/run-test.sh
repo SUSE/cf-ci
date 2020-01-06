@@ -252,7 +252,7 @@ wait_for_tests_pod() {
   until kubectl get pods --namespace "${CF_NAMESPACE}" --output name 2> /dev/null | grep --quiet "${TEST_NAME}" || [[ "$timeout" == "0" ]]; do sleep 1; timeout=$((timeout - 1)); done
   if [[ "${timeout}" == 0 ]]; then return 1; fi
   pod_name="$(tests_pod_name)"
-  until [[ "$(kubectl get pod "${pod_name}" --namespace "${CF_NAMESPACE}" --output jsonpath='{.status.containerStatuses[?(@.name == "${container}")].state.running}' 2> /dev/null)" != "" ]] || [[ "$timeout" == "0" ]]; do sleep 1; timeout=$((timeout - 1)); done
+  until [[ "$(kubectl get pod "${pod_name}" --namespace "${CF_NAMESPACE}" --output jsonpath="{.status.containerStatuses[?(@.name == ${container})].state.running}" 2> /dev/null)" != "" ]] || [[ "$timeout" == "0" ]]; do sleep 1; timeout=$((timeout - 1)); done
   if [[ "${timeout}" == 0 ]]; then return 1; fi
   return 0
 }
@@ -270,7 +270,7 @@ pod_name="$(tests_pod_name)"
 kubectl logs --follow "${pod_name}" --namespace "${CF_NAMESPACE}" --container "${container}"
 
 # Wait for the container to terminate and then exit the script with the container's exit code.
-jsonpath='{.status.containerStatuses[?(@.name == "${container}")].state.terminated.exitCode}'
+jsonpath="{.status.containerStatuses[?(@.name == ${container})].state.terminated.exitCode}"
 while true; do
   exit_code="$(kubectl get "${pod_name}" --namespace "${CF_NAMESPACE}" --output "jsonpath=${jsonpath}")"
   if [[ -n "${exit_code}" ]]; then

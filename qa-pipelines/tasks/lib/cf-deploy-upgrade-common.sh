@@ -8,6 +8,8 @@ source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 CF_NAMESPACE=kubecf
 CFO_NAMESPACE=cfo
 CAP_DIRECTORY=s3.scf-config
+AWS_CLUSTER_CIDR=0.0.0.0/0
+AWS_SERVICE_CLUSTER_IP_RANGE=10.0.0.0/24
 
 # Set SCF_LOG_HOST for sys log brain tests
 log_uid=$(hexdump -n 8 -e '2/4 "%08x"' /dev/urandom)
@@ -22,7 +24,7 @@ if [ -n "${CAP_BUNDLE_URL:-}" ]; then
     #unzip ${CAP_DIRECTORY}.zip -d ${CAP_DIRECTORY}/
     tar -xvzf ${CAP_DIRECTORY}.tgz -C ${CAP_DIRECTORY}/
 else
-    tar -xvzf ${CAP_DIRECTORY}/*.tgz -C ${CAP_DIRECTORY}/
+    tar -xvzf ${CAP_DIRECTORY}/bundle-*.tgz -C ${CAP_DIRECTORY}/
 fi
 
 # Check that the kube of the cluster is reasonable
@@ -52,7 +54,7 @@ fi
 eks_lb_workaround() {
     # For eks clusters, use a kubectl patch to set health check port
     # Otherwise, AWS loadbalancer health checks fail when the TCP service doesn't expose port 8080
-    if [[ ${cap_platform} == "eks" &&  ${namespace} == "kubecf" ]]; then
+    if [[ ${cap_platform} == "eks" ]]; then
         healthcheck_port=$(kubectl get service kubecf-tcp-router-public -o jsonpath='{.spec.ports[?(@.name == "healthcheck")].port}' --namespace kubecf)
         if [ -z "${healthcheck_port}" ]; then
             kubectl patch service kubecf-tcp-router-public --namespace kubecf --type strategic --patch '{"spec": {"ports": [{"name": "healthcheck", "port": 8080}]}}'
@@ -183,6 +185,12 @@ set_kubecf_params() {
     if [[ "${HA:-false}" == true ]]; then
         #HELM_PARAMS+=(--set=config.HA=true)
         echo "HA is not yet implemented. This is SA deployment"
+    fi
+    if [[ ${cap_platform} == "eks" ]] ; then
+        HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=${AWS_CLUSTER_CIDR}")
+        HELM_PARAMS+=(--set "kube.service_cluster_ip_range=${AWS_SERVICE_CLUSTER_IP_RANGE}")
+    else
+        echo "TODO: cluster-cider and service-cluster-ip-range for AKS, GKE and CaaSP"
     fi
     #HELM_PARAMS+=(--set "enable.credhub=${ENABLE_CREDHUB}")
     #HELM_PARAMS+=(--set "enable.autoscaler=${ENABLE_AUTOSCALER}")
