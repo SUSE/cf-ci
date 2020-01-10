@@ -5,11 +5,11 @@ set -o errexit -o nounset
 source "ci/qa-pipelines/tasks/lib/prepare-kubeconfig.sh"
 
 set -o allexport
-CF_NAMESPACE=scf
-UAA_NAMESPACE=uaa
+CF_NAMESPACE=kubecf
+CFO_NAMESPACE=cfo
 set +o allexport
 
-namespaces=("${CF_NAMESPACE}" "${UAA_NAMESPACE}" "external-db" "stratos")
+namespaces=("${CFO_NAMESPACE}" "${CF_NAMESPACE}" "external-db" "stratos")
 
 while [[ "${#namespaces[@]}" -gt 0 ]]; do
     while [[ -n $(helm list --short --all ${namespaces[0]}) ]]; do

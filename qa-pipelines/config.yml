@@ -31,7 +31,7 @@ status-email-sender: *ci-status-email-sender
 status-email-receiver: *ci-status-email-receiver
 
 enable-autoscaler: false
-enable-credhub: false
+# enable-credhub: false # Credhub is enabled by default
 enable-external-uaa-scf-db: false
 
 terraform-platforms: [gke, aks]

@@ -61,6 +61,10 @@ elif [[ $(read_yaml_key ${pool_file} platform) == "gke" ]]; then
             --clusterrole cluster-admin \
             --user $(gcloud config get-value account)
     fi
+
+    # GKE --cluster-cidr and --service-cluster-ip-range
+    GKE_CLUSTER_CIDR=$(gcloud container clusters describe ${GKE_CLUSTER_NAME} --zone ${GKE_CLUSTER_ZONE} | grep clusterIpv4Cidr: | awk '{ print $2 }')
+    GKE_SERVICE_CLUSTER_IP_RANGE=$(gcloud container clusters describe ${GKE_CLUSTER_NAME} --zone ${GKE_CLUSTER_ZONE} | grep servicesIpv4Cidr: | awk '{ print $2 }')
 fi
 
 echo "kubectl version:"

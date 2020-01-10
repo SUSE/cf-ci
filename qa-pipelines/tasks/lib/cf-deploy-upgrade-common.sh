@@ -62,24 +62,6 @@ eks_lb_workaround() {
     fi
 }
 
-# Password for SCF to authenticate with UAA
-#UAA_ADMIN_CLIENT_SECRET="$(head -c32 /dev/urandom | base64)"
-
-# Wait until CF namespaces are ready
-# is_namespace_ready() {
-#     local namespace="$1"
-
-#     # Check that all pods not from jobs are ready
-#     if kubectl get pods --namespace "${namespace}" --selector '!job-name' \
-#         --output 'custom-columns=:.status.containerStatuses[*].ready' \
-#         | grep --quiet false
-#     then
-#         return 1
-#     fi
-
-#     return 0
-# }
-
 # Outputs a json representation of a yml document
 y2j() {
     if [[ -e ${1:-} ]]; then
@@ -88,79 +70,6 @@ y2j() {
         ruby -r json -r yaml -e 'puts (YAML.load_stream(ARGF.read).to_json)'
     fi
 }
-
-# wait_for_jobs() {
-#     local release=${1}
-#     local namespace=$(helm status ${release} -o json | jq -r .namespace)
-#     local jobs_in_namespace=$(helm get manifest ${release} | y2j | jq -r '.[] | select(.kind=="Job").metadata.name')
-#     local job seconds_remaining time_since_start kubectl_wait_status
-#     local start=$(date +%s)
-#     for job in ${jobs_in_namespace}; do
-#         echo "waiting for job ${job}"
-#         seconds_remaining=$(( 4800 + ${start} - $(date +%s) ))
-#         set +o errexit
-#         kubectl wait job ${job} --namespace ${namespace} --for=condition=complete --timeout ${seconds_remaining}s
-#         kubectl_wait_status=$?
-#         set -o errexit
-#         time_since_start=$(( $(date +%s) - ${start} ))
-#         if [[ ${kubectl_wait_status} -eq 0 ]]; then
-#             echo "Done waiting for ${release} jobs at $(date --rfc-2822) (${time_since_start}s)"
-#         elif [[ ${time_since_start} -ge 4800 ]]; then
-#             echo "${release} job ${job} not completed due to timeout"
-#             return 1
-#         else
-#             echo "waiting for ${release} job ${job} failed with exit status ${kubectl_wait_status}"
-#             return 1
-#         fi
-#     done
-# }
-
-# wait_for_release() {
-#     local start now elapsed
-#     local release="$1"
-#     local namespace=$(helm list "${release}" | awk '$1=="'"$release"'" {print $NF}')
-#     start=$(date +%s)
-
-#     wait_for_jobs $release || exit 1
-
-#     # Wait for config map
-#     local secret_name=""
-#     while true ; do
-#         secret_name="$(kubectl get configmap -n "${namespace}" secrets-config -o jsonpath='{.data.current-secrets-name}')"
-#         if [[ -n "${secret_name}" ]] && kubectl get secrets -n "${namespace}" "${secret_name}" ; then
-#             break
-#         fi
-#         now=$(date +%s)
-#         elapsed="$((now - start))"
-#         if (( elapsed > 4800 )) ; then
-#             printf "\nTimed out waiting for %s config map (%s is %s seconds since start)\n" "${release}" "$(date --rfc-2822)" "${elapsed}"
-#         fi
-#         printf "\rWaiting for %s config map at %s (%ss)..." "${release}" "$(date --rfc-2822)" "${elapsed}"
-#         sleep 10
-#     done
-
-#     for (( i = 0  ; i < 480 ; i ++ )) ; do
-#         if is_namespace_ready "${namespace}" ; then
-#             break
-#         fi
-#         now=$(date +%s)
-#         printf "\rWaiting for %s pods at %s (%ss)..." "${release}" "$(date --rfc-2822)" $((now - start))
-#         sleep 10
-#     done
-
-#     now=$(date +%s)
-#     printf "\rDone waiting for %s pods at %s (%ss)\n" "${release}" "$(date --rfc-2822)" $((now - start))
-#     kubectl get pods --namespace="${namespace}"
-#     if ! is_namespace_ready "${namespace}" && [[ $i -eq 480 ]]; then
-#         kubectl get pods --namespace "${namespace}" --selector '!job-name' \
-#             --output 'custom-columns=NAME:.metadata.name,CONTAINERS:.status.containerStatuses[*].name,READY:.status.containerStatuses[*].ready' \
-#             | grep -E 'READY|false' \
-#             || true
-#         printf "%s pods are still pending after 80 minutes \n" "${release}"
-#         exit 1
-#     fi
-
-# }
 
 function semver_is_gte() {
   # Returns successfully if the left-hand semver is greater than or equal to the right-hand semver
@@ -189,10 +98,16 @@ set_kubecf_params() {
     if [[ ${cap_platform} == "eks" ]] ; then
         HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=${AWS_CLUSTER_CIDR}")
         HELM_PARAMS+=(--set "kube.service_cluster_ip_range=${AWS_SERVICE_CLUSTER_IP_RANGE}")
+    elif [[ ${cap_platform} == "gke" ]]; then
+        HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=${GKE_CLUSTER_CIDR}")
+        HELM_PARAMS+=(--set "kube.service_cluster_ip_range=${GKE_SERVICE_CLUSTER_IP_RANGE}")
     else
-        echo "TODO: cluster-cider and service-cluster-ip-range for AKS, GKE and CaaSP"
+        echo "TODO: cluster-cider and service-cluster-ip-range for AKS and CaaSP"
     fi
+
+    #Credhub is enabled by default
     #HELM_PARAMS+=(--set "enable.credhub=${ENABLE_CREDHUB}")
+
     #HELM_PARAMS+=(--set "enable.autoscaler=${ENABLE_AUTOSCALER}")
     if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
         echo "EXTERNAL_DB is not yet implemented in CI"
@@ -203,6 +118,8 @@ set_kubecf_params() {
         # HELM_PARAMS+=(--set "enable.mysql=false")
         # HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
     fi
+    HELM_PARAMS+=(--set "testing.brain_tests.enabled=true")
+    HELM_PARAMS+=(--set "testing.cf_acceptance_tests.enabled=true")
 }
 
 set -o allexport
