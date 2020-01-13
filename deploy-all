@@ -69,8 +69,6 @@ end
 
 Dir.chdir('../bosh-linux-stemcell-builder-ci') do
   %w[
-    develop-fissile
-    develop-os-images
     release-fissile
     release-os-images
     release-sles-os-images
@@ -81,55 +79,10 @@ Dir.chdir('../bosh-linux-stemcell-builder-ci') do
 end
 
 Dir.chdir('../cloudfoundry/ci/pipelines') do
-  # This has a bunch of pipelines, but we don't have a good way of
-  # selecting all of the relevant ones
-  run 'make', 'pre'
-  %w[
-    pipeline-cf-openstack-validator
-    pipeline-concourse-lftp-resource
-    pipeline-concourse-obs-resource
-    pipeline-post-publish
-    pipeline-helm-charts-check
-    pipeline-helm-charts-sync
-    pipeline-helm-charts-sync-container
-    pipeline-network-test
-    pipeline-rootfs-publish
-    pipeline-sle15-rootfs-publish
-    pipeline-publish-release-notes
-    pipeline-publish-scf-tarball
-    pipeline-suse-os-image-stemcell-builder
-    pipeline-suse-packages
-    pipeline-update-handling
-    pipeline-update-cflinuxfs
-    pipeline-final-releases
-  ].each do |target|
-    status "deploying #{target}"
-    run 'make', 'NON_INTERACTIVE=', target
-  end
+  # This has a bunch of pipelines
+  run 'make', 'pipelines'
 ensure
   run 'make', 'post'
-end
-
-Dir.chdir('../cf-buildpacks-ci') do
-  def update(*args)
-    run({ 'CONCOURSE_TARGET_NAME' => 'suse.de' }, 'bin/update-pipelines', *args)
-  end
-  %w[sle12 opensuse42].each do |stack|
-    status "deploying #{stack}-binary-builder pipeline"
-    update(*(%w[--include binary-builder --exclude new --stack] + [stack]))
-  end
-  status 'deploying buildpack builder pipelines'
-  update(*'--template buildpack --exclude apt-buildpack --stack sle12'.split)
-end
-
-# Java pipeline is special
-Dir.chdir('../cf-java-buildpack-dependency-builder/ci') do
-  status 'deploying Java dependencies pipeline'
-  run './set-master.sh', 'suse.de'
-end
-Dir.chdir('../cf-java-buildpack/ci') do
-  status 'deploying Java buildpack pipeline'
-  run './set-master.sh', 'suse.de'
 end
 
 Dir.chdir('../buildpacks-ci') do
