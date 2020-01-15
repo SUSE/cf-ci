@@ -22,10 +22,6 @@ monitor_url() {
       last_state=$new_state
     fi
     ((++count))
-    if [[ ${count} -gt 10800 ]]; then
-      echo "Ending monitor of ${app_url} due to timeout"
-      break
-    fi
     sleep 1
   done
 }
