@@ -30,7 +30,7 @@ variable "cluster_labels" {
 }
 
 variable "disk_size_gb" {
-    default = 60
+    default = 120
 }
 
 variable "gke_sa_key" {
