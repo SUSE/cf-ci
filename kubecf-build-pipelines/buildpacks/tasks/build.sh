@@ -32,7 +32,7 @@ base_dir=$(pwd)
 pushd gh_release
 RELEASE_VERSION=$(cat version)
 RELEASE_URL=$(cat body | grep -o "Release Tarball: .*" | sed 's/Release Tarball: //')
-RELEASE_SHA=$(sha1sum ${base_dir}/s3.suse_final_release/*.tgz | cut -d' ' -f1)
+RELEASE_SHA=$(sha1sum ${base_dir}/suse_final_release/*.tgz | cut -d' ' -f1)
 popd
 
 tasks_dir="$(dirname $0)"

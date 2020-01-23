@@ -11,7 +11,7 @@ inputs:
 - name: s3.stemcell-version
 - name: s3.fissile-linux
 - name: gh_release
-- name: s3.suse_final_release
+- name: suse_final_release
 params:
   STEMCELL_REPOSITORY: ~
   STEMCELL_VERSIONED_FILE: ~
