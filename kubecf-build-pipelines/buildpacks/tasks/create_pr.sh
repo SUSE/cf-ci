@@ -17,7 +17,7 @@ function update_buildpack_info() {
 
 BUILDPACK_NAME=$1
 KUBECF_VALUES=$2
-NEW_IMAGE_URL=$3
+BUILT_IMAGE=$3
 NEW_FILE_NAME=$4
 
 PYTHON_CODE=$(cat <<EOF 
@@ -28,11 +28,11 @@ import ruamel.yaml
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 
-NEW_URL = "/".join(NEW_IMAGE_URL.split("/", 2)[:2])
-IMAGE_URL = IMAGE_URL.split("-")
-NEW_VERSION = IMAGE_URL[-1]
-NEW_STEMCELL_OS = IMAGE_URL[3].split(":")[1]
-NEW_STEMCELL_VERSION = "-".join(IMAGE_URL[4:6])
+NEW_URL = "/".join(BUILT_IMAGE.split("/", 2)[:2])
+BUILT_IMAGE = BUILT_IMAGE.split("-")
+NEW_VERSION = BUILT_IMAGE[-1]
+NEW_STEMCELL_OS = BUILT_IMAGE[3].split(":")[1]
+NEW_STEMCELL_VERSION = "-".join(BUILT_IMAGE[4:6])
 
 with open("${KUBECF_VALUES}") as fp:
     buildpacks = yaml.load(fp)['releases']
@@ -71,8 +71,8 @@ git config --global user.email "$GIT_MAIL"
 git config --global user.name "$GIT_USER"
 
 RELEASE_VERSION=$(cat suse_final_release/version)
-NEW_IMAGE_URL=$(cat built_image/image)
-NEW_FILE=$(tar -zxOf *.tgz packages | tar -ztf - | grep zip | cut -d'/' -f3)
+BUILT_IMAGE=$(cat built_image/image)
+NEW_FILE=$(tar -zxOf suse_final_release/*.tgz packages | tar -ztf - | grep zip | cut -d'/' -f3)
 
 COMMIT_TITLE="Bump ${BUILDPACK_NAME} release to ${RELEASE_VERSION}"
 
@@ -84,7 +84,7 @@ git pull
 export GIT_BRANCH_NAME="bump_${BUILDPACK_NAME}-`date +%Y%m%d%H%M%S`"
 git checkout -b "${GIT_BRANCH_NAME}"
 
-update_buildpack_info "${BUILDPACK_NAME}" "${KUBECF_VALUES}" "${NEW_IMAGE_URL}" "${NEW_FILE}"
+update_buildpack_info "${BUILDPACK_NAME}" "${KUBECF_VALUES}" "${BUILT_IMAGE}" "${NEW_FILE}"
 
 git commit "${KUBECF_VALUES}" -m "${COMMIT_TITLE}"
 
