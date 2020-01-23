@@ -15,10 +15,10 @@ set -o errexit -o nounset
 
 function update_buildpack_info() {
 
-KUBECF_VALUES=$1
-RELEASE=$2
-NEW_VERSION=$4
-NEW_SHA=$5
+BUILDPACK_NAME=$1
+KUBECF_VALUES=$2
+NEW_IMAGE_URL=$3
+NEW_FILE_NAME=$4
 
 PYTHON_CODE=$(cat <<EOF 
 #!/usr/bin/python3
@@ -28,14 +28,23 @@ import ruamel.yaml
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 
+NEW_URL = "/".join(NEW_IMAGE_URL.split("/", 2)[:2])
+IMAGE_URL = IMAGE_URL.split("-")
+NEW_VERSION = IMAGE_URL[-1]
+NEW_STEMCELL_OS = IMAGE_URL[3].split(":")[1]
+NEW_STEMCELL_VERSION = "-".join(IMAGE_URL[4:6])
+
 with open("${KUBECF_VALUES}") as fp:
     buildpacks = yaml.load(fp)['releases']
 
-for buildpack in buildpacks:
-    if buildpack['value']['name'] == "${RELEASE}":
-        buildpack['value']['url'] = "${NEW_URL}"
-        buildpack['value']['version'] = "${NEW_VERSION}"
-        buildpack['value']['sha1'] = "${NEW_SHA}"
+for release in releases:
+    if release == "${BUILDPACK_NAME}":
+        buildpack['url'] = "${NEW_URL}"
+        buildpack['stemcell']['os'] = "${NEW_STEMCELL_OS}"
+        buildpack['stemcell']['version'] = "${NEW_STEMCELL_VERSION}"
+        new_file = buildpack['file'].split("/")[:3]
+        new_file.append("${NEW_FILE_NAME}")
+        buildpack['file'] = "/".join(new_file)
         break
 
 with open("${KUBECF_VALUES}", 'w') as f:
@@ -61,26 +70,21 @@ chmod 0600 ~/.ssh/id_ecdsa
 git config --global user.email "$GIT_MAIL"
 git config --global user.name "$GIT_USER"
 
-base_dir=$(pwd)
-# Get version from the GitHub release that triggered this task
-pushd suse_final_release
-#RELEASE_VERSION=$(cat version)
-#RELEASE_URL=$(cat body | grep -o "Release Tarball: .*" | sed 's/Release Tarball: //')
-#RELEASE_SHA=$(sha1sum ${base_dir}/suse_final_release/*.tgz | cut -d' ' -f1)
-FILE=$(tar -zxOf *.tgz packages | tar -ztf - | grep zip | cut -d'/' -f3)
-popd
+RELEASE_VERSION=$(cat suse_final_release/version)
+NEW_IMAGE_URL=$(cat built_image/image)
+NEW_FILE=$(tar -zxOf *.tgz packages | tar -ztf - | grep zip | cut -d'/' -f3)
 
-COMMIT_TITLE="Bump ${NAME_IN_ROLE_MANIFEST} release to ${RELEASE_VERSION}"
+COMMIT_TITLE="Bump ${BUILDPACK_NAME} release to ${RELEASE_VERSION}"
 
 # Update release in kubecf repo
 cp -r kubecf/. updated-kubecf/
 cd updated-kubecf
 
 git pull
-export GIT_BRANCH_NAME="bump_${NAME_IN_ROLE_MANIFEST}-`date +%Y%m%d%H%M%S`"
+export GIT_BRANCH_NAME="bump_${BUILDPACK_NAME}-`date +%Y%m%d%H%M%S`"
 git checkout -b "${GIT_BRANCH_NAME}"
 
-update_buildpack_info "${KUBECF_VALUES}" "${REGISTRY_URL}" "${VERSION}" "${NAME_IN_ROLE_MANIFEST}" "${RELEASE_VERSION}"
+update_buildpack_info "${BUILDPACK_NAME}" "${KUBECF_VALUES}" "${NEW_IMAGE_URL}" "${NEW_FILE}"
 
 git commit "${KUBECF_VALUES}" -m "${COMMIT_TITLE}"
 
