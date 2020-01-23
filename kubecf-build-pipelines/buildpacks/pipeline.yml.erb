@@ -144,6 +144,7 @@ jobs:
       input_mapping:
         s3.stemcell-version: s3.fissile-stemcell-version 
         gh_release: <%= release[:name] %>-gh-release
+        suse_final_release: suse-final-release-<%= release[:name] %>
       params:
         STEMCELL_REPOSITORY: <%= stemcell_repository %>
         STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
