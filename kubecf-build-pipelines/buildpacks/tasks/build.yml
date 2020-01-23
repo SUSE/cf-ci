@@ -10,7 +10,6 @@ inputs:
 - name: build-image-resource
 - name: s3.stemcell-version
 - name: s3.fissile-linux
-- name: gh_release
 - name: suse_final_release
 params:
   STEMCELL_REPOSITORY: ~

@@ -29,10 +29,10 @@ docker pull "${stemcell_image}"
 # Build the releases.
 base_dir=$(pwd)
 # Get version from the GitHub release that triggered this task
-pushd gh_release
+pushd suse_final_release
 RELEASE_VERSION=$(cat version)
-RELEASE_URL=$(cat body | grep -o "Release Tarball: .*" | sed 's/Release Tarball: //')
-RELEASE_SHA=$(sha1sum ${base_dir}/suse_final_release/*.tgz | cut -d' ' -f1)
+RELEASE_URL=$(cat url)
+RELEASE_SHA=$(sha1sum *.tgz | cut -d' ' -f1)
 popd
 
 tasks_dir="$(dirname $0)"

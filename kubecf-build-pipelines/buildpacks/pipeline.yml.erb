@@ -142,8 +142,7 @@ jobs:
     - task: build
       privileged: true
       input_mapping:
-        s3.stemcell-version: s3.fissile-stemcell-version 
-        gh_release: <%= release[:name] %>-gh-release
+        s3.stemcell-version: s3.fissile-stemcell-version
         suse_final_release: suse-final-release-<%= release[:name] %>
       params:
         STEMCELL_REPOSITORY: <%= stemcell_repository %>
