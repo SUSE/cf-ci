@@ -7,10 +7,9 @@ image_resource:
     tag: kubecf
 inputs:
 - name: ci
-- name: gh_release
 - name: suse_final_release
 - name: kubecf
-- name: build-image-output
+- name: built_image
 params:
   GITHUB_TOKEN: ~
   GIT_MAIL: ~

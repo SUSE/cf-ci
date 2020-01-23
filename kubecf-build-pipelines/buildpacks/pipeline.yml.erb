@@ -158,6 +158,7 @@ jobs:
       privileged: true
       input_mapping:
         suse_final_release: suse-final-release-<%= release[:name] %>
+        built_image: built_image
       params:
         GITHUB_TOKEN: <%= github_access_token %>
         GITHUB_PRIVATE_KEY: |

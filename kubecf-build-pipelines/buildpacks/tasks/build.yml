@@ -12,7 +12,7 @@ inputs:
 - name: s3.fissile-linux
 - name: suse_final_release
 outputs:
-- name: build-image-output
+- name: built_image
 params:
   STEMCELL_REPOSITORY: ~
   STEMCELL_VERSIONED_FILE: ~
