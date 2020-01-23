@@ -10,6 +10,7 @@ inputs:
 - name: gh_release
 - name: suse_final_release
 - name: kubecf
+- name: build-image-output
 params:
   GITHUB_TOKEN: ~
   GIT_MAIL: ~
@@ -17,6 +18,6 @@ params:
   RELEASE_NAME: ~
   NAME_IN_ROLE_MANIFEST: ~
   KUBECF_BRANCH: ~
-  KUBECF_OPS_SET_SUSE_BUILDPACKS: ~
+  KUBECF_VALUES: ~
 run:
   path: ci/kubecf-build-pipelines/buildpacks/tasks/create_pr.sh

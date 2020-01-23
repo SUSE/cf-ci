@@ -11,6 +11,8 @@ inputs:
 - name: s3.stemcell-version
 - name: s3.fissile-linux
 - name: suse_final_release
+outputs:
+- name: build-image-output
 params:
   STEMCELL_REPOSITORY: ~
   STEMCELL_VERSIONED_FILE: ~

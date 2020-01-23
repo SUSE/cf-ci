@@ -158,7 +158,6 @@ jobs:
       privileged: true
       input_mapping:
         suse_final_release: suse-final-release-<%= release[:name] %>
-        gh_release: <%= release[:name] %>-gh-release
       params:
         GITHUB_TOKEN: <%= github_access_token %>
         GITHUB_PRIVATE_KEY: |
@@ -168,6 +167,6 @@ jobs:
         RELEASE_NAME: <%= release[:name] %>
         NAME_IN_ROLE_MANIFEST: <%= release[:name_in_role_manifest] %>
         KUBECF_BRANCH: <%= kubecf_branch %>
-        KUBECF_OPS_SET_SUSE_BUILDPACKS: <%= kubecf_ops_set_suse_buildpacks %>
+        KUBECF_VALUES: <%= kubecf_values %>
       file: ci/kubecf-build-pipelines/buildpacks/tasks/create_pr.yml
 <% end %>

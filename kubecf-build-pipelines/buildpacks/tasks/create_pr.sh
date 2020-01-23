@@ -15,9 +15,8 @@ set -o errexit -o nounset
 
 function update_buildpack_info() {
 
-KUBECF_OPS_SET_SUSE_BUILDPACKS=$1
+KUBECF_VALUES=$1
 RELEASE=$2
-NEW_URL=$3
 NEW_VERSION=$4
 NEW_SHA=$5
 
@@ -29,8 +28,8 @@ import ruamel.yaml
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 
-with open("${KUBECF_OPS_SET_SUSE_BUILDPACKS}") as fp:
-    buildpacks = yaml.load(fp)
+with open("${KUBECF_VALUES}") as fp:
+    buildpacks = yaml.load(fp)['releases']
 
 for buildpack in buildpacks:
     if buildpack['value']['name'] == "${RELEASE}":
@@ -39,7 +38,7 @@ for buildpack in buildpacks:
         buildpack['value']['sha1'] = "${NEW_SHA}"
         break
 
-with open("${KUBECF_OPS_SET_SUSE_BUILDPACKS}", 'w') as f:
+with open("${KUBECF_VALUES}", 'w') as f:
     yaml.dump(buildpacks, f)
 
 EOF
@@ -64,10 +63,11 @@ git config --global user.name "$GIT_USER"
 
 base_dir=$(pwd)
 # Get version from the GitHub release that triggered this task
-pushd gh_release
-RELEASE_VERSION=$(cat version)
-RELEASE_URL=$(cat body | grep -o "Release Tarball: .*" | sed 's/Release Tarball: //')
-RELEASE_SHA=$(sha1sum ${base_dir}/suse_final_release/*.tgz | cut -d' ' -f1)
+pushd suse_final_release
+#RELEASE_VERSION=$(cat version)
+#RELEASE_URL=$(cat body | grep -o "Release Tarball: .*" | sed 's/Release Tarball: //')
+#RELEASE_SHA=$(sha1sum ${base_dir}/suse_final_release/*.tgz | cut -d' ' -f1)
+FILE=$(tar -zxOf *.tgz packages | tar -ztf - | grep zip | cut -d'/' -f3)
 popd
 
 COMMIT_TITLE="Bump ${NAME_IN_ROLE_MANIFEST} release to ${RELEASE_VERSION}"
@@ -80,9 +80,9 @@ git pull
 export GIT_BRANCH_NAME="bump_${NAME_IN_ROLE_MANIFEST}-`date +%Y%m%d%H%M%S`"
 git checkout -b "${GIT_BRANCH_NAME}"
 
-update_buildpack_info "${KUBECF_OPS_SET_SUSE_BUILDPACKS}" "${NAME_IN_ROLE_MANIFEST}" "${RELEASE_URL}" "${RELEASE_VERSION}" "${RELEASE_SHA}"
+update_buildpack_info "${KUBECF_VALUES}" "${REGISTRY_URL}" "${VERSION}" "${NAME_IN_ROLE_MANIFEST}" "${RELEASE_VERSION}"
 
-git commit "${KUBECF_OPS_SET_SUSE_BUILDPACKS}" -m "${COMMIT_TITLE}"
+git commit "${KUBECF_VALUES}" -m "${COMMIT_TITLE}"
 
 # Open a Pull Request
 PR_MESSAGE=`echo -e "${COMMIT_TITLE}"`
