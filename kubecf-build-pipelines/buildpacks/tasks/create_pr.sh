@@ -5,13 +5,13 @@ set -o errexit -o nounset
 # Updates release information in role-manifest
 # Looks for a release like:
 #
-# - type: replace
-#   path: /releases/name=go-buildpack
-#   value:
-#     name: suse-go-buildpack
-#     url: "https://s3.amazonaws.com/suse-final-releases/go-buildpack-release-1.8.42.1.tgz"
-#     version: "1.8.42.1"
-#     sha1: "f811bef86bfba4532d6a7f9653444c7901c59989"
+# suse-go-buildpack:
+#   url: registry.suse.com/cap-staging
+#   version: "1.9.4.1"
+#   stemcell:
+#     os: SLE_15_SP1
+#     version: 21.3-7.0.0_374.gb8e8e6af
+#   file: suse-go-buildpack/packages/go-buildpack-sle15/go-buildpack-sle15-v1.9.4.1-1.1-436eaf5d.zip
 
 function update_buildpack_info() {
 
@@ -25,30 +25,36 @@ PYTHON_CODE=$(cat <<EOF
 
 import ruamel.yaml
 
+def represent_none(self, data):
+    return self.represent_scalar(u'tag:yaml.org,2002:null', u'~')
+
+# Replaces the filename at the end of the original 'file'.
+def get_new_filename():
+    new_file = values['releases']["${BUILDPACK_NAME}"]['file'].split("/")[:3]
+    new_file.append("${NEW_FILE_NAME}")
+    return "/".join(new_file)
+
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
+yaml.representer.add_representer(type(None), represent_none)
 
-NEW_URL = "/".join(BUILT_IMAGE.split("/", 2)[:2])
-BUILT_IMAGE = BUILT_IMAGE.split("-")
+# Breaking down the built_url to retrieve individual values.
+NEW_URL = "/".join("${BUILT_IMAGE}".split("/", 2)[:2])
+BUILT_IMAGE = "${BUILT_IMAGE}".split("-")
 NEW_VERSION = BUILT_IMAGE[-1]
 NEW_STEMCELL_OS = BUILT_IMAGE[3].split(":")[1]
 NEW_STEMCELL_VERSION = "-".join(BUILT_IMAGE[4:6])
 
 with open("${KUBECF_VALUES}") as fp:
-    buildpacks = yaml.load(fp)['releases']
+    values = yaml.load(fp)
 
-for release in releases:
-    if release == "${BUILDPACK_NAME}":
-        buildpack['url'] = "${NEW_URL}"
-        buildpack['stemcell']['os'] = "${NEW_STEMCELL_OS}"
-        buildpack['stemcell']['version'] = "${NEW_STEMCELL_VERSION}"
-        new_file = buildpack['file'].split("/")[:3]
-        new_file.append("${NEW_FILE_NAME}")
-        buildpack['file'] = "/".join(new_file)
-        break
+values['releases']["${BUILDPACK_NAME}"]['url'] = NEW_URL
+values['releases']["${BUILDPACK_NAME}"]['stemcell']['os'] = NEW_STEMCELL_OS
+values['releases']["${BUILDPACK_NAME}"]['stemcell']['version'] = NEW_STEMCELL_VERSION
+values['releases']["${BUILDPACK_NAME}"]['file'] = get_new_filename()
 
 with open("${KUBECF_VALUES}", 'w') as f:
-    yaml.dump(buildpacks, f)
+    yaml.dump(values, f)
 
 EOF
 )
