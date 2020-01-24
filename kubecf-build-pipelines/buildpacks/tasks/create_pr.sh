@@ -10,7 +10,7 @@ set -o errexit -o nounset
 #   version: "1.9.4.1"
 #   stemcell:
 #     os: SLE_15_SP1
-#     version: 21.3-7.0.0_374.gb8e8e6af
+#     version: 23.1-7.0.0_374.gb8e8e6af
 #   file: suse-go-buildpack/packages/go-buildpack-sle15/go-buildpack-sle15-v1.9.4.1-1.1-436eaf5d.zip
 
 function update_buildpack_info() {
