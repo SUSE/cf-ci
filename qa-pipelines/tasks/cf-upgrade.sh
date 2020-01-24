@@ -4,6 +4,8 @@ set -o errexit -o nounset
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 trap "upload_klogs_on_failure ${CF_NAMESPACE} ${UAA_NAMESPACE}" EXIT
+monitor_kubectl_pods &
+
 
 # monitor_url takes a URL argument and a path to a log file
 # This will time out after 3 hours. Until then, repeatedly curl the URL with a 1-second wait period, and log the response
@@ -102,17 +104,15 @@ cf orgs
 echo "Checking /v2/users for 'pre-upgrade-user':"
 cf curl /v2/users | jq -e '.resources[] | .entity.username | select( . == "pre-upgrade-user")'
 
-# While the background app monitoring job is running, *and* the app isn't yet ready, sleep
-while jobs %% &>/dev/null && ! tail -1 ${monitor_file} | grep -q "200 OK"; do
+# Sleep until the monitored app is ready again, post-upgrade
+while ! tail -1 ${monitor_file} | grep -q "200 OK"; do
   sleep 1
 done
 
-# If we get here because the app is ready, monitor_url will still be running in the background
-# Kill it, so we don't get any messages about the app becoming unreachable at the end
-if jobs %% &>/dev/null; then
-  echo "Terminating app monitoring background job"
-  kill %1
-fi
+# Kill the app monitoring job (always the most recently backgrounded job),
+# so we don't get any messages about the app becoming unreachable at the end
+echo "Terminating app monitoring background job"
+kill %%
 
 echo "Results of app monitoring:"
 echo "SECONDS|STATUS"

@@ -19,6 +19,29 @@ __set_errexit() {
   fi
 }
 
+monitor_kubectl_pods()
+(
+  mkdir -p "$HOME/klog/monitor_kubectl_pods/"
+  cd "$HOME/klog/monitor_kubectl_pods/"
+  echo "monitoring kubectl pods"
+  start_date=$(date +%s)
+  while true; do
+    time_since_start=$(($(date +%s) - ${start_date}))
+    # zero-pad to 5 places for sorting when monitoring will last less than 27 hours
+    time_since_start=$(printf "%05d\n" ${time_since_start})
+    kubectl get pods --all-namespaces > new.log
+    last_file=$(ls -tr1  | tail -2 | head -1)
+    if [[ ${last_file} == new.log ]]; then
+      mv new.log ${time_since_start}.log
+    else
+      if ! diff -q <(awk '{print $1, $2, $3, $4}' new.log) <(awk '{print $1, $2, $3, $4}' ${last_file})  > /dev/null; then
+        mv new.log ${time_since_start}.log
+      fi
+    fi
+    sleep 10
+  done
+)
+
 upload_klogs_on_failure() {
   # This function should run whenever the task exits with a failure.
   # Task scripts should unset this as the EXIT handler before successful exits

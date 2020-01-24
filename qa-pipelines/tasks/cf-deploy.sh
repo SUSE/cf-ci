@@ -4,6 +4,7 @@ set -o nounset
 
 source "ci/qa-pipelines/tasks/lib/cf-deploy-upgrade-common.sh"
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
+monitor_kubectl_pods &
 
 # Delete legacy psp/crb, and set up new psps, crs, and necessary crbs for CAP version
 kubectl delete psp --ignore-not-found suse.cap.psp
