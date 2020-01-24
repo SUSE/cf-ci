@@ -2,7 +2,7 @@
 
 set -o errexit -o nounset
 
-# Updates release information in role-manifest
+# Updates release information in values.yaml
 # Looks for a release like:
 #
 # suse-go-buildpack:
