@@ -27,6 +27,7 @@ params:
   KLOG_COLLECTION_ON_FAILURE: false
   EMBEDDED_UAA: false # true or false
   ENABLE_CREDHUB: true
+  ENABLE_EIRINI: false
   ENABLE_AUTOSCALER: true
   EXTERNAL_DB: false # true or false
   HA_STRICT: "" # set to true or false when testing HA_strict
