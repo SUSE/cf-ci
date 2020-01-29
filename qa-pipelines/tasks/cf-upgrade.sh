@@ -48,7 +48,9 @@ set_helm_params # Sets HELM_PARAMS.
 set_uaa_params # Adds uaa specific params to HELM_PARAMS.
 
 echo "UAA customization..."
-echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+echo "${HELM_PARAMS[@]}" \
+    | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g' \
+    | sed 's/secrets\.DB_EXTERNAL_PASSWORD=[^[:space:]]*/secrets.DB_EXTERNAL_PASSWORD=<REDACTED>/g'
 
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
   helm upgrade uaa ${CAP_DIRECTORY}/helm/uaa/ \
@@ -73,7 +75,9 @@ if [[ "${HA}" == true ]] && [[ -n "${HA_STRICT:-}" ]]; then
 fi
 
 echo "SCF customization..."
-echo "${HELM_PARAMS[@]}" | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g'
+echo "${HELM_PARAMS[@]}" \
+    | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g' \
+    | sed 's/secrets\.DB_EXTERNAL_PASSWORD=[^[:space:]]*/secrets.DB_EXTERNAL_PASSWORD=<REDACTED>/g'
 
 helm upgrade scf ${CAP_DIRECTORY}/helm/cf/ \
     --namespace "${CF_NAMESPACE}" \
