@@ -224,9 +224,10 @@ set_helm_params() {
         HELM_PARAMS+=(--set "enable.uaa=true")
     fi
     if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
-        HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=external-db-mariadb.external-db.svc.cluster.local")
-        HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=3306")
-        HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=root")
+        EXTERNAL_DB_PASS=${EXTERNAL_DB_PASS:-$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)}
+        HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=${EXTERNAL_DB_HOST:-external-db-mariadb.external-db.svc.cluster.local}")
+        HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=${EXTERNAL_DB_PORT:-3306}")
+        HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=${EXTERNAL_DB_USER:-root}")
         HELM_PARAMS+=(--set "enable.mysql=false")
         HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
     fi

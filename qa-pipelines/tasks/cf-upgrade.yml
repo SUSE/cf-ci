@@ -29,6 +29,10 @@ params:
   ENABLE_CREDHUB: true
   ENABLE_AUTOSCALER: true
   EXTERNAL_DB: false # true or false
+  EXTERNAL_DB_HOST: ~
+  EXTERNAL_DB_PORT: ~
+  EXTERNAL_DB_USER: ~
+  EXTERNAL_DB_PASS: ~
   HA_STRICT: "" # set to true or false when testing HA_strict
 
 run:
