@@ -1,0 +1,101 @@
+---
+<%
+
+# When trigger_path is set, this will be monitored by concourse for changes,
+# otherwise the whole repo will be monitored.
+#
+# When release_dir is set, a bosh release will be created from within that directory, otherwise
+# the root directory will be used.
+releases = [
+  {
+    name: "brain-tests",
+    uri: "git@github.com:SUSE/brain-tests-release.git",
+    name_in_role_manifest: false, # Do not update in SCF
+    branch: "bisingh/bump-golang"
+  }
+# TODO: Add scf-helper when we are able to build a bosh release for that (remove role-manifest.yml from the spec)
+#  { name: "scf-helper", uri: "git@github.com:SUSE/scf-helper-release.git" }
+]
+%>
+
+resources:
+- name: ci
+  type: git
+  source:
+    uri: <%= ci_repo %>
+    branch: <%= ci_branch %>
+<% releases.each do |release| %>
+- name: git.<%= release[:name] %>-release
+  type: git
+  source:
+    uri: <%= release[:uri] %>
+    branch: <%= release[:branch] %>
+    submodules: all
+    private_key: |
+      <%= github_private_key.gsub("\n", "\n      ") %>
+  <% if release[:trigger_path] %>
+    paths: [<%= release[:trigger_path] %>]
+  <% end %>
+# Hack to avoid pipeline triggering itself. We push to a "different" resource.
+- name: git.push-<%= release[:name] %>-release
+  type: git
+  source:
+    uri: <%= release[:uri] %>
+    branch: master
+    private_key: |
+      <%= github_private_key.gsub("\n", "\n      ") %>
+- name: s3.suse-final-release-<%= release[:name] %>
+  type: s3
+  source:
+    bucket: suse-final-releases
+    regexp: <%= release[:name] %>-release-(.*).tgz
+    access_key_id: <%= aws_access_key %>
+    secret_access_key: <%= aws_secret_key %>
+    private_key: |
+      <%= github_private_key.gsub("\n", "\n      ") %>
+<% end %>
+
+jobs:
+<% releases.each do |release| %>
+- name: create-<%= release[:name] %>-final-release
+  plan:
+  - in_parallel:
+    - get: ci
+      params:
+        submodules: none
+    - get: git.<%= release[:name] %>-release
+      <% if release[:trigger_path] %>
+      trigger: true
+      <% end %>
+  - task: build_final_release
+    input_mapping: { release: git.<%= release[:name] %>-release }
+    params:
+      RELEASE_NAME: <%= release[:name] %>
+      RELEASE_DIRECTORY: <%= release[:release_dir].to_s.inspect %>
+      ACCESS_KEY_ID: <%= aws_access_key %>
+      SECRET_ACCESS_KEY: <%= aws_secret_key %>
+      <% if release[:trigger_path] == "config/blobs.yml" %>
+      VERSION_REGEXP: '.*?-v?([0-9]+(\.[0-9]+)+)-.*'
+      <% end %>
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: splatform/bosh-cli
+          tag: latest
+      inputs:
+        - name: ci
+        - name: release
+      run:
+        path: ci/ci/pipelines/final-releases/tasks/build_final_release.sh
+      outputs:
+        - name: release_tarball_dir
+        - name: git_output
+  - put: s3.suse-final-release-<%= release[:name] %>
+    params:
+      file: release_tarball_dir/<%= release[:name] %>-release-*.tgz
+      acl: public-read
+  - put: git.push-<%= release[:name] %>-release
+    params: { repository: "git_output" }
+<% end %>
