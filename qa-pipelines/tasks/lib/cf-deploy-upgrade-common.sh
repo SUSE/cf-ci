@@ -212,6 +212,7 @@ set_helm_params() {
         HELM_PARAMS+=(--set "enable.credhub=${ENABLE_CREDHUB}")
     fi
 
+
     if [[ ${cap_platform} == "azure" ]] || [[ ${cap_platform} == "gke" ]] ||
      [[ ${cap_platform} == "eks" ]]; then
         HELM_PARAMS+=(--set "services.loadbalanced=true")
@@ -229,6 +230,10 @@ set_helm_params() {
         HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=root")
         HELM_PARAMS+=(--set "enable.mysql=false")
         HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
+    fi
+    if [[ "${ENABLE_EIRINI:-false}" == "true" ]]; then
+        HELM_PARAMS+=(--set "enable.eirini=true")
+        HELM_PARAMS+=(--set "env.KUBE_CSR_AUTO_APPROVAL=true")
     fi
     if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")

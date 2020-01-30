@@ -132,7 +132,7 @@ azure_set_record_sets_for_namespace() {
         if [[ ${lb_svc} == "uaa-uaa-public" ]]; then
             azure_set_record uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
             azure_set_record *.uaa.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
-        elif [[ ${lb_svc} == diego-ssh-ssh-proxy-public ]]; then
+        elif [[ ${lb_svc} == diego-ssh-ssh-proxy-public ]] || [[ ${lb_svc} == eirini-ssh-eirini-ssh-proxy-public ]]; then
             azure_set_record ssh.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
         elif [[ ${lb_svc} == tcp-router-tcp-router-public ]]; then
             azure_set_record tcp.$AZURE_AKS_RESOURCE_GROUP "${lb_svc_obj}"
