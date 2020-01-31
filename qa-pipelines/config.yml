@@ -40,6 +40,7 @@ external-db-host: ~
 external-db-user: ~
 external-db-port: ~
 external-db-pass: ~
+external-db-ssl-mode: false
 # The following two options test that ha strict mode works by adjusting the diego_api count to 1
 # This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true
 # For non-upgrade pipelines, this affects cf-deploy, and for upgrade pipelines, it affects the upgrade step

@@ -83,6 +83,11 @@ aliases:
     ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
     EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
     EXTERNAL_DB: <%= enable_external_uaa_scf_db == true %>
+    EXTERNAL_DB_HOST: <%= external_db_host %>
+    EXTERNAL_DB_PORT: <%= external_db_port %>
+    EXTERNAL_DB_USER: <%= external_db_user %>
+    EXTERNAL_DB_PASS: <%= external_db_pass %>
+    EXTERNAL_DB_SSL_MODE: <%= external_db_ssl_mode == true %>
 
   # Terraform AKS Configuration
   terraform-aks-params: &terraform-aks-params
