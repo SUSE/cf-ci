@@ -35,7 +35,7 @@ params:
   EXTERNAL_DB_PORT: ~
   EXTERNAL_DB_USER: ~
   EXTERNAL_DB_PASS: ~
-  EXTERNAL_DB_SSL_MODE: false
+  EXTERNAL_DB_SSL: false
   HA_STRICT: "" # set to true or false when testing HA_strict
 
 run:

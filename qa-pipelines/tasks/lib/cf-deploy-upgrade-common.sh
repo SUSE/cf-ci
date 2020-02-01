@@ -228,7 +228,13 @@ set_helm_params() {
         HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=${EXTERNAL_DB_HOST:-external-db-mariadb.external-db.svc.cluster.local}")
         HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=${EXTERNAL_DB_PORT:-3306}")
         HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=${EXTERNAL_DB_USER:-root}")
-        HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=${EXTERNAL_DB_SSL_MODE:-false}")
+        if [[ ${EXTERNAL_DB_SSL:-false} == "true" ]]; then
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=true")
+            HELM_PARAMS+=(--set "env.UAADB_TLS=enabled")
+        else
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=false")
+            HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
+        fi
         HELM_PARAMS+=(--set "enable.mysql=false")
         HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
     fi
