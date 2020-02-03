@@ -2,8 +2,8 @@
 
 set -o errexit -o nounset
 
-# Updates release information in values.yaml
-# Looks for a release like:
+# Updates release information in values.yaml.
+# It looks for a release like:
 #
 # suse-go-buildpack:
 #   url: registry.suse.com/cap-staging
@@ -25,6 +25,7 @@ PYTHON_CODE=$(cat <<EOF
 
 import ruamel.yaml
 
+# Adds ~ to the null values to preserve existing structure of values.yaml.
 def represent_none(self, data):
     return self.represent_scalar(u'tag:yaml.org,2002:null', u'~')
 
