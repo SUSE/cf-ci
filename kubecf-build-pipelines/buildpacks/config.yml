@@ -4,7 +4,7 @@ build-image-resource-repo: https://github.com/concourse/docker-image-resource
 build-image-resource-branch: master
 kubecf-repo: git@github.com:SUSE/kubecf.git
 kubecf-branch: master
-kubecf-ops-set-suse-buildpacks: deploy/helm/kubecf/assets/operations/buildpacks/set_suse_buildpacks.yaml
+kubecf-values: deploy/helm/kubecf/values.yaml
 fissile-linux-s3-bucket: cf-opensusefs2
 stemcell-repository: splatform/fissile-stemcell-sle
 stemcell-versions-s3-bucket: cf-operators

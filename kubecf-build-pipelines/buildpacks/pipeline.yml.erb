@@ -12,61 +12,61 @@ releases = [
     name: "go-buildpack",
     uri: "git@github.com:SUSE/cf-go-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-go-buildpack"
+    name_in_values_yaml: "suse-go-buildpack"
   },
   {
     name: "nodejs-buildpack",
     uri: "git@github.com:SUSE/cf-nodejs-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-nodejs-buildpack"
+    name_in_values_yaml: "suse-nodejs-buildpack"
   },
   {
     name: "python-buildpack",
     uri: "git@github.com:SUSE/cf-python-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-python-buildpack"
+    name_in_values_yaml: "suse-python-buildpack"
   },
   {
     name: "staticfile-buildpack",
     uri: "git@github.com:SUSE/cf-staticfile-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-staticfile-buildpack"
+    name_in_values_yaml: "suse-staticfile-buildpack"
   },
   {
     name: "nginx-buildpack",
     uri: "git@github.com:SUSE/cf-nginx-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-nginx-buildpack"
+    name_in_values_yaml: "suse-nginx-buildpack"
   },
   {
     name: "java-buildpack",
     uri: "git@github.com:SUSE/cf-java-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-java-buildpack"
+    name_in_values_yaml: "suse-java-buildpack"
   },
   {
     name: "dotnet-core-buildpack",
     uri:  "git@github.com:SUSE/cf-dotnet-core-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-dotnet-core-buildpack"
+    name_in_values_yaml: "suse-dotnet-core-buildpack"
   },
   {
     name: "php-buildpack",
     uri: "git@github.com:SUSE/cf-php-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-php-buildpack"
+    name_in_values_yaml: "suse-php-buildpack"
   },
   {
     name: "ruby-buildpack",
     uri: "git@github.com:SUSE/cf-ruby-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-ruby-buildpack"
+    name_in_values_yaml: "suse-ruby-buildpack"
   },
   {
     name: "binary-buildpack",
     uri: "git@github.com:SUSE/cf-binary-buildpack-release.git",
     trigger_path: "config/blobs.yml",
-    name_in_role_manifest: "suse-binary-buildpack"
+    name_in_values_yaml: "suse-binary-buildpack"
   }
 ]
 %>
@@ -142,8 +142,8 @@ jobs:
     - task: build
       privileged: true
       input_mapping:
-        s3.stemcell-version: s3.fissile-stemcell-version 
-        gh_release: <%= release[:name] %>-gh-release
+        s3.stemcell-version: s3.fissile-stemcell-version
+        suse_final_release: suse-final-release-<%= release[:name] %>
       params:
         STEMCELL_REPOSITORY: <%= stemcell_repository %>
         STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
@@ -158,7 +158,7 @@ jobs:
       privileged: true
       input_mapping:
         suse_final_release: suse-final-release-<%= release[:name] %>
-        gh_release: <%= release[:name] %>-gh-release
+        built_image: built_image
       params:
         GITHUB_TOKEN: <%= github_access_token %>
         GITHUB_PRIVATE_KEY: |
@@ -166,8 +166,8 @@ jobs:
         GIT_MAIL: <%= github_username %>
         GIT_USER: suse-cf-ci-bot
         RELEASE_NAME: <%= release[:name] %>
-        NAME_IN_ROLE_MANIFEST: <%= release[:name_in_role_manifest] %>
+        BUILDPACK_NAME: <%= release[:name_in_values_yaml] %>
         KUBECF_BRANCH: <%= kubecf_branch %>
-        KUBECF_OPS_SET_SUSE_BUILDPACKS: <%= kubecf_ops_set_suse_buildpacks %>
+        KUBECF_VALUES: <%= kubecf_values %>
       file: ci/kubecf-build-pipelines/buildpacks/tasks/create_pr.yml
 <% end %>

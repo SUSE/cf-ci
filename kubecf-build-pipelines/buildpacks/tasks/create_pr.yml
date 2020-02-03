@@ -7,16 +7,16 @@ image_resource:
     tag: kubecf
 inputs:
 - name: ci
-- name: gh_release
 - name: suse_final_release
 - name: kubecf
+- name: built_image
 params:
   GITHUB_TOKEN: ~
   GIT_MAIL: ~
   GIT_USER: ~
   RELEASE_NAME: ~
-  NAME_IN_ROLE_MANIFEST: ~
+  BUILDPACK_NAME: ~
   KUBECF_BRANCH: ~
-  KUBECF_OPS_SET_SUSE_BUILDPACKS: ~
+  KUBECF_VALUES: ~
 run:
   path: ci/kubecf-build-pipelines/buildpacks/tasks/create_pr.sh

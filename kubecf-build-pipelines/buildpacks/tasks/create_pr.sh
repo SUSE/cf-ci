@@ -2,45 +2,60 @@
 
 set -o errexit -o nounset
 
-# Updates release information in role-manifest
-# Looks for a release like:
+# Updates release information in values.yaml.
+# It looks for a release like:
 #
-# - type: replace
-#   path: /releases/name=go-buildpack
-#   value:
-#     name: suse-go-buildpack
-#     url: "https://s3.amazonaws.com/suse-final-releases/go-buildpack-release-1.8.42.1.tgz"
-#     version: "1.8.42.1"
-#     sha1: "f811bef86bfba4532d6a7f9653444c7901c59989"
+# suse-go-buildpack:
+#   url: registry.suse.com/cap-staging
+#   version: "1.9.4.1"
+#   stemcell:
+#     os: SLE_15_SP1
+#     version: 23.1-7.0.0_374.gb8e8e6af
+#   file: suse-go-buildpack/packages/go-buildpack-sle15/go-buildpack-sle15-v1.9.4.1-1.1-436eaf5d.zip
 
 function update_buildpack_info() {
 
-KUBECF_OPS_SET_SUSE_BUILDPACKS=$1
-RELEASE=$2
-NEW_URL=$3
-NEW_VERSION=$4
-NEW_SHA=$5
+BUILDPACK_NAME=$1
+KUBECF_VALUES=$2
+BUILT_IMAGE=$3
+NEW_FILE_NAME=$4
 
 PYTHON_CODE=$(cat <<EOF 
 #!/usr/bin/python3
 
 import ruamel.yaml
 
+# Adds ~ to the null values to preserve existing structure of values.yaml.
+def represent_none(self, data):
+    return self.represent_scalar(u'tag:yaml.org,2002:null', u'~')
+
+# Replaces the filename at the end of the original 'file'.
+def get_new_filename():
+    new_file = values['releases']["${BUILDPACK_NAME}"]['file'].split("/")[:3]
+    new_file.append("${NEW_FILE_NAME}")
+    return "/".join(new_file)
+
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
+yaml.representer.add_representer(type(None), represent_none)
 
-with open("${KUBECF_OPS_SET_SUSE_BUILDPACKS}") as fp:
-    buildpacks = yaml.load(fp)
+# Breaking down the built_url to retrieve individual values.
+NEW_URL = "/".join("${BUILT_IMAGE}".split("/", 2)[:2])
+BUILT_IMAGE = "${BUILT_IMAGE}".split("-")
+NEW_VERSION = BUILT_IMAGE[-1]
+NEW_STEMCELL_OS = BUILT_IMAGE[3].split(":")[1]
+NEW_STEMCELL_VERSION = "-".join(BUILT_IMAGE[4:6])
 
-for buildpack in buildpacks:
-    if buildpack['value']['name'] == "${RELEASE}":
-        buildpack['value']['url'] = "${NEW_URL}"
-        buildpack['value']['version'] = "${NEW_VERSION}"
-        buildpack['value']['sha1'] = "${NEW_SHA}"
-        break
+with open("${KUBECF_VALUES}") as fp:
+    values = yaml.load(fp)
 
-with open("${KUBECF_OPS_SET_SUSE_BUILDPACKS}", 'w') as f:
-    yaml.dump(buildpacks, f)
+values['releases']["${BUILDPACK_NAME}"]['url'] = NEW_URL
+values['releases']["${BUILDPACK_NAME}"]['stemcell']['os'] = NEW_STEMCELL_OS
+values['releases']["${BUILDPACK_NAME}"]['stemcell']['version'] = NEW_STEMCELL_VERSION
+values['releases']["${BUILDPACK_NAME}"]['file'] = get_new_filename()
+
+with open("${KUBECF_VALUES}", 'w') as f:
+    yaml.dump(values, f)
 
 EOF
 )
@@ -62,27 +77,23 @@ chmod 0600 ~/.ssh/id_ecdsa
 git config --global user.email "$GIT_MAIL"
 git config --global user.name "$GIT_USER"
 
-base_dir=$(pwd)
-# Get version from the GitHub release that triggered this task
-pushd gh_release
-RELEASE_VERSION=$(cat version)
-RELEASE_URL=$(cat body | grep -o "Release Tarball: .*" | sed 's/Release Tarball: //')
-RELEASE_SHA=$(sha1sum ${base_dir}/suse_final_release/*.tgz | cut -d' ' -f1)
-popd
+RELEASE_VERSION=$(cat suse_final_release/version)
+BUILT_IMAGE=$(cat built_image/image)
+NEW_FILE=$(tar -zxOf suse_final_release/*.tgz packages | tar -ztf - | grep zip | cut -d'/' -f3)
 
-COMMIT_TITLE="Bump ${NAME_IN_ROLE_MANIFEST} release to ${RELEASE_VERSION}"
+COMMIT_TITLE="Bump ${BUILDPACK_NAME} release to ${RELEASE_VERSION}"
 
 # Update release in kubecf repo
 cp -r kubecf/. updated-kubecf/
 cd updated-kubecf
 
 git pull
-export GIT_BRANCH_NAME="bump_${NAME_IN_ROLE_MANIFEST}-`date +%Y%m%d%H%M%S`"
+export GIT_BRANCH_NAME="bump_${BUILDPACK_NAME}-`date +%Y%m%d%H%M%S`"
 git checkout -b "${GIT_BRANCH_NAME}"
 
-update_buildpack_info "${KUBECF_OPS_SET_SUSE_BUILDPACKS}" "${NAME_IN_ROLE_MANIFEST}" "${RELEASE_URL}" "${RELEASE_VERSION}" "${RELEASE_SHA}"
+update_buildpack_info "${BUILDPACK_NAME}" "${KUBECF_VALUES}" "${BUILT_IMAGE}" "${NEW_FILE}"
 
-git commit "${KUBECF_OPS_SET_SUSE_BUILDPACKS}" -m "${COMMIT_TITLE}"
+git commit "${KUBECF_VALUES}" -m "${COMMIT_TITLE}"
 
 # Open a Pull Request
 PR_MESSAGE=`echo -e "${COMMIT_TITLE}"`
