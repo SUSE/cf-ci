@@ -3,10 +3,10 @@ releases:
   url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.5.11
   version: 2.5.11
   sha1: f1810c1e662a1c76f40911cffd1d159204c9a661
-- name: cf-mysql-release
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
-  version: 36.19.0
-  sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
+# - name: cf-mysql-release
+#   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
+#   version: 36.19.0
+#   sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
 - name: app-autoscaler
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/app-autoscaler-release?v=3.0.0
   version: 3.0.0
