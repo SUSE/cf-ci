@@ -237,6 +237,9 @@ set_helm_params() {
         fi
         HELM_PARAMS+=(--set "enable.mysql=false")
         HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
+        if [[ -n "${EXTERNAL_DB_USER_HOST_SUFFIX:-}" ]]; then
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER_HOST_SUFFIX=@${EXTERNAL_DB_USER_HOST_SUFFIX}")
+        fi
     fi
     if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")

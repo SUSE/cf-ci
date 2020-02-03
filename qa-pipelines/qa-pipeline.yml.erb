@@ -11,6 +11,10 @@ def bundle_url_from_version(domain, version)
   end
 end
 
+def present?(var)
+  var != nil && var != ""
+end
+
 is_upgrade_pipeline = enable_cf_deploy_pre_upgrade || enable_cf_smoke_tests_pre_upgrade || enable_cf_brain_tests_pre_upgrade || enable_cf_usb_upgrade_tests
 
 # Convert a multiline string into a string with literal '\n's for YAML to parse as multiline string
@@ -88,6 +92,9 @@ aliases:
     EXTERNAL_DB_USER: <%= external_db_user %>
     EXTERNAL_DB_PASS: <%= external_db_pass %>
     EXTERNAL_DB_SSL: <%= external_db_ssl == true %>
+    <% if present? external_db_user_host_suffix %>
+    EXTERNAL_DB_USER_HOST_SUFFIX: <%= external_db_user_host_suffix %>
+    <% end %>
 
   # Terraform AKS Configuration
   terraform-aks-params: &terraform-aks-params
