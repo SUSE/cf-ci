@@ -8,10 +8,10 @@ stemcell-repository: splatform/fissile-stemcell-sle
 stemcell-versions-s3-bucket: cf-operators
 stemcell-version-file: fissile-stemcell-versions/fissile-stemcell-sle15-version
 stemcell-s3-bucket-region: us-east-1
-registry-name: *docker-public-staging-registry
-registry-org: *docker-public-staging-org
-registry-user: *docker-public-staging-username
-registry-pass: *docker-public-staging-password
+registry-name: docker.io
+registry-org: *docker-cfcontainerization-org
+registry-user: *docker-cfcontainerization-username
+registry-pass: *docker-cfcontainerization-password
 s3-access-key: *aws-capbot-access-key
 s3-secret-key: *aws-capbot-secret-key
 github-access-token: *github-access-token

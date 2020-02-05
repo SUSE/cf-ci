@@ -3,6 +3,7 @@ releases:
   url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.5.11
   version: 2.5.11
   sha1: f1810c1e662a1c76f40911cffd1d159204c9a661
+# Leaving cf-mysql-release due to build failure issues.  
 # - name: cf-mysql-release
 #   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
 #   version: 36.19.0
