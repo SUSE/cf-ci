@@ -32,3 +32,7 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/bits-service-release?v=2.29.0
   version: 2.29.0
   sha1: 1b889072a7de5553f86b76d813717ff97e976d93
+- name: eirini
+  url: https://bosh.io/d/github.com/cloudfoundry-community/eirini-bosh-release?v=0.0.25
+  version: 0.0.25
+  sha1: ee832521e2a63e4eccbea16f4dd1b26606f7bd99
