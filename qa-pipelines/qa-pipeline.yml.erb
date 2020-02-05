@@ -86,14 +86,27 @@ aliases:
     ENABLE_CREDHUB: <%= enable_credhub == true %>
     ENABLE_AUTOSCALER: <%= enable_autoscaler == true %>
     EMBEDDED_UAA: <%= enable_embedded_uaa == true %>
-    EXTERNAL_DB: <%= enable_external_uaa_scf_db == true %>
-    EXTERNAL_DB_HOST: <%= external_db_host %>
-    EXTERNAL_DB_PORT: <%= external_db_port %>
-    EXTERNAL_DB_USER: <%= external_db_user %>
-    EXTERNAL_DB_PASS: <%= external_db_pass %>
-    EXTERNAL_DB_SSL: <%= external_db_ssl == true %>
-    <% if present? external_db_user_host_suffix %>
-    EXTERNAL_DB_USER_HOST_SUFFIX: <%= external_db_user_host_suffix %>
+    UAA_EXTERNAL_DB: <%= enable_uaa_external_db == true %>
+    UAA_EXTERNAL_DB_HOST: <%= uaa_external_db_host %>
+    UAA_EXTERNAL_DB_PORT: <%= uaa_external_db_port %>
+    <% if present? uaa_external_db_user %>
+    UAA_EXTERNAL_DB_USER: <%= uaa_external_db_user %>
+    <% end %>
+    UAA_EXTERNAL_DB_PASS: <%= uaa_external_db_pass %>
+    UAA_EXTERNAL_DB_SSL: <%= uaa_external_db_ssl == true %>
+    <% if present? uaa_external_db_user_host_suffix %>
+    UAA_EXTERNAL_DB_USER_HOST_SUFFIX: <%= uaa_external_db_user_host_suffix %>
+    <% end %>
+    SCF_EXTERNAL_DB: <%= enable_scf_external_db == true %>
+    SCF_EXTERNAL_DB_HOST: <%= scf_external_db_host %>
+    SCF_EXTERNAL_DB_PORT: <%= scf_external_db_port %>
+    <% if present? scf_external_db_user %>
+    SCF_EXTERNAL_DB_USER: <%= scf_external_db_user %>
+    <% end %>
+    SCF_EXTERNAL_DB_PASS: <%= scf_external_db_pass %>
+    SCF_EXTERNAL_DB_SSL: <%= scf_external_db_ssl == true %>
+    <% if present? scf_external_db_user_host_suffix %>
+    SCF_EXTERNAL_DB_USER_HOST_SUFFIX: <%= scf_external_db_user_host_suffix %>
     <% end %>
 
   # Terraform AKS Configuration

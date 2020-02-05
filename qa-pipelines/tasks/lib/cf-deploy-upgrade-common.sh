@@ -223,24 +223,6 @@ set_helm_params() {
     if [[ "${EMBEDDED_UAA:-false}" == "true" ]]; then
         HELM_PARAMS+=(--set "enable.uaa=true")
     fi
-    if [[ "${EXTERNAL_DB:-false}" == "true" ]]; then
-        EXTERNAL_DB_PASS=${EXTERNAL_DB_PASS:-$(kubectl get secret -n external-db external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)}
-        HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=${EXTERNAL_DB_HOST:-external-db-mariadb.external-db.svc.cluster.local}")
-        HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=${EXTERNAL_DB_PORT:-3306}")
-        HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=${EXTERNAL_DB_USER:-root}")
-        if [[ ${EXTERNAL_DB_SSL:-false} == "true" ]]; then
-            HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=true")
-            HELM_PARAMS+=(--set "env.UAADB_TLS=enabled")
-        else
-            HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=false")
-            HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
-        fi
-        HELM_PARAMS+=(--set "enable.mysql=false")
-        HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${EXTERNAL_DB_PASS}")
-        if [[ -n "${EXTERNAL_DB_USER_HOST_SUFFIX:-}" ]]; then
-            HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER_HOST_SUFFIX=@${EXTERNAL_DB_USER_HOST_SUFFIX}")
-        fi
-    fi
     if [[ -n "${KUBE_REGISTRY_HOSTNAME:-}" ]]; then
         HELM_PARAMS+=(--set "kube.registry.hostname=${KUBE_REGISTRY_HOSTNAME%/}")
     fi
@@ -255,6 +237,34 @@ set_uaa_params() {
     if [[ "${HA:-false}" == true ]]; then
         HELM_PARAMS+=(--set=config.HA=true)
     fi
+    if [[ "${UAA_EXTERNAL_DB:-false}" == "true" ]]; then
+        if [[ -z "${UAA_EXTERNAL_DB_HOST:-}" ]]; then
+            # External DB is deployed in cf-deploy from mariadb helm chart
+            UAA_EXTERNAL_DB_PASS=$(kubectl get secret -n uaa-external-db uaa-external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=uaa-external-db-mariadb.uaa-external-db.svc.cluster.local")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=3306")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=false")
+            HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=root")
+        else
+            # External DB is specified in config.yaml
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=${UAA_EXTERNAL_DB_HOST}")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=${UAA_EXTERNAL_DB_PORT:-3306}")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=${UAA_EXTERNAL_DB_USER:-root}")
+            if [[ ${UAA_EXTERNAL_DB_SSL:-false} == false ]]; then
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=false")
+                HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
+            else
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=true")
+                HELM_PARAMS+=(--set "env.UAADB_TLS=enabled")
+            fi
+            if [[ -n "${UAA_EXTERNAL_DB_USER_HOST_SUFFIX:-}" ]]; then
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER_HOST_SUFFIX=@${UAA_EXTERNAL_DB_USER_HOST_SUFFIX}")
+            fi
+        fi
+        HELM_PARAMS+=(--set "enable.mysql=false")
+        HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${UAA_EXTERNAL_DB_PASS}")
+    fi
 }
 
 # Method to customize SCF.
@@ -267,6 +277,36 @@ set_scf_params() {
     fi
     if [[ "${HA:-false}" == true ]]; then
         HELM_PARAMS+=(--set=config.HA=true)
+    fi
+    if [[ "${SCF_EXTERNAL_DB:-false}" == "true" ]]; then
+        if [[ -z "${SCF_EXTERNAL_DB_HOST:-}" ]]; then
+            # External DB is deployed in cf-deploy from mariadb helm chart
+            SCF_EXTERNAL_DB_PASS=$(kubectl get secret -n scf-external-db scf-external-db-mariadb -o jsonpath='{.data.mariadb-root-password}' | base64 --decode)
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=scf-external-db-mariadb.scf-external-db.svc.cluster.local")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=3306")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=false")
+            HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=root")
+        else
+            # External DB is specified in config.yaml
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_HOST=${SCF_EXTERNAL_DB_HOST}")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_PORT=${SCF_EXTERNAL_DB_PORT:-3306}")
+            HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER=${SCF_EXTERNAL_DB_USER:-root}")
+            if [[ ${SCF_EXTERNAL_DB_SSL:-false} == false ]]; then
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=false")
+                HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
+                HELM_PARAMS+=(--set "env.CREDHUB_DB_REQUIRE_TLS=false")
+            else
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=true")
+                HELM_PARAMS+=(--set "env.UAADB_TLS=enabled")
+                HELM_PARAMS+=(--set "env.CREDHUB_DB_REQUIRE_TLS=true")
+            fi
+            if [[ -n "${SCF_EXTERNAL_DB_USER_HOST_SUFFIX:-}" ]]; then
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_USER_HOST_SUFFIX=@${SCF_EXTERNAL_DB_USER_HOST_SUFFIX}")
+            fi
+        fi
+        HELM_PARAMS+=(--set "enable.mysql=false")
+        HELM_PARAMS+=(--set "secrets.DB_EXTERNAL_PASSWORD=${SCF_EXTERNAL_DB_PASS}")
     fi
 }
 

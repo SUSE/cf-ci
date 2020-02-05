@@ -30,12 +30,20 @@ params:
   EMBEDDED_UAA: false # true or false
   ENABLE_CREDHUB: true
   ENABLE_AUTOSCALER: true
-  EXTERNAL_DB: false # true or false
-  EXTERNAL_DB_HOST: ~
-  EXTERNAL_DB_PORT: ~
-  EXTERNAL_DB_USER: ~
-  EXTERNAL_DB_PASS: ~
-  EXTERNAL_DB_SSL: false
+  UAA_EXTERNAL_DB: false # true or false
+  UAA_EXTERNAL_DB_HOST: ~
+  UAA_EXTERNAL_DB_PORT: ~
+  UAA_EXTERNAL_DB_USER: ~
+  UAA_EXTERNAL_DB_PASS: ~
+  UAA_EXTERNAL_DB_SSL: false
+  UAA_EXTERNAL_DB_USER_HOST_SUFFIX: ~
+  SCF_EXTERNAL_DB: false # true or false
+  SCF_EXTERNAL_DB_HOST: ~
+  SCF_EXTERNAL_DB_PORT: ~
+  SCF_EXTERNAL_DB_USER: ~
+  SCF_EXTERNAL_DB_PASS: ~
+  SCF_EXTERNAL_DB_SSL: false
+  SCF_EXTERNAL_DB_USER_HOST_SUFFIX: ~
   HA_STRICT: "" # set to true or false when testing HA_strict
 
 run:

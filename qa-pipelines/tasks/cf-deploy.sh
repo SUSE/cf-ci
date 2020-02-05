@@ -13,34 +13,29 @@ if [[ ${cap_platform} != "eks" ]]; then
     kubectl replace --force --filename=ci/qa-tools/cap-crb-tests.yaml
 fi
 
-# external db for uaa and scf db
-if [[ "${EXTERNAL_DB:-false}" == "true" ]] && [[ -z "${EXTERNAL_DB_HOST}" ]]; then
-    helm init --client-only
-    helm repo add stable https://kubernetes-charts.storage.googleapis.com
-    helm install stable/mariadb \
-        --version 6.10.1 \
-        --name external-db \
-        --namespace external-db \
-        --set volumePermissions.enabled=true
-    kubectl wait --timeout=10m --namespace external-db --for=condition=ready pod/external-db-mariadb-master-0
-fi
-
-
-set_helm_params # Sets HELM_PARAMS.
-set_uaa_params # Adds uaa specific params to HELM_PARAMS.
-
-echo "UAA customization..."
-echo "${HELM_PARAMS[@]}" \
-    | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g' \
-    | sed 's/secrets\.DB_EXTERNAL_PASSWORD=[^[:space:]]*/secrets.DB_EXTERNAL_PASSWORD=<REDACTED>/g'
-
 if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
+    if [[ "${UAA_EXTERNAL_DB:-false}" == "true" ]] && [[ -z "${UAA_EXTERNAL_DB_HOST}" ]]; then
+        helm init --client-only
+        helm repo add stable https://kubernetes-charts.storage.googleapis.com
+        helm install stable/mariadb \
+            --version 6.10.1 \
+            --name uaa-external-db \
+            --namespace uaa-external-db \
+            --set volumePermissions.enabled=true
+        kubectl wait --timeout=10m --namespace external-db --for=condition=ready pod/uaa-external-db-mariadb-master-0
+    fi
+    set_helm_params # Sets HELM_PARAMS.
+    set_uaa_params # Adds uaa specific params to HELM_PARAMS.
     # Deploy UAA.
     kubectl create namespace "${UAA_NAMESPACE}"
     if [[ "${PROVISIONER}" == "kubernetes.io/rbd" ]]; then
         kubectl get secret -o yaml ceph-secret-admin | sed "s/namespace: default/namespace: ${UAA_NAMESPACE}/g" | kubectl create -f -
     fi
 
+    echo "UAA customization..."
+    echo "${HELM_PARAMS[@]}" \
+        | sed 's/kube\.registry\.password=[^[:space:]]*/kube.registry.password=<REDACTED>/g' \
+        | sed 's/secrets\.DB_EXTERNAL_PASSWORD=[^[:space:]]*/secrets.DB_EXTERNAL_PASSWORD=<REDACTED>/g'
     helm install ${CAP_DIRECTORY}/helm/uaa/ \
         --namespace "${UAA_NAMESPACE}" \
         --name uaa \
@@ -60,7 +55,16 @@ if [[ "${EMBEDDED_UAA:-false}" != "true" ]]; then
     fi
 fi
 
-# Deploy CF.
+if [[ "${SCF_EXTERNAL_DB:-false}" == "true" ]] && [[ -z "${SCF_EXTERNAL_DB_HOST}" ]]; then
+    helm init --client-only
+    helm repo add stable https://kubernetes-charts.storage.googleapis.com
+    helm install stable/mariadb \
+        --version 6.10.1 \
+        --name scf-external-db \
+        --namespace scf-external-db \
+        --set volumePermissions.enabled=true
+    kubectl wait --timeout=10m --namespace external-db --for=condition=ready pod/scf-external-db-mariadb-master-0
+fi
 set_helm_params # Resets HELM_PARAMS.
 set_scf_params # Adds scf specific params to HELM_PARAMS.
 
