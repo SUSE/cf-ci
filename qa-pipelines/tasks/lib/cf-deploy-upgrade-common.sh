@@ -255,7 +255,7 @@ set_uaa_params() {
                 HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=false")
                 HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
             else
-                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=true")
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=${UAA_EXTERNAL_DB_SSL:-true}")
                 HELM_PARAMS+=(--set "env.UAADB_TLS=${UAA_EXTERNAL_DB_VALIDATION}")
             fi
             if [[ -n "${UAA_EXTERNAL_DB_USER_HOST_SUFFIX:-}" ]]; then
@@ -297,7 +297,7 @@ set_scf_params() {
                 HELM_PARAMS+=(--set "env.UAADB_TLS=disabled")
                 HELM_PARAMS+=(--set "env.CREDHUB_DB_REQUIRE_TLS=false")
             else
-                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=true")
+                HELM_PARAMS+=(--set "env.DB_EXTERNAL_SSL_MODE=${SCF_EXTERNAL_DB_SSL:-true}")
                 HELM_PARAMS+=(--set "env.UAADB_TLS=${UAA_EXTERNAL_DB_VALIDATION}")
                 HELM_PARAMS+=(--set "env.CREDHUB_DB_REQUIRE_TLS=true")
             fi

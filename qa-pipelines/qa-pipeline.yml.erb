@@ -93,7 +93,7 @@ aliases:
     UAA_EXTERNAL_DB_USER: <%= uaa_external_db_user %>
     <% end %>
     UAA_EXTERNAL_DB_PASS: <%= uaa_external_db_pass %>
-    UAA_EXTERNAL_DB_SSL: <%= uaa_external_db_ssl == true %>
+    UAA_EXTERNAL_DB_SSL: <%= uaa_external_db_ssl %>
     <% if present? uaa_external_db_user_host_suffix %>
     UAA_EXTERNAL_DB_USER_HOST_SUFFIX: <%= uaa_external_db_user_host_suffix %>
     <% end %>
@@ -105,7 +105,7 @@ aliases:
     SCF_EXTERNAL_DB_USER: <%= scf_external_db_user %>
     <% end %>
     SCF_EXTERNAL_DB_PASS: <%= scf_external_db_pass %>
-    SCF_EXTERNAL_DB_SSL: <%= scf_external_db_ssl == true %>
+    SCF_EXTERNAL_DB_SSL: <%= scf_external_db_ssl %>
     <% if present? scf_external_db_user_host_suffix %>
     SCF_EXTERNAL_DB_USER_HOST_SUFFIX: <%= scf_external_db_user_host_suffix %>
     <% end %>
