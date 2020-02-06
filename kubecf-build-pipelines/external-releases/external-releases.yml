@@ -40,3 +40,8 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry-community/eirini-bosh-release?v=0.0.25
   version: 0.0.25
   sha1: ee832521e2a63e4eccbea16f4dd1b26606f7bd99
+# TODO: replace url once final release is available.
+- name: sync-integration-tests-release
+  url: https://s3-us-west-2.amazonaws.com/dummy-releases/sync-integration-tests-release-v0.0.2.tgz
+  version: v0.0.2
+  sha1: 6d2d70efac87ee088fa3c6e8f886b65a7ccb0404
