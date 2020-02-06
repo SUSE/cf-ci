@@ -27,3 +27,8 @@ releases:
   url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.1.tgz
   version: v0.0.1
   sha1: 81dfa411d47eddf1e7c74f9e9dd310056ea1dfc6
+# TODO: replace url once final release is available.
+- name: sync-integration-tests-release
+  url: https://s3-us-west-2.amazonaws.com/dummy-releases/sync-integration-tests-release-v0.0.2.tgz
+  version: v0.0.2
+  sha1: 6d2d70efac87ee088fa3c6e8f886b65a7ccb0404
