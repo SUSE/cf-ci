@@ -11,7 +11,7 @@ releases = [
     name: "sync-integration-tests-release",
     uri: "git@github.com:SUSE/sync-integration-tests-release.git",
     name_in_role_manifest: false, # Do not update in SCF
-    branch: "bisingh/bump-golang"
+    branch: "master"
   }
 ]
 %>
@@ -38,6 +38,7 @@ resources:
   type: s3
   source:
     bucket: <%= s3_bucket %>
+    region_name: <%= s3_bucket_region %>
     regexp: <%= release[:name] %>-release-(.*).tgz
     access_key_id: <%= s3_access_key %>
     secret_access_key: <%= s3_secret_key %>

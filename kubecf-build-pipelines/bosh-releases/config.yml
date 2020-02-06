@@ -3,6 +3,7 @@ ci-branch: bisingh/bosh-release
 build-image-resource-repo: https://github.com/concourse/docker-image-resource
 build-image-resource-branch: master
 s3-bucket: dummy-releases
-s3-access-key: *aws-capbot-access-key
-s3-secret-key: *aws-capbot-secret-key
+s3-bucket-region: us-west-2
+s3-access-key: *aws-access-key
+s3-secret-key: *aws-secret-key
 github-access-token: *github-access-token
