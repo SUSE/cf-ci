@@ -34,14 +34,6 @@ resources:
   <% if release[:trigger_path] %>
     paths: [<%= release[:trigger_path] %>]
   <% end %>
-# Hack to avoid pipeline triggering itself. We push to a "different" resource.
-- name: git.push-<%= release[:name] %>-release
-  type: git
-  source:
-    uri: <%= release[:uri] %>
-    branch: master
-    private_key: |
-      <%= github_private_key.gsub("\n", "\n      ") %>
 - name: s3.suse-final-release-<%= release[:name] %>
   type: s3
   source:
@@ -71,7 +63,7 @@ jobs:
       RELEASE_NAME: <%= release[:name] %>
       RELEASE_DIRECTORY: <%= release[:release_dir].to_s.inspect %>
       ACCESS_KEY_ID:  <%= s3_access_key %>
-      SECRET_ACCESS_KEY:<%= s3_secret_key %>
+      SECRET_ACCESS_KEY: <%= s3_secret_key %>
       <% if release[:trigger_path] == "config/blobs.yml" %>
       VERSION_REGEXP: '.*?-v?([0-9]+(\.[0-9]+)+)-.*'
       <% end %>
