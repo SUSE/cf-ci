@@ -21,13 +21,25 @@ releases:
   version: 0.0.7
   sha1: 6d3cd621c3eb011744d31c8746f3a96ecc804ea9
 - name: brains-tests-release
+  url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.6.tgz
+  version: v0.0.6
+  sha1: c18d0054174b23359c5b7602fcdefdb75527788e
+- name: brains-tests-release
   url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.8.tgz
   version: v0.0.8
   sha1: 706218d94e13782d65daf926279adcd41ef3911a
 - name: postgres
+  url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=39
+  version: 39
+  sha1: 8ff395540e77a461322a01c41aa68973c10f1ffb
+- name: postgres
   url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=40
   version: 40
   sha1: 343f04f1594c57ecea65638802e94e311cd72688
+- name: bits-service
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bits-service-release?v=2.28.0
+  version: 2.28.0
+  sha1: bd173fc9952277ea962a330c04555d9bd1e8a10e
 - name: bits-service
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/bits-service-release?v=2.29.0
   version: 2.29.0
