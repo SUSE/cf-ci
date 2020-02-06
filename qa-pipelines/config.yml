@@ -48,6 +48,8 @@ scf-external-db-user: ~
 scf-external-db-port: ~
 scf-external-db-pass: ~
 scf-external-db-ssl: false
+# Set this one, even for embedded UAA
+uaa-external-db-validation: disabled
 scf-external-db-user-host-suffix: ~
 # The following two options test that ha strict mode works by adjusting the diego_api count to 1
 # This will only have an effect on builds from the HA job. When testing, only one of these flags should be set to true
