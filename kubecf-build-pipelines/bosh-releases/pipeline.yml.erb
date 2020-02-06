@@ -8,13 +8,11 @@
 # the root directory will be used.
 releases = [
   {
-    name: "brain-tests",
+    name: "sync-integration-tests-release",
     uri: "git@github.com:SUSE/sync-integration-tests-release.git",
     name_in_role_manifest: false, # Do not update in SCF
     branch: "bisingh/bump-golang"
   }
-# TODO: Add scf-helper when we are able to build a bosh release for that (remove role-manifest.yml from the spec)
-#  { name: "scf-helper", uri: "git@github.com:SUSE/scf-helper-release.git" }
 ]
 %>
 
@@ -47,10 +45,10 @@ resources:
 - name: s3.suse-final-release-<%= release[:name] %>
   type: s3
   source:
-    bucket: suse-final-releases
+    bucket: <%= s3_bucket %>
     regexp: <%= release[:name] %>-release-(.*).tgz
-    access_key_id: <%= aws_access_key %>
-    secret_access_key: <%= aws_secret_key %>
+    access_key_id: <%= s3_access_key %>
+    secret_access_key: <%= s3_secret_key %>
     private_key: |
       <%= github_private_key.gsub("\n", "\n      ") %>
 <% end %>
@@ -72,8 +70,8 @@ jobs:
     params:
       RELEASE_NAME: <%= release[:name] %>
       RELEASE_DIRECTORY: <%= release[:release_dir].to_s.inspect %>
-      ACCESS_KEY_ID: <%= aws_access_key %>
-      SECRET_ACCESS_KEY: <%= aws_secret_key %>
+      ACCESS_KEY_ID:  <%= s3_access_key %>
+      SECRET_ACCESS_KEY:<%= s3_secret_key %>
       <% if release[:trigger_path] == "config/blobs.yml" %>
       VERSION_REGEXP: '.*?-v?([0-9]+(\.[0-9]+)+)-.*'
       <% end %>
@@ -96,6 +94,4 @@ jobs:
     params:
       file: release_tarball_dir/<%= release[:name] %>-release-*.tgz
       acl: public-read
-  - put: git.push-<%= release[:name] %>-release
-    params: { repository: "git_output" }
 <% end %>

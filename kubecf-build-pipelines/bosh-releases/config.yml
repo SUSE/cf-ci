@@ -2,16 +2,7 @@ ci-repo: https://github.com/suse/cf-ci
 ci-branch: bisingh/bosh-release
 build-image-resource-repo: https://github.com/concourse/docker-image-resource
 build-image-resource-branch: master
-external-releases-yaml: kubecf-build-pipelines/external-releases/external-releases.yml
-fissile-linux-s3-bucket: cf-opensusefs2
-stemcell-repository: splatform/fissile-stemcell-sle
-stemcell-versions-s3-bucket: cf-operators
-stemcell-version-file: fissile-stemcell-versions/fissile-stemcell-sle15-version
-stemcell-s3-bucket-region: us-east-1
-registry-name: *docker-public-staging-registry
-registry-org: *docker-public-staging-org
-registry-user: *docker-public-staging-username
-registry-pass: *docker-public-staging-password
+s3-bucket: dummy-releases
 s3-access-key: *aws-capbot-access-key
 s3-secret-key: *aws-capbot-secret-key
 github-access-token: *github-access-token
