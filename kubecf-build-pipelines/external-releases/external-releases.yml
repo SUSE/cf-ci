@@ -3,11 +3,6 @@ releases:
   url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.5.11
   version: 2.5.11
   sha1: f1810c1e662a1c76f40911cffd1d159204c9a661
-# Leaving cf-mysql-release out due to build failure issues.  
-# - name: cf-mysql-release
-#   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
-#   version: 36.19.0
-#   sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
 - name: app-autoscaler
   version: 3.0.0
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/app-autoscaler-release?v=3.0.0
@@ -20,14 +15,6 @@ releases:
   url: https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release-0.0.7.tgz
   version: 0.0.7
   sha1: 6d3cd621c3eb011744d31c8746f3a96ecc804ea9
-- name: brains-tests-release
-  url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.6.tgz
-  version: v0.0.6
-  sha1: c18d0054174b23359c5b7602fcdefdb75527788e
-- name: brains-tests-release
-  url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.8.tgz
-  version: v0.0.8
-  sha1: 706218d94e13782d65daf926279adcd41ef3911a
 - name: postgres
   url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=39
   version: 39
@@ -52,6 +39,19 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry-community/eirini-bosh-release?v=0.0.25
   version: 0.0.25
   sha1: ee832521e2a63e4eccbea16f4dd1b26606f7bd99
+# Leaving few releases out due to build failure issues, see: https://github.com/SUSE/kubecf/issues/270
+# - name: cf-mysql-release
+#   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
+#   version: 36.19.0
+#   sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
+# - name: brains-tests-release
+#   url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.6.tgz
+#   version: v0.0.6
+#   sha1: c18d0054174b23359c5b7602fcdefdb75527788e
+# - name: brains-tests-release
+#   url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.8.tgz
+#   version: v0.0.8
+#   sha1: 706218d94e13782d65daf926279adcd41ef3911a
 # TODO: replace url once final release is available.
 - name: sync-integration-tests-release
   url: https://s3-us-west-2.amazonaws.com/dummy-releases/sync-integration-tests-release-v0.0.2.tgz
