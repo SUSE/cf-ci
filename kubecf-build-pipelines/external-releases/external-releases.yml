@@ -3,15 +3,14 @@ releases:
   url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.5.11
   version: 2.5.11
   sha1: f1810c1e662a1c76f40911cffd1d159204c9a661
-# Leaving cf-mysql-release out due to build failure issues.  
-# - name: cf-mysql-release
-#   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
-#   version: 36.19.0
-#   sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
 - name: app-autoscaler
   version: 3.0.0
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/app-autoscaler-release?v=3.0.0
   sha1: eb532308d63a8a3db6645c118b3429d0ab2d5937
+- name: cf-sle15-release
+  url: https://s3.amazonaws.com/suse-final-releases/sle15-release-10.93.tgz
+  version: 10.93
+  sha1: 601c0d7e990203cb09ebfaa099a14b780e95e500
 - name: cf-sle15-release
   url: https://s3.amazonaws.com/suse-final-releases/sle15-release-10.100.tgz
   version: 10.100
@@ -20,14 +19,18 @@ releases:
   url: https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release-0.0.7.tgz
   version: 0.0.7
   sha1: 6d3cd621c3eb011744d31c8746f3a96ecc804ea9
-- name: brains-tests-release
-  url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.8.tgz
-  version: v0.0.8
-  sha1: 706218d94e13782d65daf926279adcd41ef3911a
+- name: postgres
+  url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=39
+  version: 39
+  sha1: 8ff395540e77a461322a01c41aa68973c10f1ffb
 - name: postgres
   url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=40
   version: 40
   sha1: 343f04f1594c57ecea65638802e94e311cd72688
+- name: bits-service
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bits-service-release?v=2.28.0
+  version: 2.28.0
+  sha1: bd173fc9952277ea962a330c04555d9bd1e8a10e
 - name: bits-service
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/bits-service-release?v=2.29.0
   version: 2.29.0
@@ -40,6 +43,20 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry-community/eirini-bosh-release?v=0.0.25
   version: 0.0.25
   sha1: ee832521e2a63e4eccbea16f4dd1b26606f7bd99
+# Leaving few releases out due to build failure issues, see: https://github.com/SUSE/kubecf/issues/270.
+# TODO: fix them.
+# - name: cf-mysql-release
+#   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
+#   version: 36.19.0
+#   sha1: 393a018015fdcb48da40259b6a39b8e30fde9d0c
+# - name: brains-tests-release
+#   url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.6.tgz
+#   version: v0.0.6
+#   sha1: c18d0054174b23359c5b7602fcdefdb75527788e
+# - name: brains-tests-release
+#   url: https://s3.amazonaws.com/suse-final-releases/brain-tests-release-v0.0.8.tgz
+#   version: v0.0.8
+#   sha1: 706218d94e13782d65daf926279adcd41ef3911a
 # TODO: replace url once final release is available.
 - name: sync-integration-tests-release
   url: https://s3-us-west-2.amazonaws.com/dummy-releases/sync-integration-tests-release-v0.0.2.tgz
