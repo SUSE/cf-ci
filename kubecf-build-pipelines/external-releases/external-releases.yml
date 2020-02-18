@@ -43,7 +43,8 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry-community/eirini-bosh-release?v=0.0.25
   version: 0.0.25
   sha1: ee832521e2a63e4eccbea16f4dd1b26606f7bd99
-# Leaving few releases out due to build failure issues, see: https://github.com/SUSE/kubecf/issues/270
+# Leaving few releases out due to build failure issues, see: https://github.com/SUSE/kubecf/issues/270.
+# TODO: fix them.
 # - name: cf-mysql-release
 #   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.19.0
 #   version: 36.19.0
