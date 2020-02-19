@@ -12,9 +12,7 @@ cf-deployment-branch: master
 cf-deployment-yaml: cf-deployment/cf-deployment.yml
 fissile-linux-s3-bucket: cf-opensusefs2
 stemcell-repository: splatform/fissile-stemcell-sle
-stemcell-versions-s3-bucket: cf-operators
-stemcell-version-file: fissile-stemcell-versions/fissile-stemcell-sle15-version
-stemcell-s3-bucket-region: us-east-1
+stemcell-version: SLE_15_SP1-23.8
 registry-name: docker.io
 registry-org: *docker-cfcontainerization-org
 registry-user: *docker-cfcontainerization-username

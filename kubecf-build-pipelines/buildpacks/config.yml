@@ -7,9 +7,7 @@ kubecf-branch: master
 kubecf-values: deploy/helm/kubecf/values.yaml
 fissile-linux-s3-bucket: cf-opensusefs2
 stemcell-repository: splatform/fissile-stemcell-sle
-stemcell-versions-s3-bucket: cf-operators
-stemcell-version-file: fissile-stemcell-versions/fissile-stemcell-sle15-version
-stemcell-s3-bucket-region: us-east-1
+stemcell-version: SLE_15_SP1-23.8
 registry-name: *docker-public-staging-registry
 registry-org: *docker-public-staging-org
 registry-user: *docker-public-staging-username

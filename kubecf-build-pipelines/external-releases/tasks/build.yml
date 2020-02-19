@@ -8,12 +8,11 @@ image_resource:
 inputs:
 - name: ci
 - name: build-image-resource
-- name: s3.stemcell-version
 - name: s3.fissile-linux
 - name: external-releases
 params:
   STEMCELL_REPOSITORY: ~
-  STEMCELL_VERSIONED_FILE: ~
+  STEMCELL_VERSION: ~
   EXTERNAL_RELEASES_YAML: ~
   REGISTRY_NAME: ~
   REGISTRY_ORG: ~
