@@ -101,10 +101,13 @@ set_kubecf_params() {
     elif [[ ${cap_platform} == "gke" ]]; then
         HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=${GKE_CLUSTER_CIDR}")
         HELM_PARAMS+=(--set "kube.service_cluster_ip_range=${GKE_SERVICE_CLUSTER_IP_RANGE}")
-    else
+    elif [[ ${cap_platform} == "caasp4" ]]; then
         HELM_PARAMS+=(--set "kube.service_cluster_ip_range=0.0.0.0/0")
         HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=0.0.0.0/0")
         echo "TODO: remove kube.service_cluster_ip_range and kube.pod_cluster_ip_range settings for CaaSP"
+        for svc in router tcp-router ssh-proxy; do
+            HELM_PARAMS+=(--set "services.${svc}.type=ClusterIP" --set "services.${svc}.clusterIP=${public_ip}")
+        done
     fi
 
     #Credhub is enabled by default
