@@ -111,11 +111,10 @@ else
 fi
 
 # Clean existing test jobs, if any
-if [[ $(kubectl get job --namespace "${CF_NAMESPACE}" --output name | grep kubecf-"${TEST_NAME}") ]]; then
-  for test_job in $(kubectl get job --namespace "${CF_NAMESPACE}" --output name | grep kubecf-"${TEST_NAME}"); do
-    echo "Deleting existing test job: ${test_job}"
-    kubectl delete "${test_job}" --namespace "${CF_NAMESPACE}"
-fi
+for test_job in $(kubectl get job --namespace "${CF_NAMESPACE}" --output name | grep kubecf-"${TEST_NAME}"); do
+  echo "Deleting existing test job: ${test_job}"
+  kubectl delete "${test_job}" --namespace "${CF_NAMESPACE}"
+done
 
 kubectl patch qjob --namespace "${CF_NAMESPACE}" kubecf-"${TEST_NAME}" --type merge --patch '{"spec":{"trigger":{"strategy":"now"}}}'
 
