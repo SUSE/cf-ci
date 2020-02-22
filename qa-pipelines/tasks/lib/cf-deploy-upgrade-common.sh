@@ -105,9 +105,14 @@ set_kubecf_params() {
         HELM_PARAMS+=(--set "kube.service_cluster_ip_range=0.0.0.0/0")
         HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=0.0.0.0/0")
         echo "TODO: remove kube.service_cluster_ip_range and kube.pod_cluster_ip_range settings for CaaSP"
+        local external_ips
+        external_ips="$(kubectl get configmap -n kube-system cap-values -o json | jq -r '.data["external-ips"] // ""')"
         for svc in router tcp-router ssh-proxy; do
             HELM_PARAMS+=(--set "services.${svc}.type=ClusterIP") 
             #HELM_PARAMS+=(--set "services.${svc}.clusterIP=${public_ip}")
+            if [[ -n "${external_ips}" ]]; then
+                HELM_PARAMS+=(--set "services.${svc}.externalIPs=${external_ips}")
+            fi
         done
     fi
 
