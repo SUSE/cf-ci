@@ -28,7 +28,7 @@ def deploy_vancouver(path, opts = {})
       status "deploying #{path} (#{variant})"
       args = [%w[./deploy ./deploy.sh].find { |f| File.exist? f }].compact
       raise "No deploy script found for #{path}" if args.empty?
-      args += ['-t', 'vancouver', variant]
+      args += ['-t', 'suse.de', variant]
       args << opts[:config] if opts.include? :config
       run(*args)
     end
@@ -43,15 +43,14 @@ ENV['CONCOURSE_SECRETS_FILE'] ||= \
 Dir.chdir('../cloudfoundry/ci/pipelines') do
   status 'Logging in to concourse servers...'
   {
-    'suse.de' => 'http://concourse.suse.de',
-    'vancouver' => 'http://concourse.ca-west-1.howdoi.website'
+    'suse.de' => 'http://concourse.suse.de'
   }.each do |target, url|
     run 'make', "TARGET=#{target}", "CONCOURSE_URL=#{url}", 'login-suse.de'
   end
 end
 
-# Vancouver targets
-run 'fly', '-t', 'vancouver', 'sync'
+run 'fly', '-t', 'suse.de', 'sync'
+# Previous Vancouver targets (now also deployed on suse.de)
 deploy_vancouver '../cloudfoundry/ci/pipelines/certstrap',       variants: %w[master], config: 'production'
 deploy_vancouver '../cloudfoundry/ci/pipelines/cf-usb-plugin',   variants: %w[check master]
 deploy_vancouver '../cloudfoundry/ci/pipelines/minibroker',      variants: %w[check master]
@@ -59,7 +58,6 @@ deploy_vancouver '../fissile-ci',   variants: %w[check master develop]
 deploy_vancouver '../configgin-ci', variants: %w[check master]
 
 # Nuremberg targets
-run 'fly', '-t', 'suse.de', 'sync'
 Dir.chdir('../cloudfoundry/ci/pipelines/cf-usb') do
   status 'deploying cf-usb (openSUSE develop)'
   run './deploy', '-t', 'suse.de', 'production'
