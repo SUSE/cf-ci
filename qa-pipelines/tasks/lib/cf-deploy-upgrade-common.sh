@@ -101,7 +101,7 @@ set_kubecf_params() {
     elif [[ ${cap_platform} == "gke" ]]; then
         HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=${GKE_CLUSTER_CIDR}")
         HELM_PARAMS+=(--set "kube.service_cluster_ip_range=${GKE_SERVICE_CLUSTER_IP_RANGE}")
-    elif [[ ${cap_platform} == "caasp4" ]]; then
+    elif [[ ${cap_platform} == "caasp4" ]] || [[ ${cap_platform} == "azure" ]]; then
         HELM_PARAMS+=(--set "kube.service_cluster_ip_range=0.0.0.0/0")
         HELM_PARAMS+=(--set "kube.pod_cluster_ip_range=0.0.0.0/0")
         echo "TODO: remove kube.service_cluster_ip_range and kube.pod_cluster_ip_range settings for CaaSP"
