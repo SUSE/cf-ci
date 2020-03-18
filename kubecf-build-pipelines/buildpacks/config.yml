@@ -2,7 +2,7 @@ ci-repo: https://github.com/suse/cf-ci
 ci-branch: develop
 build-image-resource-repo: https://github.com/concourse/docker-image-resource
 build-image-resource-branch: master
-kubecf-repo: git@github.com:SUSE/kubecf.git
+kubecf-repo: git@github.com:cloudfoundry-incubator/kubecf.git
 kubecf-branch: master
 kubecf-values: deploy/helm/kubecf/values.yaml
 fissile-linux-s3-bucket: cf-opensusefs2
