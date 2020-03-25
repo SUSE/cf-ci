@@ -50,6 +50,7 @@ with open("${KUBECF_VALUES}") as fp:
     values = yaml.load(fp)
 
 values['releases']["${BUILDPACK_NAME}"]['url'] = NEW_URL
+values['releases']["${BUILDPACK_NAME}"]['version'] = NEW_VERSION
 values['releases']["${BUILDPACK_NAME}"]['stemcell']['os'] = NEW_STEMCELL_OS
 values['releases']["${BUILDPACK_NAME}"]['stemcell']['version'] = NEW_STEMCELL_VERSION
 values['releases']["${BUILDPACK_NAME}"]['file'] = get_new_filename()
