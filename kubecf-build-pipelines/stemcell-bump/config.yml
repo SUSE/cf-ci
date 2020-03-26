@@ -1,0 +1,12 @@
+ci-repo: https://github.com/suse/cf-ci
+ci-branch: develop
+fissile-linux-s3-bucket: cf-opensusefs2
+kubecf-repo: git@github.com:cloudfoundry-incubator/kubecf.git
+kubecf-branch: master
+kubecf-values: deploy/helm/kubecf/values.yaml
+stemcell-versions-s3-bucket: cf-operators
+stemcell-version-file: fissile-stemcell-versions/fissile-stemcell-sle15-version
+stemcell-s3-bucket-region: us-east-1
+s3-access-key: *aws-capbot-access-key
+s3-secret-key: *aws-capbot-secret-key
+github-access-token: *github-access-token
