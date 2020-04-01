@@ -1,0 +1,53 @@
+# This pipeline is intended to bump stemcell version.
+
+resources:
+- name: ci
+  type: git
+  source:
+    uri: <%= ci_repo %>
+    branch: <%= ci_branch %>
+- name: s3.fissile-linux
+  type: s3
+  source:
+    bucket: <%= fissile_linux_s3_bucket %>
+    private: true
+    regexp: fissile/develop/fissile-(.*)\.tgz
+- name: s3.fissile-stemcell-version
+  type: s3
+  source:
+    bucket: <%= stemcell_versions_s3_bucket %>
+    region_name: <%= stemcell_s3_bucket_region %>
+    access_key_id: <%= s3_access_key %>
+    secret_access_key: <%= s3_secret_key %>
+    versioned_file: <%= stemcell_version_file %>
+- name: kubecf
+  type: git
+  source:
+    uri: <%= kubecf_repo %>
+    branch: <%= kubecf_branch %>
+    private_key: |
+      <%= github_private_key.gsub("\n", "\n      ") %>
+
+jobs:
+- name: create_pr
+  plan:
+  - in_parallel:
+    - get: ci
+    - get: s3.fissile-stemcell-version
+    - get: s3.fissile-linux
+    - get: kubecf
+  - do:
+    - task: create_pr
+      privileged: true
+      input_mapping:
+        s3.stemcell-version: s3.fissile-stemcell-version 
+      params:
+        GITHUB_TOKEN: <%= github_access_token %>
+        GITHUB_PRIVATE_KEY: |
+         <%= github_private_key.gsub("\n", "\n         ") %>
+        GIT_MAIL: <%= github_username %>
+        GIT_USER: suse-cf-ci-bot
+        STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
+        KUBECF_VALUES: <%= kubecf_values %>
+        KUBECF_BRANCH: <%= kubecf_branch %>
+      file: ci/kubecf-build-pipelines/stemcell-bump/tasks/create_pr.yml
