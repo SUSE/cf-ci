@@ -39,12 +39,13 @@ yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True
 yaml.representer.add_representer(type(None), represent_none)
 
-# Breaking down the built_url to retrieve individual values.
-NEW_URL = "/".join("${BUILT_IMAGE}".split("/", 2)[:2])
-BUILT_IMAGE = "${BUILT_IMAGE}".split("-")
-NEW_VERSION = BUILT_IMAGE[-1]
-NEW_STEMCELL_OS = BUILT_IMAGE[3].split(":")[1]
-NEW_STEMCELL_VERSION = "-".join(BUILT_IMAGE[4:6])
+# Breaking down the BUILT_IMAGE to retrieve individual values.
+BUILT_IMAGE_LIST = "${BUILT_IMAGE}".split("/", 2)
+NEW_URL = "/".join(BUILT_IMAGE_LIST[:2])
+BUILT_IMAGE = BUILT_IMAGE_LIST[-1].split(":")[1].split("-")
+NEW_STEMCELL_OS = BUILT_IMAGE[0]
+NEW_STEMCELL_VERSION = "-".join(BUILT_IMAGE[1:3])
+NEW_VERSION = BUILT_IMAGE[3]
 
 with open("${KUBECF_VALUES}") as fp:
     values = yaml.load(fp)
