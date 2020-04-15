@@ -16,9 +16,9 @@ releases:
   version: 10.100
   sha1: a60edb70a1d7d3506dd7018a7e042a791031e5bb
 - name: cf-acceptance-tests-release
-  url: https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release-0.0.12.tgz
-  version: 0.0.12
-  sha1: 937ec64f774ea78f5c90acced29dbbba99f6a476
+  url: https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release-0.0.13.tgz
+  version: 0.0.13
+  sha1: 7949d745a1f080f1fe1a20d248b97eab3a7e30bf
 - name: postgres
   url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=39
   version: 39
