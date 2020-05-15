@@ -8,6 +8,8 @@ stemcell-repository: splatform/fissile-stemcell-sle
 stemcell-versions-s3-bucket: cf-operators
 stemcell-version-file: fissile-stemcell-versions/fissile-stemcell-sle15-version
 stemcell-s3-bucket-region: us-east-1
+kubecf-sources-s3-bucket: kubecf-sources
+kubecf-sources-s3-bucket-region: us-east-1
 registry-name: docker.io
 registry-org: *docker-cfcontainerization-org
 registry-user: *docker-cfcontainerization-username

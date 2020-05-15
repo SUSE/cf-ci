@@ -7,8 +7,8 @@ cf-deployment-tags:
   - v12.39.0
   - v12.40.0
 ci-repo: https://github.com/suse/cf-ci
-ci-branch: develop
-build-image-resource-repo: https://github.com/concourse/docker-image-resource	
+ci-branch: aduffeck/upload_source_to_s3
+build-image-resource-repo: https://github.com/concourse/docker-image-resource
 build-image-resource-branch: master
 cf-deployment-repo: https://github.com/cloudfoundry/cf-deployment
 cf-deployment-branch: master
@@ -18,6 +18,8 @@ stemcell-repository: splatform/fissile-stemcell-sle
 stemcell-versions-s3-bucket: cf-operators
 stemcell-version-file: fissile-stemcell-versions/fissile-stemcell-sle15-version
 stemcell-s3-bucket-region: us-east-1
+kubecf-sources-s3-bucket: kubecf-sources
+kubecf-sources-s3-bucket-region: us-east-1
 registry-name: docker.io
 registry-org: *docker-cfcontainerization-org
 registry-user: *docker-cfcontainerization-username

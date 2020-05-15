@@ -6,10 +6,10 @@ resources:
   source:
     uri: <%= ci_repo %>
     branch: <%= ci_branch %>
-- name: build-image-resource	
-  type: git	
-  source:	
-    uri: <%= build_image_resource_repo %>	
+- name: build-image-resource
+  type: git
+  source:
+    uri: <%= build_image_resource_repo %>
     branch: <%= build_image_resource_branch %>
 - name: s3.fissile-linux
   type: s3
@@ -51,7 +51,7 @@ jobs:
     - task: build
       privileged: true
       input_mapping:
-        s3.stemcell-version: s3.fissile-stemcell-version 
+        s3.stemcell-version: s3.fissile-stemcell-version
       params:
         STEMCELL_REPOSITORY: <%= stemcell_repository %>
         STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
@@ -61,3 +61,9 @@ jobs:
         REGISTRY_USER: <%= registry_user %>
         REGISTRY_PASS: <%= registry_pass %>
       file: ci/kubecf-build-pipelines/external-releases/tasks/build.yml
+    - task: push-sources
+      params:
+        AWS_ACCESS_KEY_ID: <%= s3_access_key %>
+        AWS_SECRET_ACCESS_KEY: <%= s3_secret_key %>
+        BUCKET: <%= kubecf_sources_s3_bucket %>
+      file: ci/kubecf-build-pipelines/external-releases/tasks/push_sources.yml

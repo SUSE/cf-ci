@@ -11,6 +11,8 @@ inputs:
 - name: cf-deployment
 - name: s3.stemcell-version
 - name: s3.fissile-linux
+outputs:
+- name: s3.kubecf-sources
 params:
   STEMCELL_REPOSITORY: ~
   STEMCELL_VERSIONED_FILE: ~

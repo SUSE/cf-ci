@@ -11,6 +11,8 @@ inputs:
 - name: s3.stemcell-version
 - name: s3.fissile-linux
 - name: external-releases
+outputs:
+- name: sources
 params:
   STEMCELL_REPOSITORY: ~
   STEMCELL_VERSIONED_FILE: ~
