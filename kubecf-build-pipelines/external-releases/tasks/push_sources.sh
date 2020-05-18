@@ -2,4 +2,4 @@
 
 set -o errexit -o nounset
 
-aws s3 cp sources/* s3://${BUCKET}/bosh-releases
+aws s3 cp sources/ s3://${BUCKET}/bosh-releases --recursive --acl public-read

@@ -34,18 +34,18 @@ function build_release() {
 
   export DOCKER_CLI_EXPERIMENTAL=enabled
   # Only build and push the container image if doesn't exits already.
-  if docker manifest inspect "${built_image}" 2>&1 | grep --quiet "no such manifest"; then
+  #if docker manifest inspect "${built_image}" 2>&1 | grep --quiet "no such manifest"; then
       # Download source tarball so that it can be stored later on
       curl -L -o "sources/${release_name}-${release_version}.tgz" "${release_url}"
 
       # Build the release image.
-      fissile build release-images "${build_args[@]}"
+      #fissile build release-images "${build_args[@]}"
       echo -e "Built image: ${GREEN}${built_image}${NC}"
-      docker push "${built_image}"
-      docker rmi "${built_image}"
-  else
-      echo -e "Skipping push for ${GREEN}${built_image}${NC} as it is already present in the registry..."
-  fi
+      #docker push "${built_image}"
+      #docker rmi "${built_image}"
+  #else
+  #    echo -e "Skipping push for ${GREEN}${built_image}${NC} as it is already present in the registry..."
+  #fi
 
   echo '----------------------------------------------------------------------------------------------------'
 }
