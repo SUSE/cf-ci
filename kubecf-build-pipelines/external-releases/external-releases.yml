@@ -62,3 +62,7 @@ releases:
   url: https://s3.amazonaws.com/suse-final-releases/sync-integration-tests-release-v0.0.3.tgz
   version: v0.0.3
   sha1: d0809278e1958784722faaf69c7c6ac5ae063888
+- name: cf-acceptance-tests-release
+  url: https://s3.amazonaws.com/suse-final-releases/cf-acceptance-tests-release-0.0.10.tgz
+  version: 0.0.10
+  sha1: 9eb0d99889516aa2aa83de2f640d6a3ea44e05a3

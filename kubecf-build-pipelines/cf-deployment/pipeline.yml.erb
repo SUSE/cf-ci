@@ -25,14 +25,6 @@ resources:
     bucket: <%= fissile_linux_s3_bucket %>
     private: true
     regexp: fissile/develop/fissile-(.*)\.tgz
-- name: s3.fissile-stemcell-version
-  type: s3
-  source:
-    bucket: <%= stemcell_versions_s3_bucket %>
-    region_name: <%= stemcell_s3_bucket_region %>
-    access_key_id: <%= s3_access_key %>
-    secret_access_key: <%= s3_secret_key %>
-    versioned_file: <%= stemcell_version_file %>
 
 jobs:
 <% cf_deployment_tags.each do |cf_deployment_tag| %>
@@ -42,19 +34,16 @@ jobs:
     - get: ci
     - get: build-image-resource
     - get: cf-deployment-<%= cf_deployment_tag %>
-    - get: s3.fissile-stemcell-version
-      trigger: true
     - get: s3.fissile-linux
       trigger: true
   - do:
     - task: build
       privileged: true
       input_mapping:
-        s3.stemcell-version: s3.fissile-stemcell-version
         cf-deployment: cf-deployment-<%= cf_deployment_tag %>
       params:
         STEMCELL_REPOSITORY: <%= stemcell_repository %>
-        STEMCELL_VERSIONED_FILE: <%= stemcell_version_file %>
+        STEMCELL_VERSION: <%= stemcell_version %>
         CF_DEPLOYMENT_YAML: <%= cf_deployment_yaml %>
         REGISTRY_NAME: <%= registry_name %>
         REGISTRY_ORG: <%= registry_org %>

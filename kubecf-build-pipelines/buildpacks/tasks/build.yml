@@ -8,14 +8,13 @@ image_resource:
 inputs:
 - name: ci
 - name: build-image-resource
-- name: s3.stemcell-version
 - name: s3.fissile-linux
 - name: suse_final_release
 outputs:
 - name: built_image
 params:
   STEMCELL_REPOSITORY: ~
-  STEMCELL_VERSIONED_FILE: ~
+  STEMCELL_VERSION: ~
   REGISTRY_NAME: ~
   REGISTRY_ORG: ~
   REGISTRY_USER: ~

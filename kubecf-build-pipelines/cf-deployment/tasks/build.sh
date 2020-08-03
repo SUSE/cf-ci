@@ -22,8 +22,7 @@ echo "${REGISTRY_PASS}" | docker login "${REGISTRY_NAME}" --username "${REGISTRY
 tar xvf s3.fissile-linux/fissile-*.tgz --directory "/usr/local/bin/"
 
 # Pull the stemcell image.
-stemcell_version="$(cat s3.stemcell-version/"${STEMCELL_VERSIONED_FILE##*/}")"
-stemcell_image="${STEMCELL_REPOSITORY}:${stemcell_version}"
+stemcell_image="${STEMCELL_REPOSITORY}:${STEMCELL_VERSION}"
 docker pull "${stemcell_image}"
 
 # Build the releases.
