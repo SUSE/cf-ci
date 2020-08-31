@@ -62,3 +62,7 @@ releases:
   url: https://s3.amazonaws.com/suse-final-releases/sync-integration-tests-release-v0.0.3.tgz
   version: v0.0.3
   sha1: d0809278e1958784722faaf69c7c6ac5ae063888
+- name: bosh-dns
+  url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=1.24.0
+  version: 1.24.0
+  sha1: ba1e42c045c76ff097939f28e5168439c583686d
