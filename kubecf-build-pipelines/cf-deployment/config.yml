@@ -7,6 +7,7 @@ cf-deployment-tags:
   - v12.39.0
   - v12.40.0
   - v13.9.0
+  - v13.17.0
 ci-repo: https://github.com/suse/cf-ci
 ci-branch: develop
 build-image-resource-repo: https://github.com/concourse/docker-image-resource	
