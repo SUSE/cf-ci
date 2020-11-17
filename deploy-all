@@ -93,7 +93,6 @@ Dir.chdir('../buildpacks-ci') do
       buildpacks
       brats
       java
-      dotnet
     ].each do |target|
       run({ 'TARGET' => 'suse.de', 'CONCOURSE_SECRETS_FILE' => decrypted.path },
           './deploy.sh', target)
