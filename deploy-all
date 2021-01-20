@@ -82,6 +82,10 @@ ensure
   run 'make', 'post'
 end
 
+Dir.chdir('../cap/cap-helm-charts-ci') do
+  run './deploy-pipeline', 'suse.de', 'cap-helm-charts-pr'
+end
+
 Dir.chdir('../buildpacks-ci') do
   # We need to decode the secrets for this pipeline manually
   status 'deploying buildpacks pipeline'
