@@ -19,6 +19,7 @@ INCLUDE_BRAINS_REGEX=${INCLUDE_BRAINS_REGEX:-}
 ACCEPTANCE_TEST_NODES=3
 UAA_NAMESPACE=uaa
 CF_NAMESPACE=scf
+CATS_FLAKE_ATTEMPTS=0
 source "ci/qa-pipelines/tasks/lib/klog-collection.sh"
 trap "upload_klogs_on_failure ${CF_NAMESPACE} ${UAA_NAMESPACE}" EXIT
 CAP_DIRECTORY=s3.scf-config
@@ -68,6 +69,7 @@ kube_overrides() {
                 env['value'] = '$SCF_LOG_HOST' if env['name'] == 'SCF_LOG_HOST'
                 env['value'] = '$STORAGECLASS' if env['name'] == 'KUBERNETES_STORAGE_CLASS_PERSISTENT'
                 env['value'] = '$ACCEPTANCE_TEST_NODES' if env['name'] == 'ACCEPTANCE_TEST_NODES'
+                env['value'] = '$CATS_FLAKE_ATTEMPTS' if env['name'] == 'ACCEPTANCE_TEST_FLAKE_ATTEMPTS'
                 if values_from_secrets.include? env['name']
                     env['valueFrom']['secretKeyRef']['name'] = '$generated_secrets_secret'
                 end
@@ -133,6 +135,7 @@ EOF
     fi
 fi
 
+tests_start_time=$(date +%s)
 kubectl run \
     --namespace="${CF_NAMESPACE}" \
     --leave-stdin-open \
@@ -147,76 +150,54 @@ while [[ -z $(container_status ${TEST_NAME}) ]]; do
 done
 
 pod_status=$(container_status ${TEST_NAME})
+# Save info about how long tests took to display at end of CATs; since selected CATs are re-run upon failures, the total time
+# for the run-test task is not a good measure of how long CATs take on a given configuration
+tests_total_time=$(($(date +%s) - tests_start_time))
 export CATS_RERUN=1
 
 if [[ ${TEST_NAME} == "acceptance-tests" ]] && [[ $pod_status -gt 0 ]]; then
-    # Put an actual string here, because even after failing tests, if no current failures match recurring_failures, this will
-    # then get set to an empty string which is considered a passing state, since intermittent failures are nearly inevitable
-    # on some platforms
-    recurring_failures="unset"
-    while [[ $CATS_RERUN -lt 5 ]] && [[ $pod_status -gt 0 ]] && [[ -n ${recurring_failures} ]]; do
-        # Store failure messages in current_failures. The perl expression removes formatting
-        current_failures=$(
-            kubectl logs --namespace=scf acceptance-tests \
-            | perl -pe 's@\e.*?m@@g' \
-            | awk '
-                /Summarizing [0-9]+ Failure/ {
-                    numfailures=$2
-                }
-                ( numfailures > 0 ) && ( /\[Fail\]/ ) {
-                    numfailures--
-                    print
-                }
-            '
-        )
-        if [[ $recurring_failures == "unset" ]]; then
-            recurring_failures=${current_failures}
-        else
-            # Get list of failures from recurring failures which reappeared in current failures
-            recurring_failures=$(echo "${recurring_failures}" | grep -Fxf - <(echo "${current_failures}") || true)
-            echo "Recurring failures:"
-            echo "${recurring_failures}"
-        fi
-        if [[ -n ${recurring_failures} ]]; then
-            export CATS_SUITES="=$(
-                # Gets comma-separated list of all failing test suites.
-                # The sed command is required because the displayed names for docker and ssh suites are different from the variable
-                # expected by CATS to run those tests (diego_docker and diego_ssh respectively)
-                echo "${recurring_failures}" \
-                | tr -d '[]' \
-                | cut -f 2 -d ' ' \
-                | sort -u \
-                | sed -r 's/^(docker|ssh)$/diego_\1/g' \
-                | tr '\n' ','
-            )"
-            echo "CATS_SUITES=$CATS_SUITES"
-            kubectl delete pod --namespace=scf ${TEST_NAME}
-            kubectl run \
-                --namespace="${CF_NAMESPACE}" \
-                --attach \
-                --restart=Never \
-                --image="${image}" \
-                --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")" \
-                "${TEST_NAME}" ||:
+    CATS_FLAKE_ATTEMPTS=4
+    # Gets comma-separated list of all failing test suites.
+    # The sed command is required because the displayed names for docker and ssh suites are different from the variable
+    # expected by CATS to run those tests (diego_docker and diego_ssh respectively)
+    current_failures=$(
+        kubectl logs --namespace=scf acceptance-tests \
+        | perl -pe 's@\e.*?m@@g' \
+        | awk '
+            /Summarizing [0-9]+ Failure/ {
+                numfailures=$2
+            }
+            ( numfailures > 0 ) && ( /\[Fail\]/ ) {
+                numfailures--
+                print
+            }
+          ' \
+        | tr -d '[]' \
+        | cut -f 2 -d ' ' \
+        | sort -u \
+        | sed -r 's/^(docker|ssh)$/diego_\1/g' \
+        | tr '\n' ','
+    )
+    echo "Rerunning CATS with ACCEPTANCE_TEST_FLAKE_ATTEMPTS=5 and the following failed suites enabled:"
+    echo "${current_failures}"
+    export CATS_SUITES="=${current_failures}"
+    kubectl delete pod --namespace=scf ${TEST_NAME}
+    kubectl run \
+        --namespace="${CF_NAMESPACE}" \
+        --leave-stdin-open \
+        --attach \
+        --restart=Never \
+        --image="${image}" \
+        --overrides="$(kube_overrides "${CAP_DIRECTORY}/kube/cf/bosh-task/${TEST_NAME}.yaml")" \
+        "${TEST_NAME}" ||:
 
-            while [[ -z $(container_status ${TEST_NAME}) ]]; do
-                kubectl attach --namespace=scf ${TEST_NAME} ||:
-            done
-            pod_status=$(container_status ${TEST_NAME})
-            ((CATS_RERUN+=1))
-        fi
+    while [[ -z $(container_status ${TEST_NAME}) ]]; do
+        kubectl attach --namespace=scf ${TEST_NAME} ||:
     done
-fi
-
-if [[ ${TEST_NAME} == "acceptance-tests" ]]; then
-    if [[ ${CATS_RERUN} -eq 5 ]] && [[ -n ${recurring_failures} ]]; then
-        # This only happens if acceptance-tests fail 5 times with at least one error which appears in all runs
-        echo "Failures which recurred in all runs"
-        echo "${recurring_failures}"
-    else
-        # Even though the pod_status may be non-zero, set it to zero because no failures occurred in every run
-        pod_status=0
-   fi
+    pod_status=$(container_status ${TEST_NAME})
+    echo "CATS initial run time (before running with ACCEPTANCE_TEST_FLAKE_ATTEMPTS=5) was ${tests_total_time} seconds"
+elif [[ ${TEST_NAME} == "acceptance-tests" ]]; then
+    echo "CATs passed on first run, with no flaky tests, in ${tests_total_time} seconds"
 fi
 
 if [[ -f "${test_non_pods_yml}" ]]; then
